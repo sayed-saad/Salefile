@@ -132,6 +132,11 @@
     box-shadow:0 4px 12px rgba(5,150,105,.25);font-size:.78rem;font-weight:500;}
   .storage-banner i{font-size:.95rem;}
 
+  .warning-banner{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:12px;
+    padding:.7rem 1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.6rem;
+    box-shadow:0 4px 12px rgba(220,38,38,.3);font-size:.8rem;font-weight:600;}
+  .warning-banner i{font-size:1rem;}
+
   .debug-panel{background:#fef3c7;border:1.5px solid #fbbf24;border-radius:12px;padding:.8rem 1rem;
     margin-bottom:.9rem;font-size:.75rem;color:#78350f;line-height:1.6;}
   .debug-panel .dbg-title{font-weight:700;color:#92400e;display:flex;align-items:center;gap:.4rem;
@@ -505,7 +510,7 @@
   </div>
 </div>
 
-<!-- LOSS ACCOUNTS MODAL (NEW) -->
+<!-- LOSS ACCOUNTS MODAL -->
 <div class="modal-overlay" id="lossModal">
   <div class="modal-card wide">
     <h3><i class="fas fa-exclamation-triangle" style="color:#dc2626"></i> Loss-Making Accounts</h3>
@@ -513,7 +518,6 @@
 
     <div class="raw-count" id="lossCount" style="background:#fee2e2;color:#991b1b;">0 accounts</div>
 
-    <!-- Bar Chart -->
     <div style="background:#fff;border-radius:12px;padding:.8rem;border:1px solid var(--border);margin-bottom:1rem;">
       <div style="font-size:.72rem;font-weight:700;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.4px;">
         <i class="fas fa-chart-bar" style="color:#dc2626"></i> Top Loss-Making Accounts
@@ -521,7 +525,6 @@
       <div style="position:relative;height:320px;"><canvas id="lossChart"></canvas></div>
     </div>
 
-    <!-- Table -->
     <div class="raw-table-wrap" style="max-height:50vh;">
       <table class="raw-table" id="lossTable">
         <thead>
@@ -589,6 +592,11 @@
     <i class="fas fa-filter"></i>
     <span>Showing data for: <b id="managerBannerName">—</b></span>
     <span class="tag" id="managerBannerTag">FILTERED VIEW</span>
+  </div>
+
+  <div class="warning-banner" id="warningBanner" style="display:none;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="warningBannerText">—</span>
   </div>
 
   <div class="storage-banner" id="storageBanner" style="display:none;">
@@ -698,11 +706,11 @@
   const SERVER_EXCEL_FILE = 'data.xlsx';
   const SERVER_EXCEL_ALT = 'sales-data.xlsx';
 
-  const KEY_ADMIN = 'shansi_admin_v14';
-  const KEY_VIEWERS = 'shansi_viewers_v14';
-  const KEY_SESSION = 'shansi_session_v14';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v14';
-  const KEY_CACHE_META = 'shansi_cache_meta_v14';
+  const KEY_ADMIN = 'shansi_admin_v15';
+  const KEY_VIEWERS = 'shansi_viewers_v15';
+  const KEY_SESSION = 'shansi_session_v15';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v15';
+  const KEY_CACHE_META = 'shansi_cache_meta_v15';
   const MAX_VIEWERS = 100;
 
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
@@ -817,6 +825,31 @@
     return null;
   }
 
+  /* ⭐ Fuzzy match manager name — handles Roophali/Roopali/Rupali etc. */
+  function normalizeName(s){
+    return String(s || '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/ro{1,2}p/gi, 'roop')   /* roopali, roophali → roopali */
+      .replace(/roop[ae]li/gi, 'roopali');
+  }
+
+  function managerMatch(actual, target){
+    if(!target) return false;
+    const a = normalizeName(actual);
+    const t = normalizeName(target);
+    if(a === t) return true;
+    /* Fuzzy: first name + last initial match */
+    const aParts = a.split(' ');
+    const tParts = t.split(' ');
+    if(aParts.length >= 1 && tParts.length >= 1){
+      if(aParts[0] === tParts[0]) return true;      /* same first name */
+      if(aParts[0].startsWith(tParts[0]) || tParts[0].startsWith(aParts[0])) return true;
+    }
+    return false;
+  }
+
   const MONTH_MAP = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
 
   function parseDate(v, format){
@@ -911,13 +944,30 @@
     return null;
   }
 
+  /* ⭐ Apply role filter with FUZZY manager name matching */
   function applyRoleFilter(data){
     if(!currentUser || currentUser.role === 'admin') return data.slice();
     const link = currentUser.managerLink || '';
     if(!link) return data.slice();
     const amCol = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
     if(!amCol) return data.slice();
-    return data.filter(r => String(r[amCol] || '').trim().toLowerCase() === link.trim().toLowerCase());
+
+    const filtered = data.filter(r => managerMatch(r[amCol], link));
+    console.log(`[RoleFilter] Manager: "${link}" | Total: ${data.length} | Matched: ${filtered.length}`);
+
+    /* Warning if 0 matched */
+    const warn = document.getElementById('warningBanner');
+    const warnText = document.getElementById('warningBannerText');
+    if(filtered.length === 0 && data.length > 0 && warn){
+      /* Find similar manager names */
+      const allManagers = [...new Set(data.map(r => String(r[amCol] || '').trim()))].filter(Boolean);
+      warn.style.display = 'flex';
+      warnText.innerHTML = `⚠️ No data found for "<b>${link}</b>". Available managers in your data: <b>${allManagers.join(' · ')}</b>`;
+    } else if(warn){
+      warn.style.display = 'none';
+    }
+
+    return filtered;
   }
 
   function aggregateByAM(data){
@@ -941,7 +991,8 @@
       map[am].revenue   += parseFloat(r[colRate]) || 0;
       if(colName) map[am].clientRows++;
       const lossFlag = String(r[colLoss] || '').toLowerCase();
-      if(lossFlag.includes('loss') || lossFlag.includes('high') || (parseFloat(r[colProfit])||0) < 0) map[am].lossAccounts++;
+      const profitVal = parseFloat(r[colProfit]) || 0;
+      if(lossFlag.includes('loss') || lossFlag.includes('high') || profitVal < 0) map[am].lossAccounts++;
     });
     return Object.values(map).map(x => {
       const deliveryPct = x.count ? (x.delivered/x.count)*100 : 0;
@@ -955,6 +1006,34 @@
         avgProfit: x.clientRows ? +(x.profit/x.clientRows).toFixed(2) : 0
       };
     });
+  }
+
+  /* ⭐ LOSS ACCOUNTS — matches KPI count (per row) */
+  function getLossAccounts(data){
+    const colName = findCol(data, ['Name','Client','Customer']);
+    const colAM   = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
+    const colProfit = findCol(data, ['Profit','Total Profit']);
+    if(!colName || !colProfit) return [];
+
+    const losses = [];
+    data.forEach((r, idx) => {
+      const name = String(r[colName] || '').trim();
+      const am = colAM ? String(r[colAM] || '').trim() : 'Unknown';
+      const profit = parseFloat(r[colProfit]) || 0;
+
+      if(!name) return;
+      if(profit >= 0) return; /* only negative */
+
+      let reason = 'Minor loss';
+      if(Math.abs(profit) < 0.01) reason = 'Very small loss';
+      else if(profit < -100) reason = 'Significant loss';
+      else if(profit < -10) reason = 'Moderate loss';
+
+      losses.push({ am, name, profit, reason, rowIndex: idx });
+    });
+
+    losses.sort((a,b) => a.profit - b.profit);
+    return losses;
   }
 
   function renderKPIs(rows){
@@ -983,7 +1062,6 @@
       <div class="kpi-card ${k.cls}" data-kpi="${k.label}"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>
     `).join('');
 
-    /* Make Loss-Making Accounts card clickable */
     const lossCard = document.querySelector('[data-kpi="Loss-Making Accounts"]');
     if(lossCard){
       lossCard.style.cursor = 'pointer';
@@ -1288,6 +1366,7 @@
     updateStorageBanner();
     updateHeaderSubtitle();
     updateDebugInfo();
+    console.log(`[Refresh] Manager: ${currentUser?.managerLink || 'ALL'} | Rows: ${filteredData.length} of ${rawData.length}`);
   }
 
   function updateHeaderSubtitle(){
@@ -1405,8 +1484,19 @@
       for(let j = 0; j < headers.length; j++){
         let val = row[j];
         if(val === null || val === undefined) val = '';
-        if(typeof val === 'string' && val.trim() !== '' && !isNaN(val) && isFinite(val)){
-          if(String(val).length < 15) val = parseFloat(val);
+
+        /* Parse numbers including negatives */
+        if(typeof val === 'string' && val.trim() !== ''){
+          let s = val.trim();
+          let isNegativeParen = false;
+          const parenMatch = s.match(/^\(([\d.,]+)\)$/);
+          if(parenMatch){ s = parenMatch[1]; isNegativeParen = true; }
+          if(s.endsWith('-')){ s = s.slice(0, -1); isNegativeParen = true; }
+          if(s !== '' && !isNaN(s) && isFinite(s)){
+            let num = parseFloat(s);
+            if(isNegativeParen) num = -Math.abs(num);
+            if(String(val).length < 15) val = num;
+          }
         }
         obj[headers[j]] = val;
       }
@@ -1487,6 +1577,7 @@
     const set = new Set();
     data.forEach(r => { if(r[colAM]) set.add(String(r[colAM]).trim()); });
     knownManagers = Array.from(set).sort();
+    console.log('[detectManagers] Found managers:', knownManagers);
     const sel = document.getElementById('empManagerName');
     if(sel){
       sel.innerHTML = knownManagers.map(m => `<option value="${m}">${m}</option>`).join('') ||
@@ -1615,6 +1706,7 @@
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
     document.getElementById('loginError').textContent = '';
+    document.getElementById('warningBanner').style.display = 'none';
     showToast('Logged out successfully','info');
   }
 
@@ -1925,40 +2017,10 @@
     showToast('CSV exported','success');
   }
 
-  /* ⭐⭐⭐ LOSS ACCOUNTS FEATURE ⭐⭐⭐ */
-  function getLossAccounts(data){
-    const colName = findCol(data, ['Name','Client','Customer']);
-    const colAM   = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
-    const colProfit = findCol(data, ['Profit','Total Profit']);
-    if(!colName || !colProfit) return [];
-
-    const map = {};
-    data.forEach(r => {
-      const name = String(r[colName] || '').trim();
-      const am = colAM ? String(r[colAM] || '').trim() : 'Unknown';
-      const profit = parseFloat(r[colProfit]) || 0;
-      if(!name) return;
-
-      const key = am + '||' + name;
-      if(!map[key]) map[key] = { am, name, profit: 0 };
-      map[key].profit += profit;
-    });
-
-    const losses = Object.values(map).filter(x => x.profit < 0);
-
-    losses.forEach(x => {
-      if(Math.abs(x.profit) < 0.01) x.reason = 'Very small loss';
-      else if(x.profit < -100) x.reason = 'Significant loss';
-      else if(x.profit < -10) x.reason = 'Moderate loss';
-      else x.reason = 'Minor loss';
-    });
-
-    losses.sort((a,b) => a.profit - b.profit);
-    return losses;
-  }
-
+  /* ⭐ LOSS ACCOUNTS MODAL */
   function openLossModal(){
-    const losses = getLossAccounts(filteredData.length ? filteredData : rawData);
+    const data = filteredData.length ? filteredData : rawData;
+    const losses = getLossAccounts(data);
 
     document.getElementById('lossCount').textContent = losses.length + ' account' + (losses.length === 1 ? '' : 's');
 
@@ -2056,7 +2118,8 @@
   }
 
   function exportLossCSV(){
-    const losses = getLossAccounts(filteredData.length ? filteredData : rawData);
+    const data = filteredData.length ? filteredData : rawData;
+    const losses = getLossAccounts(data);
     if(!losses.length){ showToast('No loss accounts to export','error'); return; }
     const escape = v => {
       if(v === null || v === undefined) return '';
@@ -2128,7 +2191,6 @@
     document.getElementById('rawExport').addEventListener('click', exportRawCSV);
     document.getElementById('rawModal').addEventListener('click', e => { if(e.target.id === 'rawModal') closeRawModal(); });
 
-    /* Loss modal events */
     document.getElementById('lossClose').addEventListener('click', closeLossModal);
     document.getElementById('lossExport').addEventListener('click', exportLossCSV);
     document.getElementById('lossModal').addEventListener('click', e => {

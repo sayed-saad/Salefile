@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHANSI Communications · Sales Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.css">
+<script src="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,-apple-system,sans-serif;}
+  :root{
+    --blue:#1e3a8a; --blue2:#3b82f6; --red:#dc2626; --teal:#0e7490;
+    --bg:#eef2f7; --card:#fff; --border:#e2e8f0; --text:#1e293b; --muted:#64748b;
+  }
+  body{background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+  .login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a,#0e7490);
+    display:flex;align-items:center;justify-content:center;z-index:10000;padding:1rem;
+    transition:opacity .4s,visibility .4s;overflow-y:auto;}
+  .login-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .login-card{background:#fff;border-radius:22px;padding:2rem 1.8rem;max-width:440px;width:100%;
+    box-shadow:0 30px 60px rgba(0,0,0,.35);margin:auto;}
+  .shansi-logo{text-align:center;margin-bottom:1.2rem;}
+  .shansi-logo .logo-text{font-size:2.4rem;font-weight:900;letter-spacing:2px;color:var(--blue);
+    line-height:1;font-family:'Arial Black',Arial,sans-serif;}
+  .shansi-logo .logo-text span{color:var(--red);}
+  .shansi-logo .logo-sub{font-size:.6rem;font-weight:700;letter-spacing:3px;color:var(--red);margin-top:4px;}
+  .login-tabs{display:flex;background:#f1f5f9;border-radius:12px;padding:.3rem;margin-bottom:1.3rem;}
+  .login-tab{flex:1;padding:.65rem;text-align:center;font-size:.85rem;font-weight:600;color:var(--muted);
+    border-radius:9px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:.4rem;}
+  .login-tab.active{background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .form-group{margin-bottom:.85rem;}
+  .form-group label{display:block;font-size:.75rem;font-weight:600;margin-bottom:.32rem;}
+  .form-group input,.form-group select{width:100%;padding:.7rem .9rem;border:1.5px solid var(--border);
+    border-radius:10px;font-size:.88rem;background:#f8fafc;outline:none;transition:.2s;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--blue2);background:#fff;
+    box-shadow:0 0 0 4px rgba(59,130,246,.12);}
+  .login-btn{width:100%;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:none;
+    padding:.8rem;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;margin-top:.4rem;
+    display:flex;align-items:center;justify-content:center;gap:.5rem;transition:.2s;}
+  .login-btn:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(30,58,138,.35);}
+  .login-error{color:var(--red);font-size:.78rem;text-align:center;margin-top:.5rem;min-height:1rem;}
+  .login-footer{margin-top:1rem;text-align:center;font-size:.72rem;color:var(--muted);}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;z-index:11000;padding:1rem;overflow-y:auto;}
+  .modal-overlay.show{display:flex;}
+  .modal-card{background:#fff;border-radius:18px;padding:1.6rem 1.5rem;max-width:460px;width:100%;
+    box-shadow:0 30px 60px rgba(0,0,0,.35);animation:pop .25s ease-out;margin:auto;}
+  .modal-card.wide{max-width:1100px;}
+  @keyframes pop{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .modal-card h3{font-size:1.05rem;font-weight:700;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;}
+  .modal-card h3 i{color:var(--blue2);}
+  .modal-card p.sub{color:var(--muted);font-size:.76rem;margin-bottom:1.1rem;}
+  .modal-actions{display:flex;gap:.55rem;margin-top:1.1rem;flex-wrap:wrap;}
+  .modal-actions button{flex:1;min-width:120px;padding:.65rem;border-radius:10px;font-size:.82rem;
+    font-weight:600;cursor:pointer;border:none;transition:.2s;display:flex;align-items:center;
+    justify-content:center;gap:.4rem;}
+  .btn-cancel{background:#f1f5f9;color:var(--text);}
+  .btn-cancel:hover{background:#e2e8f0;}
+  .btn-save{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;}
+  .btn-save:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(30,58,138,.3);}
+  .btn-danger{background:#fee2e2;color:var(--red);}
+  .btn-danger:hover{background:var(--red);color:#fff;}
+  .btn-excel{background:linear-gradient(135deg,#047857,#059669);color:#fff;}
+  .btn-excel:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(5,150,105,.3);}
+  .btn-csv{background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;}
+  .btn-csv:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(124,58,237,.3);}
+  .modal-msg{font-size:.76rem;text-align:center;margin-top:.5rem;min-height:1rem;}
+  .modal-msg.error{color:var(--red);}
+  .modal-msg.success{color:#059669;}
+
+  .dashboard{max-width:1600px;margin:0 auto;padding:1rem 1.2rem 2rem;display:none;}
+  .dashboard.active{display:block;}
+
+  .app-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+    background:#fff;border-radius:14px;padding:.75rem 1.1rem;margin-bottom:.9rem;border:1px solid var(--border);
+    box-shadow:0 4px 14px rgba(0,0,0,.04);}
+  .brand{display:flex;align-items:center;gap:.8rem;min-width:0;}
+  .brand .logo-text{font-size:1.5rem;font-weight:900;letter-spacing:1.5px;color:var(--blue);
+    font-family:'Arial Black',Arial,sans-serif;line-height:1;}
+  .brand .logo-text span{color:var(--red);}
+  .brand .logo-sub{font-size:.52rem;font-weight:700;letter-spacing:2px;color:var(--red);}
+  .brand .divider{width:1px;height:34px;background:var(--border);}
+  .brand .brand-text h1{font-size:.9rem;font-weight:700;color:var(--blue);}
+  .brand .brand-text p{font-size:.65rem;color:var(--muted);font-weight:500;}
+  .header-actions{display:flex;gap:.45rem;align-items:center;flex-wrap:wrap;}
+  .user-chip{display:flex;align-items:center;gap:.5rem;background:#f1f5f9;padding:.4rem .8rem;
+    border-radius:30px;font-size:.76rem;font-weight:600;}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85rem;font-weight:700;
+    overflow:hidden;flex-shrink:0;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.15);cursor:pointer;}
+  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .user-chip .role-badge{background:var(--blue);color:#fff;padding:.1rem .45rem;border-radius:20px;
+    font-size:.6rem;text-transform:uppercase;letter-spacing:.4px;}
+  .user-chip .role-badge.viewer{background:var(--teal);}
+  .user-chip .role-badge.manager{background:#7c3aed;}
+  .icon-btn{background:#eff6ff;color:var(--blue);border:none;padding:.45rem .7rem;border-radius:9px;
+    font-size:.74rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.35rem;
+    transition:.2s;white-space:nowrap;}
+  .icon-btn:hover{background:var(--blue);color:#fff;}
+  .icon-btn.green{background:#ecfdf5;color:#047857;}
+  .icon-btn.green:hover{background:#047857;color:#fff;}
+  .icon-btn.red{background:#fef2f2;color:#dc2626;}
+  .icon-btn.red:hover{background:#dc2626;color:#fff;}
+  .icon-btn.orange{background:#fff7ed;color:#ea580c;}
+  .icon-btn.orange:hover{background:#ea580c;color:#fff;}
+  .logout-btn{background:#fee2e2;color:var(--red);border:none;padding:.45rem .75rem;border-radius:9px;
+    font-size:.74rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.3rem;transition:.2s;}
+  .logout-btn:hover{background:var(--red);color:#fff;}
+
+  .manager-banner{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border-radius:12px;
+    padding:.7rem 1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.6rem;
+    box-shadow:0 6px 16px rgba(124,58,237,.25);font-size:.82rem;font-weight:600;}
+  .manager-banner i{font-size:1rem;}
+  .manager-banner .tag{background:rgba(255,255,255,.2);padding:.15rem .6rem;border-radius:20px;
+    font-size:.7rem;margin-left:auto;letter-spacing:.4px;}
+
+  .storage-banner{background:linear-gradient(135deg,#059669,#047857);color:#fff;border-radius:12px;
+    padding:.6rem 1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.6rem;
+    box-shadow:0 4px 12px rgba(5,150,105,.25);font-size:.78rem;font-weight:500;}
+  .storage-banner i{font-size:.95rem;}
+
+  .debug-panel{background:#fef3c7;border:1.5px solid #fbbf24;border-radius:12px;padding:.8rem 1rem;
+    margin-bottom:.9rem;font-size:.75rem;color:#78350f;line-height:1.6;}
+  .debug-panel .dbg-title{font-weight:700;color:#92400e;display:flex;align-items:center;gap:.4rem;
+    margin-bottom:.4rem;font-size:.8rem;}
+  .debug-panel .dbg-row{display:flex;gap:.5rem;padding:.15rem 0;}
+  .debug-panel .dbg-row b{color:#78350f;min-width:140px;display:inline-block;}
+  .debug-panel .dbg-row span{color:#1e293b;font-family:monospace;word-break:break-all;}
+  .debug-panel.ok{background:#dcfce7;border-color:#86efac;color:#14532d;}
+  .debug-panel.ok .dbg-title{color:#166534;}
+  .debug-panel.ok .dbg-row b{color:#14532d;}
+  .debug-panel.err{background:#fee2e2;border-color:#fca5a5;color:#7f1d1d;}
+  .debug-panel.err .dbg-title{color:#991b1b;}
+  .debug-panel.err .dbg-row b{color:#7f1d1d;}
+
+  .toolbar{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;background:#fff;border-radius:14px;
+    padding:.8rem 1.1rem;margin-bottom:.9rem;border:1px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.04);}
+  .upload-btn{position:relative;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;
+    padding:.6rem 1.2rem;border-radius:10px;border:none;font-weight:600;font-size:.82rem;cursor:pointer;
+    display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 12px rgba(30,58,138,.25);transition:.2s;
+    white-space:nowrap;}
+  .upload-btn:hover{transform:translateY(-1px);}
+  .upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .file-status{background:#eff6ff;color:#1e40af;padding:.4rem .8rem;border-radius:20px;font-size:.72rem;
+    font-weight:500;display:flex;align-items:center;gap:.35rem;max-width:320px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;}
+  .file-status.empty{background:#f1f5f9;color:var(--muted);}
+  .file-status.saved{background:#ecfdf5;color:#047857;font-weight:600;}
+  .date-filter{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-left:auto;}
+  .date-filter label{font-size:.72rem;font-weight:600;color:var(--muted);}
+  .date-filter input[type="date"]{padding:.4rem .55rem;border:1.5px solid var(--border);border-radius:9px;
+    font-size:.74rem;background:#f8fafc;outline:none;transition:.2s;}
+  .date-filter input[type="date"]:focus{border-color:var(--blue2);background:#fff;}
+  .date-filter select{padding:.4rem .55rem;border:1.5px solid var(--border);border-radius:9px;
+    font-size:.72rem;background:#f8fafc;outline:none;font-weight:600;color:var(--blue);cursor:pointer;}
+  .date-filter select:focus{border-color:var(--blue2);background:#fff;}
+  .btn-sm{padding:.4rem .75rem;border-radius:9px;border:1.5px solid var(--border);background:#fff;
+    font-size:.72rem;font-weight:600;cursor:pointer;color:var(--text);transition:.2s;display:flex;
+    align-items:center;gap:.3rem;}
+  .btn-sm:hover{background:#f1f5f9;}
+  .btn-sm.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .btn-sm.primary:hover{background:var(--blue2);}
+
+  .empty-state{background:#fff;border-radius:16px;padding:3rem 1.5rem;text-align:center;border:2px dashed var(--border);margin-bottom:.9rem;}
+  .empty-state i{font-size:3.5rem;color:#cbd5e1;margin-bottom:1rem;display:block;}
+  .empty-state h2{font-size:1.15rem;font-weight:700;color:#334155;margin-bottom:.5rem;}
+  .empty-state p{font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;max-width:500px;margin-left:auto;margin-right:auto;}
+
+  .content-wrap{display:none;}
+  .content-wrap.active{display:block;}
+
+  .card{background:#fff;border-radius:14px;padding:1rem 1.1rem;border:1px solid var(--border);
+    box-shadow:0 4px 14px rgba(0,0,0,.04);margin-bottom:.9rem;}
+  .section-title{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.65rem;
+    display:flex;align-items:center;gap:.5rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);}
+  .section-title i{color:var(--blue2);}
+  .section-title .badge{margin-left:auto;font-size:.65rem;background:#eff6ff;color:#1e40af;
+    padding:.15rem .55rem;border-radius:20px;font-weight:600;}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.7rem;margin-bottom:.9rem;}
+  .kpi-card{border-radius:13px;padding:.8rem 1rem;color:#fff;box-shadow:0 6px 16px rgba(15,23,42,.12);}
+  .kpi-card .label{font-size:.66rem;opacity:.9;font-weight:500;text-transform:uppercase;
+    letter-spacing:.4px;margin-bottom:.22rem;}
+  .kpi-card .value{font-size:1.15rem;font-weight:700;line-height:1.2;}
+  .kpi-card.blue{background:linear-gradient(135deg,#2563eb,#1d4ed8);}
+  .kpi-card.green{background:linear-gradient(135deg,#059669,#047857);}
+  .kpi-card.teal{background:linear-gradient(135deg,#0891b2,#0e7490);}
+  .kpi-card.orange{background:linear-gradient(135deg,#ea580c,#c2410c);}
+  .kpi-card.purple{background:linear-gradient(135deg,#7c3aed,#6d28d9);}
+  .kpi-card.rose{background:linear-gradient(135deg,#e11d48,#be123c);}
+  .kpi-card.slate{background:linear-gradient(135deg,#334155,#1e293b);}
+  .kpi-card.amber{background:linear-gradient(135deg,#d97706,#b45309);}
+
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;}
+  table.am-table{width:100%;border-collapse:collapse;font-size:.74rem;min-width:900px;}
+  table.am-table th{background:#f1f5f9;color:#334155;padding:.45rem .55rem;text-align:left;
+    font-weight:700;white-space:nowrap;border-bottom:2px solid #cbd5e1;}
+  table.am-table td{padding:.42rem .55rem;border-bottom:1px solid #eef2f6;color:#334155;white-space:nowrap;}
+  table.am-table tr:hover td{background:#f8fafc;}
+  table.am-table tr.total-row td{background:#eff6ff;font-weight:700;color:#1e3a8a;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .pos{color:#059669;font-weight:600;}
+  .neg{color:#dc2626;font-weight:600;}
+
+  .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.8rem;margin-bottom:.9rem;}
+  .chart-box{background:#fff;border-radius:14px;padding:.9rem;border:1px solid var(--border);
+    box-shadow:0 4px 14px rgba(0,0,0,.04);}
+  .chart-box h3{font-size:.72rem;font-weight:700;color:#334155;margin-bottom:.5rem;
+    text-transform:uppercase;letter-spacing:.4px;}
+  .chart-canvas-wrap{position:relative;height:260px;}
+
+  .clients-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.9rem;}
+  .client-list{background:#fff;border-radius:14px;padding:.9rem;border:1px solid var(--border);
+    box-shadow:0 4px 14px rgba(0,0,0,.04);}
+  .client-list h3{font-size:.72rem;font-weight:700;color:#334155;margin-bottom:.5rem;
+    text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);
+    padding-bottom:.4rem;display:flex;align-items:center;gap:.4rem;}
+  .client-item{display:flex;justify-content:space-between;align-items:center;padding:.32rem 0;
+    border-bottom:1px dashed #eef2f6;font-size:.72rem;gap:.5rem;}
+  .client-item:last-child{border-bottom:none;}
+  .client-item .name{color:#475569;font-weight:500;flex-shrink:0;max-width:45%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .client-item .val{font-weight:700;flex-shrink:0;font-variant-numeric:tabular-nums;}
+  .client-item .val.pos{color:#059669;}
+  .client-item .val.neg{color:#dc2626;}
+  .bar-bg{flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;min-width:25px;}
+  .bar-fill{height:100%;border-radius:3px;}
+
+  .pivot-section{background:#fff;border-radius:14px;padding:1rem 1.1rem;border:1px solid var(--border);
+    box-shadow:0 4px 14px rgba(0,0,0,.04);margin-bottom:.9rem;}
+  .pivot-help{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:.6rem .8rem;
+    font-size:.72rem;color:var(--muted);margin-bottom:.8rem;line-height:1.5;}
+  .pivot-help b{color:var(--blue);}
+  #pivotOutput{overflow-x:auto;}
+  .pvtUi{font-size:.74rem;width:100%;}
+  .pvtUi select{padding:.3rem .5rem;border-radius:6px;border:1px solid #cbd5e1;
+    background:#f8fafc;font-size:.72rem;max-width:150px;font-weight:600;color:var(--blue);}
+  .pvtAxisContainer{background:#eff6ff;border-radius:8px;padding:.4rem;border:1px solid #bfdbfe;min-height:36px;}
+  .pvtAxisContainer li{background:#3b82f6;color:#fff!important;border-radius:5px;padding:2px 6px!important;
+    font-size:.7rem!important;font-weight:600;margin:2px!important;cursor:move;}
+  .pvtVals{background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;padding:.35rem .5rem;min-width:130px;}
+  .pvtVals select{color:#047857;font-weight:700;}
+  .pvtUnused{background:#f8fafc;border-radius:8px;border:1px solid var(--border);padding:.4rem;}
+  .pvtUnused li{background:#e2e8f0;color:#475569!important;border-radius:5px;padding:2px 6px!important;
+    font-size:.7rem!important;font-weight:600;margin:2px!important;cursor:move;}
+  .pvtTable{width:100%;border-collapse:collapse;font-size:.72rem;}
+  .pvtTable th{background:#f1f5f9;padding:5px 7px;border:1px solid var(--border);font-weight:700;
+    color:#1e293b;white-space:nowrap;}
+  .pvtTable td{padding:4px 7px;border:1px solid #eef2f6;color:#334155;white-space:nowrap;}
+  .pvtTable tr:hover td{background:#f8fafc;}
+  .pvtTotal,.pvtGrandTotal{background:#eff6ff!important;font-weight:700;color:#1e3a8a;}
+  .pvtRowLabel{background:#f8fafc!important;font-weight:600;color:#1e293b;}
+  .pvtColLabel{background:#f8fafc!important;font-weight:600;color:#1e293b;}
+
+  .raw-table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:10px;}
+  table.raw-table{width:100%;border-collapse:collapse;font-size:.72rem;}
+  table.raw-table th{background:#1e3a8a;color:#fff;padding:.5rem .6rem;text-align:left;
+    font-weight:700;white-space:nowrap;position:sticky;top:0;z-index:2;}
+  table.raw-table td{padding:.4rem .6rem;border-bottom:1px solid #eef2f6;color:#334155;white-space:nowrap;}
+  table.raw-table tr:nth-child(even) td{background:#f8fafc;}
+  table.raw-table tr:hover td{background:#eff6ff;}
+  .raw-count{background:#eff6ff;color:#1e40af;padding:.35rem .8rem;border-radius:20px;
+    font-size:.72rem;font-weight:600;display:inline-block;margin-bottom:.6rem;}
+
+  .emp-table{width:100%;border-collapse:collapse;font-size:.76rem;margin-top:.5rem;}
+  .emp-table th{background:#f1f5f9;padding:.5rem;text-align:left;font-weight:700;color:#334155;
+    border-bottom:2px solid #cbd5e1;font-size:.72rem;white-space:nowrap;}
+  .emp-table td{padding:.45rem .5rem;border-bottom:1px solid #eef2f6;color:#334155;}
+  .emp-table tr:hover td{background:#f8fafc;}
+  .emp-table .del-btn{background:#fee2e2;color:var(--red);border:none;padding:.3rem .55rem;
+    border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;transition:.15s;}
+  .emp-table .del-btn:hover{background:var(--red);color:#fff;}
+  .emp-scroll{max-height:340px;overflow-y:auto;border-radius:10px;border:1px solid var(--border);}
+  .emp-link{background:#f5f3ff;color:#6d28d9;padding:.15rem .5rem;border-radius:20px;
+    font-size:.68rem;font-weight:600;display:inline-block;}
+
+  #avatarInput{display:none;}
+  .footer-note{text-align:center;color:#94a3b8;font-size:.7rem;padding:.8rem 0 .2rem;}
+
+  .toast{position:fixed;top:18px;right:18px;background:#1e293b;color:#fff;padding:.7rem 1rem;
+    border-radius:11px;box-shadow:0 15px 30px rgba(0,0,0,.25);display:flex;align-items:center;
+    gap:.5rem;font-size:.78rem;z-index:9999;transform:translateX(150%);
+    transition:transform .35s cubic-bezier(.16,1,.3,1);max-width:330px;}
+  .toast.show{transform:translateX(0);}
+  .toast.success{background:#047857;}
+  .toast.error{background:#b91c1c;}
+
+  @media (max-width:768px){
+    .dashboard{padding:.6rem .5rem 1.4rem;}
+    .app-header{padding:.6rem .7rem;gap:.5rem;}
+    .brand .logo-text{font-size:1.15rem;}
+    .brand .logo-sub{font-size:.46rem;letter-spacing:1.5px;}
+    .brand .brand-text h1{font-size:.78rem;}
+    .brand .brand-text p{font-size:.58rem;}
+    .brand .divider{height:26px;}
+    .user-chip{padding:.32rem .55rem;font-size:.65rem;}
+    .avatar{width:28px;height:28px;font-size:.75rem;}
+    .icon-btn,.logout-btn{padding:.35rem .5rem;font-size:.66rem;}
+    .icon-btn span,.logout-btn span{display:none;}
+    .toolbar{padding:.65rem;gap:.45rem;}
+    .date-filter{width:100%;margin-left:0;}
+    .date-filter input[type="date"]{flex:1;min-width:0;padding:.4rem;font-size:.7rem;}
+    .date-filter select{font-size:.68rem;}
+    .kpi-row{grid-template-columns:repeat(2,1fr);gap:.5rem;}
+    .kpi-card{padding:.6rem .7rem;}
+    .kpi-card .label{font-size:.58rem;}
+    .kpi-card .value{font-size:.9rem;}
+    .charts-grid{grid-template-columns:1fr;}
+    .clients-grid{grid-template-columns:1fr;}
+    .chart-canvas-wrap{height:220px;}
+    .login-card{padding:1.5rem 1.2rem;}
+    .shansi-logo .logo-text{font-size:2rem;}
+    table.am-table{font-size:.66rem;}
+    .client-item{font-size:.66rem;}
+    .pvtUi{font-size:.66rem;}
+    .toast{right:10px;left:10px;max-width:none;}
+    .login-tab{font-size:.78rem;padding:.55rem .3rem;}
+    .modal-card.wide{max-width:100%;}
+    .manager-banner{font-size:.72rem;padding:.6rem .8rem;}
+    .empty-state{padding:2rem 1rem;}
+    .empty-state i{font-size:2.5rem;}
+    .debug-panel{font-size:.68rem;}
+    .debug-panel .dbg-row b{min-width:100px;font-size:.66rem;}
+  }
+  @media (max-width:400px){ .kpi-row{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="shansi-logo">
+      <div class="logo-text">SH<span>A</span>NSI</div>
+      <div class="logo-sub">COMMUNICATIONS PTE LTD</div>
+    </div>
+    <div class="login-tabs">
+      <div class="login-tab active" data-role="admin"><i class="fas fa-user-shield"></i> Admin Login</div>
+      <div class="login-tab" data-role="viewer"><i class="fas fa-user"></i> Manager / Viewer</div>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn">
+      <i class="fas fa-sign-in-alt"></i> <span id="loginBtnText">Sign in as Admin</span>
+    </button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-footer"><i class="fas fa-lock"></i> Secured portal · Credentials are not displayed</div>
+  </div>
+</div>
+
+<!-- AVATAR MODAL -->
+<div class="modal-overlay" id="avatarModal">
+  <div class="modal-card" style="max-width:400px;text-align:center;">
+    <h3 style="justify-content:center;"><i class="fas fa-camera"></i> Change Profile Photo</h3>
+    <p class="sub">Upload a JPG/PNG image for your profile</p>
+    <div style="margin:1rem 0;">
+      <div class="avatar" id="avatarPreviewBig" style="width:110px;height:110px;margin:0 auto;font-size:2rem;cursor:default;">A</div>
+    </div>
+    <input type="file" id="avatarInput" accept="image/*">
+    <button class="btn-sm primary" id="pickAvatarBtn" style="margin:0 auto;"><i class="fas fa-upload"></i> Choose Image</button>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="avatarCancel"><i class="fas fa-times"></i> Cancel</button>
+      <button class="btn-save" id="avatarSave"><i class="fas fa-check"></i> Save Photo</button>
+    </div>
+    <div class="modal-msg" id="avatarMsg"></div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="pwdModal">
+  <div class="modal-card">
+    <h3><i class="fas fa-key"></i> Change Password</h3>
+    <p class="sub">Update your password. It will be saved in this browser.</p>
+    <div class="form-group"><label>Current Password</label><input type="password" id="pwdCurrent" placeholder="Enter current password"></div>
+    <div class="form-group"><label>New Password</label><input type="password" id="pwdNew" placeholder="Minimum 4 characters"></div>
+    <div class="form-group"><label>Confirm New Password</label><input type="password" id="pwdConfirm" placeholder="Re-enter new password"></div>
+    <div class="modal-msg" id="pwdMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="pwdCancel"><i class="fas fa-times"></i> Cancel</button>
+      <button class="btn-save" id="pwdSave"><i class="fas fa-check"></i> Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE MODAL -->
+<div class="modal-overlay" id="empModal">
+  <div class="modal-card wide">
+    <h3><i class="fas fa-users-cog"></i> Manage Viewer / Manager Accounts</h3>
+    <p class="sub">Create up to 100 accounts. Link each to a specific Account Manager to auto-filter their data.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:.5rem;margin-bottom:.8rem;">
+      <input type="text" id="empUser" placeholder="Username" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:#f8fafc;">
+      <input type="text" id="empPass" placeholder="Password" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:#f8fafc;">
+      <select id="empLink" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:#f8fafc;">
+        <option value="">🔓 Full Access (all data)</option>
+        <option value="__MANAGER__">🔒 Manager (pick name below)</option>
+      </select>
+      <button class="btn-sm primary" id="empAddBtn" style="padding:.55rem 1rem;"><i class="fas fa-plus"></i> Add</button>
+    </div>
+    <div id="empManagerWrap" style="display:none;margin-bottom:.8rem;">
+      <label style="font-size:.72rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.3rem;">
+        <i class="fas fa-user-tie"></i> Link this login to which Account Manager?
+      </label>
+      <select id="empManagerName" style="width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.84rem;background:#f8fafc;"></select>
+    </div>
+    <div class="modal-msg" id="empMsg" style="text-align:left;margin:0 0 .6rem 0;"></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.4rem;display:flex;justify-content:space-between;">
+      <span><b id="empCount">0</b> / 100 accounts</span>
+    </div>
+    <div class="emp-scroll">
+      <table class="emp-table">
+        <thead><tr><th>#</th><th>Username</th><th>Password</th><th>Data Access</th><th>Created</th><th style="text-align:right;">Action</th></tr></thead>
+        <tbody id="empTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" id="empClose"><i class="fas fa-times"></i> Close</button></div>
+  </div>
+</div>
+
+<!-- DATA MANAGEMENT MODAL -->
+<div class="modal-overlay" id="dataMgmtModal">
+  <div class="modal-card">
+    <h3><i class="fas fa-database"></i> Data Management</h3>
+    <p class="sub">Manage uploaded data & download in original format.</p>
+
+    <div style="background:#f8fafc;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;">
+      <div style="font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:.5rem;">Currently Stored</div>
+      <div id="dataMgmtStatus" style="font-size:.85rem;font-weight:600;color:#1e293b;">—</div>
+    </div>
+
+    <div style="font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">📥 Download in Original Format</div>
+    <div class="modal-actions" style="margin-top:0;margin-bottom:1rem;">
+      <button class="btn-excel" id="dmExcelBtn"><i class="fas fa-file-excel"></i> Download Excel</button>
+      <button class="btn-csv" id="dmCsvBtn"><i class="fas fa-file-csv"></i> Download CSV</button>
+    </div>
+
+    <div style="font-size:.72rem;font-weight:700;color:var(--red);margin-bottom:.5rem;">⚠️ Danger Zone</div>
+    <div class="modal-actions" style="margin-top:0;">
+      <button class="btn-danger" id="dmClearBtn" style="width:100%;"><i class="fas fa-trash"></i> Clear Uploaded Data</button>
+    </div>
+
+    <div class="modal-actions" style="margin-top:1rem;">
+      <button class="btn-cancel" id="dmClose"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div class="modal-msg" id="dmMsg"></div>
+  </div>
+</div>
+
+<!-- RAW DATA MODAL -->
+<div class="modal-overlay" id="rawModal">
+  <div class="modal-card wide">
+    <h3><i class="fas fa-table"></i> All Uploaded Data</h3>
+    <p class="sub" id="rawSubtitle">Complete raw data currently loaded in the dashboard.</p>
+    <div class="raw-count" id="rawCount">0 records</div>
+    <div class="raw-table-wrap">
+      <table class="raw-table" id="rawTable">
+        <thead id="rawThead"></thead>
+        <tbody id="rawTbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="rawClose"><i class="fas fa-times"></i> Close</button>
+      <button class="btn-save" id="rawExport"><i class="fas fa-download"></i> Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="app-header">
+    <div class="brand">
+      <div>
+        <div class="logo-text">SH<span>A</span>NSI</div>
+        <div class="logo-sub">COMMUNICATIONS PTE LTD</div>
+      </div>
+      <div class="divider"></div>
+      <div class="brand-text">
+        <h1>Sales Dashboard</h1>
+        <p id="headerSubtitle">Upload your data to begin</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="user-chip">
+        <div class="avatar" id="userAvatar" title="Click to change photo"><span id="avatarInitial">A</span></div>
+        <span id="userLabel">admin</span>
+        <span class="role-badge" id="roleLabel">admin</span>
+      </div>
+      <button class="icon-btn orange" id="debugBtn" title="Show/hide debug info" style="display:none;">
+        <i class="fas fa-bug"></i> <span>Debug</span>
+      </button>
+      <button class="icon-btn purple" id="viewDataBtn" title="View all uploaded data" style="display:none;">
+        <i class="fas fa-table"></i> <span>View All Data</span>
+      </button>
+      <button class="icon-btn red" id="dataMgmtBtn" title="Data management" style="display:none;">
+        <i class="fas fa-database"></i> <span>Data</span>
+      </button>
+      <button class="icon-btn" id="changePwdBtn" title="Change password">
+        <i class="fas fa-key"></i> <span>Password</span>
+      </button>
+      <button class="icon-btn green" id="manageEmpBtn" title="Manage accounts" style="display:none;">
+        <i class="fas fa-users-cog"></i> <span>Employees</span>
+      </button>
+      <button class="logout-btn" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="manager-banner" id="managerBanner" style="display:none;">
+    <i class="fas fa-filter"></i>
+    <span>Showing data for: <b id="managerBannerName">—</b></span>
+    <span class="tag" id="managerBannerTag">FILTERED VIEW</span>
+  </div>
+
+  <div class="storage-banner" id="storageBanner" style="display:none;">
+    <i class="fas fa-save"></i>
+    <span id="storageBannerText">Uploaded data is saved in this browser</span>
+  </div>
+
+  <div class="debug-panel" id="debugPanel" style="display:none;">
+    <div class="dbg-title"><i class="fas fa-bug"></i> DATE FILTER DEBUG INFO</div>
+    <div id="debugContent">Click "Debug" button to refresh</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="upload-btn" id="uploadBtnWrap">
+      <i class="fas fa-cloud-upload-alt"></i> Upload Excel / CSV
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+    </div>
+    <div class="file-status empty" id="fileStatus"><i class="fas fa-database"></i> No data loaded</div>
+    <div class="date-filter" id="dateFilterWrap" style="display:none;">
+      <label>From</label>
+      <input type="date" id="dateFrom">
+      <label>To</label>
+      <input type="date" id="dateTo">
+      <label>Format</label>
+      <select id="dateFormat" title="Select the date format in your Excel">
+        <option value="auto">🔄 Auto-detect</option>
+        <option value="dd-mm-yy">16-Sep-26 (DD-MMM-YY)</option>
+        <option value="dd-mm-yyyy">16-Sep-2026 (DD-MMM-YYYY)</option>
+        <option value="dd/mm/yyyy">16/09/2026 (DD/MM/YYYY)</option>
+        <option value="mm/dd/yyyy">09/16/2026 (MM/DD/YYYY)</option>
+        <option value="yyyy-mm-dd">2026-09-16 (YYYY-MM-DD)</option>
+        <option value="excel-serial">46249 (Excel number)</option>
+      </select>
+      <button class="btn-sm primary" id="applyDateBtn"><i class="fas fa-filter"></i> Apply</button>
+      <button class="btn-sm" id="clearDateBtn"><i class="fas fa-times"></i> Clear</button>
+    </div>
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <i class="fas fa-cloud-upload-alt"></i>
+    <h2>No data loaded</h2>
+    <p>Please upload your Excel or CSV file to view the dashboard.<br>
+    <small style="color:#94a3b8;">Admin can upload data using the button above.</small></p>
+  </div>
+
+  <div class="content-wrap" id="contentWrap">
+    <div class="kpi-row" id="kpiRow"></div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-users"></i> Account Manager Performance</div>
+      <div class="table-wrap">
+        <table class="am-table" id="amTable">
+          <thead>
+            <tr>
+              <th>Account Manager</th><th class="num">Total Count</th><th class="num">Total Delivered</th>
+              <th class="num">Delivery %</th><th class="num">Total Profit</th><th class="num">Total Cost</th>
+              <th class="num">Total Revenue</th><th class="num">Margin %</th><th class="num">Clients</th>
+              <th class="num">Loss Accounts</th><th class="num">Avg Profit / Client</th>
+            </tr>
+          </thead>
+          <tbody id="amTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-box"><h3><i class="fas fa-chart-bar" style="color:#3b82f6"></i> Count by Account Manager</h3><div class="chart-canvas-wrap"><canvas id="chart1"></canvas></div></div>
+      <div class="chart-box"><h3><i class="fas fa-chart-line" style="color:#f97316"></i> Count vs Delivered</h3><div class="chart-canvas-wrap"><canvas id="chart2"></canvas></div></div>
+      <div class="chart-box"><h3><i class="fas fa-percent" style="color:#059669"></i> Margin % by Account Manager</h3><div class="chart-canvas-wrap"><canvas id="chart3"></canvas></div></div>
+    </div>
+
+    <div class="clients-grid">
+      <div class="client-list"><h3><i class="fas fa-trophy" style="color:#059669"></i> Top 10 Clients by Profit</h3><div id="topClients"></div></div>
+      <div class="client-list"><h3><i class="fas fa-arrow-down" style="color:#dc2626"></i> Bottom 10 Clients by Profit</h3><div id="bottomClients"></div></div>
+    </div>
+
+    <div class="chart-box" style="margin-bottom:.9rem;">
+      <h3><i class="fas fa-chart-pie" style="color:#7c3aed"></i> Profit Share by Account Manager</h3>
+      <div class="chart-canvas-wrap" style="height:300px;max-width:520px;margin:0 auto;"><canvas id="chartPie"></canvas></div>
+    </div>
+
+    <div class="pivot-section">
+      <div class="section-title">
+        <i class="fas fa-table"></i> Pivot Explorer
+        <span class="badge">Interactive · Drag & Drop</span>
+      </div>
+      <div class="pivot-help">
+        💡 <b>How it works:</b> Drag any field from the <b>grey "Unused" box</b> into the <b>blue "Rows"</b> or <b>"Cols"</b> boxes to re-organize the summary. Change <b>aggregator</b> (Sum / Count / Average) using the green dropdown.
+      </div>
+      <div id="pivotOutput"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <i class="fas fa-database"></i> SHANSI Communications · Uploaded data is automatically saved in this browser
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fas fa-info-circle"></i><span id="toastMsg"></span></div>
+
+<script>
+(function(){
+  "use strict";
+
+  if(window.ChartDataLabels){ Chart.register(window.ChartDataLabels); }
+
+  const KEY_ADMIN = 'shansi_admin_v12';
+  const KEY_VIEWERS = 'shansi_viewers_v12';
+  const KEY_SESSION = 'shansi_session_v12';
+  const KEY_UPLOADED_DATA = 'shansi_uploaded_data_v12';
+  const KEY_DATA_META = 'shansi_data_meta_v12';
+  const MAX_VIEWERS = 100;
+
+  const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
+
+  function loadAdmin(){
+    try{ const r = localStorage.getItem(KEY_ADMIN); if(r) return Object.assign({}, DEFAULT_ADMIN, JSON.parse(r)); }catch(e){}
+    return { ...DEFAULT_ADMIN };
+  }
+  function saveAdmin(a){ try{ localStorage.setItem(KEY_ADMIN, JSON.stringify(a)); return true; }catch(e){ return false; } }
+  let ADMIN = loadAdmin();
+
+  function loadViewers(){
+    try{
+      const r = localStorage.getItem(KEY_VIEWERS);
+      if(r){
+        const parsed = JSON.parse(r);
+        if(parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) return parsed;
+      }
+    }catch(e){}
+    return {
+      krishna:  { password:'krishna123',  created:new Date().toISOString(), managerLink:'Krishna Chauhan' },
+      roophali: { password:'roophali123', created:new Date().toISOString(), managerLink:'Roophali Vishwakarma' },
+      anup:     { password:'anup123',     created:new Date().toISOString(), managerLink:'Anup Vichare' }
+    };
+  }
+  function saveViewers(v){ try{ localStorage.setItem(KEY_VIEWERS, JSON.stringify(v)); return true; }catch(e){ return false; } }
+  let VIEWERS = loadViewers();
+  saveViewers(VIEWERS);
+
+  function saveSession(user){ try{ localStorage.setItem(KEY_SESSION, JSON.stringify(user)); }catch(e){} }
+  function loadSession(){
+    try{
+      const r = localStorage.getItem(KEY_SESSION);
+      if(r){
+        const s = JSON.parse(r);
+        if(s.role === 'admin'){ if(s.username.toLowerCase() === ADMIN.username.toLowerCase()) return s; }
+        else if(s.role === 'viewer'){ if(VIEWERS[s.username]) return s; }
+      }
+    }catch(e){}
+    return null;
+  }
+  function clearSession(){ try{ localStorage.removeItem(KEY_SESSION); }catch(e){} }
+
+  function saveUploadedData(data, fileName){
+    try{
+      const clean = data.map(r => {
+        const o = {};
+        Object.keys(r).forEach(k => {
+          let v = r[k];
+          if(v === null || v === undefined) v = '';
+          o[k] = v;
+        });
+        return o;
+      });
+      localStorage.setItem(KEY_UPLOADED_DATA, JSON.stringify(clean));
+      localStorage.setItem(KEY_DATA_META, JSON.stringify({
+        fileName: fileName || 'unknown',
+        rowCount: clean.length,
+        uploadedAt: new Date().toISOString()
+      }));
+      return true;
+    }catch(e){
+      if(e.name === 'QuotaExceededError' || (e.message && e.message.toLowerCase().includes('quota'))){
+        showToast('Data too large for browser storage. Use "Download Excel" as backup.','error');
+      } else {
+        showToast('Could not save data: ' + e.message,'error');
+      }
+      return false;
+    }
+  }
+
+  function loadUploadedData(){
+    try{
+      const r = localStorage.getItem(KEY_UPLOADED_DATA);
+      if(!r) return null;
+      const data = JSON.parse(r);
+      if(!Array.isArray(data) || data.length === 0) return null;
+      return data;
+    }catch(e){ return null; }
+  }
+
+  function loadDataMeta(){
+    try{
+      const r = localStorage.getItem(KEY_DATA_META);
+      if(r) return JSON.parse(r);
+    }catch(e){}
+    return null;
+  }
+
+  function clearUploadedData(){
+    try{
+      localStorage.removeItem(KEY_UPLOADED_DATA);
+      localStorage.removeItem(KEY_DATA_META);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  let rawData = [];
+  let filteredData = [];
+  let currentUser = null;
+  const charts = {};
+  let selectedAvatar = null;
+  let selectedLoginRole = 'admin';
+  let knownManagers = [];
+
+  const fmt = (n, d=2) => (n===null||n===undefined||isNaN(n)) ? '-' :
+    Number(n).toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d});
+  const fmtInt = (n) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString();
+  const fmtPct = (n) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toFixed(2)+'%';
+
+  function fmtSmart(n){
+    if(n === null || n === undefined || isNaN(n)) return '-';
+    const abs = Math.abs(n);
+    if(abs === 0) return '0.000';
+    if(abs < 1) return Number(n).toFixed(3);
+    if(abs < 100) return Number(n).toFixed(2);
+    return Number(n).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  function showToast(msg, type='info'){
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.className = 'toast ' + type;
+    t.classList.add('show');
+    clearTimeout(t._timeout);
+    t._timeout = setTimeout(()=>t.classList.remove('show'), 3800);
+  }
+
+  function findCol(data, candidates){
+    if(!data.length) return null;
+    const keys = Object.keys(data[0]);
+    for(const cand of candidates){
+      const found = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g,'') === cand.toLowerCase().replace(/[^a-z0-9]/g,''));
+      if(found) return found;
+    }
+    for(const cand of candidates){
+      const found = keys.find(k => k.toLowerCase().includes(cand.toLowerCase()));
+      if(found) return found;
+    }
+    return null;
+  }
+
+  const MONTH_MAP = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+
+  function parseDate(v, format){
+    if(v === null || v === undefined || v === '') return null;
+    format = format || (document.getElementById('dateFormat')?.value || 'auto');
+
+    const tryExcelSerial = (num) => {
+      if(num > 20000 && num < 80000){
+        const d = new Date((num - 25569) * 86400 * 1000);
+        return isNaN(d) ? null : d;
+      }
+      return null;
+    };
+
+    if(typeof v === 'number'){
+      const d = tryExcelSerial(v);
+      if(d) return d;
+    }
+
+    const s = String(v).trim();
+    if(!s) return null;
+
+    if(/^\d{4,5}$/.test(s)){
+      const num = parseInt(s);
+      const d = tryExcelSerial(num);
+      if(d) return d;
+    }
+
+    let m;
+
+    if(format === 'dd-mm-yy' || format === 'dd-mm-yyyy' || format === 'auto'){
+      m = s.match(/^(\d{1,2})[-/ ]([A-Za-z]{3,})[-/ ](\d{2,4})/);
+      if(m){
+        const mon = MONTH_MAP[m[2].toLowerCase().slice(0,3)];
+        let yr = parseInt(m[3]); if(yr < 100) yr += 2000;
+        if(mon !== undefined){
+          const d = new Date(yr, mon, parseInt(m[1]));
+          if(!isNaN(d)) return d;
+        }
+      }
+    }
+
+    if(format === 'auto'){
+      m = s.match(/^([A-Za-z]{3,})[-/ ](\d{1,2})[-/ ](\d{2,4})/);
+      if(m){
+        const mon = MONTH_MAP[m[1].toLowerCase().slice(0,3)];
+        let yr = parseInt(m[3]); if(yr < 100) yr += 2000;
+        if(mon !== undefined){
+          const d = new Date(yr, mon, parseInt(m[2]));
+          if(!isNaN(d)) return d;
+        }
+      }
+    }
+
+    if(format === 'yyyy-mm-dd' || format === 'auto'){
+      m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      if(m){
+        const d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+        if(!isNaN(d)) return d;
+      }
+    }
+
+    if(format === 'dd/mm/yyyy' || format === 'auto'){
+      m = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$/);
+      if(m){
+        let yr = parseInt(m[3]); if(yr < 100) yr += 2000;
+        const day = parseInt(m[1]); const mo = parseInt(m[2]);
+        if(mo >= 1 && mo <= 12){
+          const d = new Date(yr, mo-1, day);
+          if(!isNaN(d)) return d;
+        }
+      }
+    }
+
+    if(format === 'mm/dd/yyyy'){
+      m = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$/);
+      if(m){
+        let yr = parseInt(m[3]); if(yr < 100) yr += 2000;
+        const mo = parseInt(m[1]); const day = parseInt(m[2]);
+        if(mo >= 1 && mo <= 12){
+          const d = new Date(yr, mo-1, day);
+          if(!isNaN(d)) return d;
+        }
+      }
+    }
+
+    if(format === 'auto'){
+      const d = new Date(s);
+      if(!isNaN(d) && s.length > 6 && d.getFullYear() > 1990 && d.getFullYear() < 2100) return d;
+    }
+
+    return null;
+  }
+
+  function applyRoleFilter(data){
+    if(!currentUser || currentUser.role === 'admin') return data.slice();
+    const link = currentUser.managerLink || '';
+    if(!link) return data.slice();
+    const amCol = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
+    if(!amCol) return data.slice();
+    return data.filter(r => String(r[amCol] || '').trim().toLowerCase() === link.trim().toLowerCase());
+  }
+
+  /* ⭐⭐⭐ FIXED aggregateByAM — counts ROWS like Excel "Count of Name" ⭐⭐⭐ */
+  function aggregateByAM(data){
+    const colName = findCol(data, ['Name','Client','Customer']);
+    const colAM   = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
+    const colCount = findCol(data, ['Count','Total Count','Units']);
+    const colDeliv = findCol(data, ['Delivered','Total Delivered']);
+    const colProfit = findCol(data, ['Profit','Total Profit']);
+    const colCost = findCol(data, ['Total Cost','Cost']);
+    const colRate = findCol(data, ['Total Rate','Revenue','Total Revenue','Rate']);
+    const colLoss = findCol(data, ['Loss','Loss Accounts','Risk Flag','Profitability Flag']);
+    if(!colAM) return [];
+    const map = {};
+    data.forEach(r => {
+      const am = r[colAM] || 'Unknown';
+      if(!map[am]) map[am] = {am, count:0, delivered:0, profit:0, cost:0, revenue:0, clientRows:0, lossAccounts:0};
+      map[am].count     += parseFloat(r[colCount]) || 0;
+      map[am].delivered += parseFloat(r[colDeliv]) || 0;
+      map[am].profit    += parseFloat(r[colProfit]) || 0;
+      map[am].cost      += parseFloat(r[colCost]) || 0;
+      map[am].revenue   += parseFloat(r[colRate]) || 0;
+
+      /* ⭐ Count ROWS — matches Excel "Count of Name" */
+      if(colName) map[am].clientRows++;
+
+      const lossFlag = String(r[colLoss] || '').toLowerCase();
+      if(lossFlag.includes('loss') || lossFlag.includes('high') || (parseFloat(r[colProfit])||0) < 0) map[am].lossAccounts++;
+    });
+    return Object.values(map).map(x => {
+      const deliveryPct = x.count ? (x.delivered/x.count)*100 : 0;
+      const marginPct = x.revenue ? (x.profit/x.revenue)*100 : 0;
+      return {
+        am:x.am, count:x.count, delivered:x.delivered,
+        deliveryPct:+deliveryPct.toFixed(2), profit:+x.profit.toFixed(2), cost:+x.cost.toFixed(2),
+        revenue:+x.revenue.toFixed(2), marginPct:+marginPct.toFixed(2),
+        clients:x.clientRows,          /* ⭐ ROW COUNT — matches Excel pivot */
+        lossAccounts:x.lossAccounts,
+        avgProfit: x.clientRows ? +(x.profit/x.clientRows).toFixed(2) : 0
+      };
+    });
+  }
+
+  function renderKPIs(rows){
+    const tCount = rows.reduce((s,r)=>s+r.count,0);
+    const tDeliv = rows.reduce((s,r)=>s+r.delivered,0);
+    const tProfit = rows.reduce((s,r)=>s+r.profit,0);
+    const tRev = rows.reduce((s,r)=>s+r.revenue,0);
+    const tCost = rows.reduce((s,r)=>s+r.cost,0);
+    const tClients = rows.reduce((s,r)=>s+r.clients,0);
+    const tLoss = rows.reduce((s,r)=>s+r.lossAccounts,0);
+    const oDelivery = tCount ? (tDeliv/tCount)*100 : 0;
+    const oMargin = tRev ? (tProfit/tRev)*100 : 0;
+    const kpis = [
+      {label:'Total Count', value:fmtInt(tCount), cls:'blue'},
+      {label:'Total Delivered', value:fmtInt(tDeliv), cls:'green'},
+      {label:'Overall Delivery %', value:fmtPct(oDelivery), cls:'teal'},
+      {label:'Total Profit', value:fmt(tProfit), cls:'orange'},
+      {label:'Total Revenue', value:fmt(tRev), cls:'purple'},
+      {label:'Total Cost', value:fmt(tCost), cls:'rose'},
+      {label:'Overall Margin %', value:fmtPct(oMargin), cls:'green'},
+      {label:'Active Account Managers', value:fmtInt(rows.length), cls:'slate'},
+      {label:'Total Clients', value:fmtInt(tClients), cls:'amber'},
+      {label:'Loss-Making Accounts', value:fmtInt(tLoss), cls:'rose'}
+    ];
+    document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+      <div class="kpi-card ${k.cls}"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>
+    `).join('');
+  }
+
+  function renderAMTable(rows){
+    const tbody = document.getElementById('amTableBody');
+    if(!rows.length){ tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#94a3b8;padding:1.2rem;">No data</td></tr>'; return; }
+    const totals = rows.reduce((a,r)=>{
+      a.count+=r.count; a.delivered+=r.delivered; a.profit+=r.profit;
+      a.cost+=r.cost; a.revenue+=r.revenue; a.clients+=r.clients; a.lossAccounts+=r.lossAccounts;
+      return a;
+    }, {count:0,delivered:0,profit:0,cost:0,revenue:0,clients:0,lossAccounts:0});
+    const tD = totals.count ? (totals.delivered/totals.count)*100 : 0;
+    const tM = totals.revenue ? (totals.profit/totals.revenue)*100 : 0;
+    const tA = totals.clients ? totals.profit/totals.clients : 0;
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td><strong>${r.am}</strong></td>
+        <td class="num">${fmtInt(r.count)}</td>
+        <td class="num">${fmtInt(r.delivered)}</td>
+        <td class="num">${fmtPct(r.deliveryPct)}</td>
+        <td class="num ${r.profit>=0?'pos':'neg'}">${fmt(r.profit)}</td>
+        <td class="num">${fmt(r.cost)}</td>
+        <td class="num">${fmt(r.revenue)}</td>
+        <td class="num">${fmtPct(r.marginPct)}</td>
+        <td class="num">${fmtInt(r.clients)}</td>
+        <td class="num">${fmtInt(r.lossAccounts)}</td>
+        <td class="num">${fmt(r.avgProfit)}</td>
+      </tr>
+    `).join('') + `
+      <tr class="total-row">
+        <td><strong>Total</strong></td>
+        <td class="num">${fmtInt(totals.count)}</td>
+        <td class="num">${fmtInt(totals.delivered)}</td>
+        <td class="num">${fmtPct(tD)}</td>
+        <td class="num">${fmt(totals.profit)}</td>
+        <td class="num">${fmt(totals.cost)}</td>
+        <td class="num">${fmt(totals.revenue)}</td>
+        <td class="num">${fmtPct(tM)}</td>
+        <td class="num">${fmtInt(totals.clients)}</td>
+        <td class="num">${fmtInt(totals.lossAccounts)}</td>
+        <td class="num">${fmt(tA)}</td>
+      </tr>`;
+  }
+
+  const BAR_COLORS = ['#3b82f6','#f97316','#10b981','#a855f7','#e11d48','#0891b2','#d97706','#6366f1','#14b8a6','#ec4899','#8b5cf6','#22c55e'];
+
+  function destroyCharts(){
+    Object.values(charts).forEach(c => { try{c.destroy();}catch(e){} });
+    Object.keys(charts).forEach(k => delete charts[k]);
+  }
+
+  function renderCharts(rows){
+    destroyCharts();
+    if(!rows.length) return;
+    const labels = rows.map(r=>r.am);
+
+    charts.chart1 = new Chart(document.getElementById('chart1'), {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'Count', data: rows.map(r=>r.count),
+        backgroundColor: rows.map((_,i)=>BAR_COLORS[i % BAR_COLORS.length]),
+        borderRadius:6, barPercentage:0.7 }]},
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ right: 70 } },
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:c=>'Count: '+fmtInt(c.raw)}},
+          datalabels:{ anchor:'end', align:'right', offset:6, color:'#1e293b',
+            font:{ weight:'700', size:12 }, formatter:(v)=> fmtInt(v) }
+        },
+        scales:{x:{beginAtZero:true, ticks:{callback:v=>fmtInt(v)}}, y:{grid:{display:false}}} }
+    });
+
+    charts.chart2 = new Chart(document.getElementById('chart2'), {
+      type:'bar',
+      data:{ labels, datasets:[
+        { label:'Counts', data: rows.map(r=>r.count),
+          backgroundColor: rows.map((_,i)=>BAR_COLORS[i % BAR_COLORS.length]),
+          borderRadius:5, barPercentage:0.7 },
+        { label:'Delivered', data: rows.map(r=>r.delivered), type:'line',
+          borderColor:'#f97316', backgroundColor:'#f97316', borderWidth:2,
+          tension:0.2, pointRadius:4, pointBackgroundColor:'#fff', pointBorderColor:'#f97316' }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top: 24 } },
+        plugins:{
+          legend:{position:'top', labels:{boxWidth:12, font:{size:11}}},
+          tooltip:{ mode:'index', intersect:false },
+          datalabels:{ anchor:'end', align:'top', offset:4, color:'#1e293b',
+            font:{ weight:'700', size:11 },
+            formatter:(v, ctx)=>{ if(ctx.datasetIndex !== 0) return null; return fmtInt(v); } }
+        },
+        scales:{y:{beginAtZero:true, ticks:{callback:v=>fmtInt(v)}}, x:{grid:{display:false}}} }
+    });
+
+    charts.chart3 = new Chart(document.getElementById('chart3'), {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'Margin %', data: rows.map(r=>r.marginPct),
+        backgroundColor: rows.map((_,i)=>BAR_COLORS[i % BAR_COLORS.length]),
+        borderRadius:6, barPercentage:0.6 }]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top: 24 } },
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:c=>'Margin: '+fmtPct(c.raw)}},
+          datalabels:{ anchor:'end', align:'top', offset:4, color:'#059669',
+            font:{ weight:'700', size:12 }, formatter:(v)=> fmtPct(v) }
+        },
+        scales:{y:{beginAtZero:true, ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}}} }
+    });
+
+    charts.chartPie = new Chart(document.getElementById('chartPie'), {
+      type:'doughnut',
+      data:{ labels, datasets:[{ data: rows.map(r=>Math.max(r.profit,0.01)),
+        backgroundColor: rows.map((_,i)=>BAR_COLORS[i % BAR_COLORS.length]),
+        borderWidth:2, borderColor:'#fff' }]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}}},
+          tooltip:{callbacks:{label:c=>{
+            const total = c.dataset.data.reduce((s,v)=>s+v,0);
+            const pct = total ? (c.raw/total*100).toFixed(2) : 0;
+            return `${c.label}: ${fmt(c.raw)} (${pct}%)`;
+          }}},
+          datalabels:{ color:'#fff', font:{ weight:'700', size:12 },
+            formatter:(v, ctx)=>{
+              const total = ctx.dataset.data.reduce((s,x)=>s+x,0);
+              if(!total) return '';
+              const pct = (v/total*100);
+              if(pct < 4) return '';
+              return pct.toFixed(1) + '%';
+            } }
+        },
+        cutout:'55%' }
+    });
+  }
+
+  function renderClients(data){
+    const colName = findCol(data, ['Name','Client','Customer']);
+    const colProfit = findCol(data, ['Profit','Total Profit']);
+    if(!colName || !colProfit){
+      document.getElementById('topClients').innerHTML = '<div style="color:#94a3b8;text-align:center;padding:.8rem;">No client data</div>';
+      document.getElementById('bottomClients').innerHTML = '';
+      return;
+    }
+    const map = {};
+    data.forEach(r => {
+      const name = r[colName] || 'Unknown';
+      map[name] = (map[name] || 0) + (parseFloat(r[colProfit]) || 0);
+    });
+    const arr = Object.entries(map).map(([name,profit])=>({name,profit}));
+    arr.sort((a,b)=>b.profit-a.profit);
+    const top = arr.slice(0,10);
+    const bottom = arr.slice(-10).reverse();
+    const maxTop = Math.max(...top.map(t=>t.profit), 1);
+    const maxBottom = Math.max(...bottom.map(t=>Math.abs(t.profit)), 1);
+
+    document.getElementById('topClients').innerHTML = top.map(c => `
+      <div class="client-item">
+        <span class="name">${c.name}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${(c.profit/maxTop*100).toFixed(1)}%;background:linear-gradient(90deg,#34d399,#059669);"></div></div>
+        <span class="val pos">${fmtSmart(c.profit)}</span>
+      </div>`).join('') || '<div style="color:#94a3b8;">No data</div>';
+
+    document.getElementById('bottomClients').innerHTML = bottom.map(c => `
+      <div class="client-item">
+        <span class="name">${c.name}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${(Math.abs(c.profit)/maxBottom*100).toFixed(1)}%;background:linear-gradient(90deg,#f87171,#dc2626);"></div></div>
+        <span class="val ${c.profit>=0?'pos':'neg'}">${fmtSmart(c.profit)}</span>
+      </div>`).join('') || '<div style="color:#94a3b8;">No data</div>';
+  }
+
+  function renderPivot(data){
+    const $p = $('#pivotOutput');
+    $p.empty();
+    if(!data.length) return;
+    if(typeof $.fn.pivot !== 'function'){
+      setTimeout(() => renderPivot(data), 500);
+      return;
+    }
+    try{
+      const isSingleManager = currentUser && currentUser.role === 'viewer' && currentUser.managerLink;
+      const rowsField = isSingleManager
+        ? (findCol(data,['Name','Client','Customer']) || 'Name')
+        : 'Account Manager';
+      const hasProfitFlag = data.length && ('Profitability Flag' in data[0]);
+      const config = {
+        rows: [rowsField],
+        aggregator: 'Sum',
+        aggregatorName: 'Sum',
+        vals: ['Profit','Count','Delivered','Total Cost'],
+        rendererName: 'Table'
+      };
+      if(hasProfitFlag) config.cols = ['Profitability Flag'];
+      $p.pivot(data, config);
+    }catch(e){
+      console.error('Pivot error:', e);
+      $p.html('<div style="color:#dc2626;padding:.8rem;">Pivot error: '+e.message+'</div>');
+    }
+  }
+
+  function showEmptyState(){
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('contentWrap').classList.remove('active');
+    document.getElementById('viewDataBtn').style.display = 'none';
+    document.getElementById('dateFilterWrap').style.display = 'none';
+  }
+
+  function showContent(){
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('contentWrap').classList.add('active');
+    if(currentUser && currentUser.role === 'admin'){
+      document.getElementById('viewDataBtn').style.display = 'flex';
+    } else {
+      document.getElementById('viewDataBtn').style.display = 'none';
+    }
+    document.getElementById('dateFilterWrap').style.display = 'flex';
+  }
+
+  function updateDebugInfo(){
+    const panel = document.getElementById('debugPanel');
+    const content = document.getElementById('debugContent');
+    if(!rawData.length){
+      content.innerHTML = '<div class="dbg-row"><span>No data loaded</span></div>';
+      panel.className = 'debug-panel';
+      return;
+    }
+    const dcol = getDateCol();
+    const format = document.getElementById('dateFormat')?.value || 'auto';
+    const allCols = Object.keys(rawData[0]);
+
+    if(!dcol){
+      panel.className = 'debug-panel err';
+      content.innerHTML = `
+        <div class="dbg-row"><b>❌ Date column:</b><span>NOT FOUND</span></div>
+        <div class="dbg-row"><b>Total columns:</b><span>${allCols.length}</span></div>
+        <div class="dbg-row"><b>All columns:</b><span>${allCols.join(' | ')}</span></div>
+      `;
+      return;
+    }
+
+    const samples = rawData.slice(0,5).map(r => r[dcol]);
+    const parsed = samples.map(v => {
+      const d = parseDate(v, format);
+      return d ? d.toISOString().slice(0,10) : '❌ FAIL';
+    });
+    const validCount = rawData.filter(r => parseDate(r[dcol], format)).length;
+    const ok = validCount > 0;
+
+    panel.className = 'debug-panel ' + (ok ? 'ok' : 'err');
+    content.innerHTML = `
+      <div class="dbg-row"><b>Total columns:</b><span>${allCols.length}</span></div>
+      <div class="dbg-row"><b>Date column:</b><span>${dcol}</span></div>
+      <div class="dbg-row"><b>Format:</b><span>${format}</span></div>
+      <div class="dbg-row"><b>Sample values:</b><span>${samples.map(v => JSON.stringify(v)).join(', ')}</span></div>
+      <div class="dbg-row"><b>Parsed:</b><span>${parsed.join(', ')}</span></div>
+      <div class="dbg-row"><b>Valid dates:</b><span style="font-weight:700;color:${ok ? '#166534' : '#991b1b'};">${validCount} of ${rawData.length} rows</span></div>
+    `;
+  }
+
+  function refresh(){
+    if(!rawData.length){
+      showEmptyState();
+      updateStorageBanner();
+      updateHeaderSubtitle();
+      return;
+    }
+    showContent();
+    const from = document.getElementById('dateFrom').value;
+    const to   = document.getElementById('dateTo').value;
+    const format = document.getElementById('dateFormat')?.value || 'auto';
+    let d = rawData.slice();
+    const col = getDateCol();
+
+    if(col && (from || to)){
+      const fromTime = from ? new Date(from + 'T00:00:00').getTime() : null;
+      const toTime   = to ? new Date(to + 'T23:59:59').getTime() : null;
+      if(fromTime !== null){
+        d = d.filter(r => { const dt = parseDate(r[col], format); return dt && dt.getTime() >= fromTime; });
+      }
+      if(toTime !== null){
+        d = d.filter(r => { const dt = parseDate(r[col], format); return dt && dt.getTime() <= toTime; });
+      }
+    }
+    d = applyRoleFilter(d);
+    filteredData = d;
+    const amRows = aggregateByAM(filteredData);
+    renderKPIs(amRows);
+    renderAMTable(amRows);
+    renderCharts(amRows);
+    renderClients(filteredData);
+    renderPivot(filteredData);
+    updateStorageBanner();
+    updateHeaderSubtitle();
+    updateDebugInfo();
+  }
+
+  function updateHeaderSubtitle(){
+    const meta = loadDataMeta();
+    const periodEl = document.getElementById('headerSubtitle');
+    if(!rawData.length || !meta){
+      periodEl.textContent = 'Upload your data to begin';
+      return;
+    }
+    const dcol = getDateCol();
+    if(dcol){
+      const format = document.getElementById('dateFormat')?.value || 'auto';
+      const dates = rawData.map(r => parseDate(r[dcol], format)).filter(d => d);
+      if(dates.length){
+        const min = new Date(Math.min(...dates));
+        const max = new Date(Math.max(...dates));
+        const fmtD = d => d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' }).replace(/ /g,'-');
+        periodEl.textContent = `Report Period: ${fmtD(min)} to ${fmtD(max)}`;
+        return;
+      }
+    }
+    periodEl.textContent = `${meta.fileName} · ${meta.rowCount.toLocaleString()} rows`;
+  }
+
+  function autoFillDateFilter(){
+    const dcol = getDateCol();
+    if(!dcol) return;
+    const format = document.getElementById('dateFormat')?.value || 'auto';
+    const dates = rawData.map(r => parseDate(r[dcol], format)).filter(d => d);
+    if(!dates.length) return;
+    const min = new Date(Math.min(...dates));
+    const max = new Date(Math.max(...dates));
+    if(min.getFullYear() < 2020) return;
+    document.getElementById('dateFrom').value = min.toISOString().slice(0,10);
+    document.getElementById('dateTo').value = max.toISOString().slice(0,10);
+  }
+
+  function updateStorageBanner(){
+    const banner = document.getElementById('storageBanner');
+    const text = document.getElementById('storageBannerText');
+    const meta = loadDataMeta();
+    if(meta && meta.fileName && meta.rowCount){
+      banner.style.display = 'flex';
+      const d = new Date(meta.uploadedAt);
+      text.textContent = `Saved: ${meta.fileName} · ${meta.rowCount.toLocaleString()} rows · ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  function getDateCol(){
+    if(!rawData.length) return null;
+    const keys = Object.keys(rawData[0]);
+    for(const k of keys){ if(k.toLowerCase().trim() === 'date') return k; }
+    for(const k of keys){ if(k.toLowerCase().includes('date')) return k; }
+    return null;
+  }
+
+  function applyDateFilter(){
+    refresh();
+    showToast(`Filtered: ${filteredData.length} of ${rawData.length} records`,'info');
+  }
+  function clearDateFilter(){
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    refresh();
+    showToast('Date filter cleared','info');
+  }
+
+  /* ⭐ ROBUST FILE PARSER — cell by cell */
+  function handleFile(file){
+    const ext = file.name.split('.').pop().toLowerCase();
+    if(!['xlsx','xls','csv'].includes(ext)){ showToast('Please upload .xlsx, .xls or .csv','error'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try{
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+
+        if(!sheet['!ref']){
+          showToast('Sheet is empty','error'); return;
+        }
+        const range = XLSX.utils.decode_range(sheet['!ref']);
+
+        console.log('=== FILE PARSE ===');
+        console.log('Sheet range:', sheet['!ref']);
+
+        /* Read every cell */
+        const rows = [];
+        for(let r = 0; r <= range.e.r; r++){
+          const rowArr = [];
+          for(let c = 0; c <= range.e.c; c++){
+            const cell = sheet[XLSX.utils.encode_cell({r, c})];
+            let val = '';
+            if(cell){
+              if(cell.w !== undefined) val = cell.w;
+              else if(cell.v !== undefined) val = cell.v;
+            }
+            rowArr.push(val);
+          }
+          rows.push(rowArr);
+        }
+
+        /* Detect header row */
+        let headerRowIndex = 0;
+        let maxNonEmpty = 0;
+        for(let i = 0; i < Math.min(10, rows.length); i++){
+          const nonEmpty = rows[i].filter(v => String(v).trim() !== '').length;
+          if(nonEmpty > maxNonEmpty){ maxNonEmpty = nonEmpty; headerRowIndex = i; }
+        }
+
+        const headers = rows[headerRowIndex].map((h, i) => {
+          const clean = String(h || '').replace(/\s+/g, ' ').trim();
+          return clean || `Column_${i+1}`;
+        });
+
+        console.log('Header row index:', headerRowIndex);
+        console.log('Headers (' + headers.length + '):', headers);
+
+        /* Build data */
+        const cleaned = [];
+        for(let i = headerRowIndex + 1; i < rows.length; i++){
+          const row = rows[i];
+          const hasData = row.some(v => String(v).trim() !== '');
+          if(!hasData) continue;
+
+          const obj = {};
+          for(let j = 0; j < headers.length; j++){
+            let val = row[j];
+            if(val === null || val === undefined) val = '';
+            if(typeof val === 'string' && val.trim() !== '' && !isNaN(val) && isFinite(val)){
+              if(String(val).length < 15) val = parseFloat(val);
+            }
+            obj[headers[j]] = val;
+          }
+          cleaned.push(obj);
+        }
+
+        /* Remove Total row */
+        const lastRow = cleaned[cleaned.length - 1];
+        if(lastRow){
+          const lastVals = Object.values(lastRow).map(v => String(v).toLowerCase().trim());
+          if(lastVals.some(v => v === 'total' || v === 'grand total' || v === 'totals')){
+            cleaned.pop();
+            showToast('Removed "Total" row','info');
+          }
+        }
+
+        console.log('Rows:', cleaned.length);
+        console.log('Detected columns:', Object.keys(cleaned[0] || {}));
+        console.log('===================');
+
+        rawData = cleaned;
+        detectManagers(cleaned);
+        saveUploadedData(cleaned, file.name);
+
+        const status = document.getElementById('fileStatus');
+        status.className = 'file-status saved';
+        status.innerHTML = `<i class="fas fa-save"></i> ${file.name} · ${cleaned.length} rows · ${Object.keys(cleaned[0]||{}).length} cols · saved`;
+        showToast(`${cleaned.length} rows · ${Object.keys(cleaned[0]||{}).length} columns`,'success');
+
+        setTimeout(() => {
+          autoFillDateFilter();
+          refresh();
+          updateDebugInfo();
+          const dcol = getDateCol();
+          if(!dcol){
+            document.getElementById('debugPanel').style.display = 'block';
+          }
+        }, 100);
+      }catch(err){
+        console.error(err);
+        showToast('Error: '+err.message,'error');
+      }
+    };
+    reader.onerror = () => showToast('Failed to read file','error');
+    reader.readAsArrayBuffer(file);
+  }
+
+  function detectManagers(data){
+    const colAM = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
+    if(!colAM){ knownManagers = []; return; }
+    const set = new Set();
+    data.forEach(r => { if(r[colAM]) set.add(String(r[colAM]).trim()); });
+    knownManagers = Array.from(set).sort();
+    const sel = document.getElementById('empManagerName');
+    if(sel){
+      sel.innerHTML = knownManagers.map(m => `<option value="${m}">${m}</option>`).join('') ||
+        '<option value="">No managers detected</option>';
+    }
+  }
+
+  document.querySelectorAll('.login-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      selectedLoginRole = tab.getAttribute('data-role');
+      document.getElementById('loginBtnText').textContent =
+        selectedLoginRole === 'admin' ? 'Sign in as Admin' : 'Sign in as Manager / Viewer';
+      document.getElementById('loginError').textContent = '';
+    });
+  });
+
+  function applyUserUI(user){
+    currentUser = user;
+    document.getElementById('userLabel').textContent = user.username;
+    const roleBadge = document.getElementById('roleLabel');
+    if(user.role === 'admin'){ roleBadge.textContent = 'admin'; roleBadge.className = 'role-badge'; }
+    else if(user.managerLink){ roleBadge.textContent = 'manager'; roleBadge.className = 'role-badge manager'; }
+    else { roleBadge.textContent = 'viewer'; roleBadge.className = 'role-badge viewer'; }
+    updateHeaderAvatar();
+
+    const manageEmpBtn = document.getElementById('manageEmpBtn');
+    const dataMgmtBtn = document.getElementById('dataMgmtBtn');
+    const uploadWrap = document.getElementById('uploadBtnWrap');
+    const viewDataBtn = document.getElementById('viewDataBtn');
+    const debugBtn = document.getElementById('debugBtn');
+    if(user.role === 'admin'){
+      manageEmpBtn.style.display = 'flex';
+      dataMgmtBtn.style.display = 'flex';
+      uploadWrap.style.display = 'flex';
+      debugBtn.style.display = 'flex';
+    } else {
+      manageEmpBtn.style.display = 'none';
+      dataMgmtBtn.style.display = 'none';
+      uploadWrap.style.display = 'none';
+      viewDataBtn.style.display = 'none';
+      debugBtn.style.display = 'none';
+    }
+
+    const banner = document.getElementById('managerBanner');
+    if(user.role === 'viewer' && user.managerLink){
+      banner.style.display = 'flex';
+      document.getElementById('managerBannerName').textContent = user.managerLink;
+    } else {
+      banner.style.display = 'none';
+    }
+
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('dashboard').classList.add('active');
+
+    const saved = loadUploadedData();
+    if(saved && saved.length){
+      rawData = saved;
+      detectManagers(saved);
+      const meta = loadDataMeta();
+      if(meta){
+        const status = document.getElementById('fileStatus');
+        status.className = 'file-status saved';
+        status.innerHTML = `<i class="fas fa-save"></i> ${meta.fileName} · ${meta.rowCount} rows · ${Object.keys(saved[0]||{}).length} cols · restored`;
+      }
+      autoFillDateFilter();
+      refresh();
+    } else {
+      rawData = [];
+      const status = document.getElementById('fileStatus');
+      status.className = 'file-status empty';
+      status.innerHTML = '<i class="fas fa-database"></i> No data loaded';
+      showEmptyState();
+      updateHeaderSubtitle();
+    }
+  }
+
+  function doLogin(){
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    const err = document.getElementById('loginError');
+    err.textContent = '';
+    if(!u || !p){ err.textContent = 'Please enter username and password'; return; }
+
+    let matched = null;
+    if(selectedLoginRole === 'admin'){
+      if(u.toLowerCase() === ADMIN.username.toLowerCase() && p === ADMIN.password){
+        matched = { username: ADMIN.username, role:'admin', managerLink:'' };
+      }
+    } else {
+      const key = Object.keys(VIEWERS).find(k => k.toLowerCase() === u.toLowerCase());
+      if(key && VIEWERS[key].password === p){
+        matched = { username: key, role:'viewer', managerLink: VIEWERS[key].managerLink || '' };
+      }
+    }
+    if(!matched){ err.textContent = 'Invalid ' + selectedLoginRole + ' credentials'; return; }
+
+    saveSession(matched);
+    applyUserUI(matched);
+    showToast(`Welcome, ${matched.username}`,'success');
+  }
+
+  function doLogout(){
+    clearSession();
+    currentUser = null;
+    document.getElementById('dashboard').classList.remove('active');
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginError').textContent = '';
+    showToast('Logged out successfully','info');
+  }
+
+  function updateHeaderAvatar(){
+    const av = document.getElementById('userAvatar');
+    if(ADMIN.avatar){ av.innerHTML = `<img src="${ADMIN.avatar}" alt="avatar">`; }
+    else { av.innerHTML = `<span id="avatarInitial">${(currentUser?.username || 'A')[0].toUpperCase()}</span>`; }
+  }
+  function openAvatarModal(){
+    selectedAvatar = ADMIN.avatar || null;
+    document.getElementById('avatarMsg').textContent = '';
+    document.getElementById('avatarMsg').className = 'modal-msg';
+    const prev = document.getElementById('avatarPreviewBig');
+    if(selectedAvatar) prev.innerHTML = `<img src="${selectedAvatar}" alt="avatar">`;
+    else prev.innerHTML = `<span>${(currentUser?.username || 'A')[0].toUpperCase()}</span>`;
+    document.getElementById('avatarModal').classList.add('show');
+  }
+  function closeAvatarModal(){ document.getElementById('avatarModal').classList.remove('show'); }
+  function handleAvatarFile(file){
+    if(!file.type.startsWith('image/')){
+      document.getElementById('avatarMsg').className = 'modal-msg error';
+      document.getElementById('avatarMsg').textContent = 'Please choose an image file'; return;
+    }
+    if(file.size > 2 * 1024 * 1024){
+      document.getElementById('avatarMsg').className = 'modal-msg error';
+      document.getElementById('avatarMsg').textContent = 'Image must be under 2 MB'; return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      selectedAvatar = e.target.result;
+      document.getElementById('avatarPreviewBig').innerHTML = `<img src="${selectedAvatar}" alt="avatar">`;
+      document.getElementById('avatarMsg').className = 'modal-msg success';
+      document.getElementById('avatarMsg').textContent = 'Image ready. Click Save.';
+    };
+    reader.readAsDataURL(file);
+  }
+  function saveAvatar(){
+    if(!selectedAvatar){
+      document.getElementById('avatarMsg').className = 'modal-msg error';
+      document.getElementById('avatarMsg').textContent = 'Please choose an image first'; return;
+    }
+    ADMIN.avatar = selectedAvatar;
+    if(saveAdmin(ADMIN)){
+      updateHeaderAvatar();
+      document.getElementById('avatarMsg').className = 'modal-msg success';
+      document.getElementById('avatarMsg').textContent = 'Profile photo saved!';
+      showToast('Profile photo updated','success');
+      setTimeout(closeAvatarModal, 800);
+    }
+  }
+
+  function openPwdModal(){
+    document.getElementById('pwdCurrent').value = '';
+    document.getElementById('pwdNew').value = '';
+    document.getElementById('pwdConfirm').value = '';
+    document.getElementById('pwdMsg').textContent = '';
+    document.getElementById('pwdMsg').className = 'modal-msg';
+    document.getElementById('pwdModal').classList.add('show');
+  }
+  function closePwdModal(){ document.getElementById('pwdModal').classList.remove('show'); }
+
+  function saveNewPassword(){
+    const msg = document.getElementById('pwdMsg');
+    msg.className = 'modal-msg'; msg.textContent = '';
+    if(!currentUser){ msg.className='modal-msg error'; msg.textContent='Not logged in'; return; }
+    const cur = document.getElementById('pwdCurrent').value;
+    const nw  = document.getElementById('pwdNew').value;
+    const cf  = document.getElementById('pwdConfirm').value;
+    if(!cur || !nw || !cf){ msg.className='modal-msg error'; msg.textContent='Please fill all fields'; return; }
+    if(nw.length < 4){ msg.className='modal-msg error'; msg.textContent='New password must be at least 4 characters'; return; }
+    if(nw !== cf){ msg.className='modal-msg error'; msg.textContent='New passwords do not match'; return; }
+    if(nw === cur){ msg.className='modal-msg error'; msg.textContent='New password must be different'; return; }
+
+    if(currentUser.role === 'admin'){
+      if(ADMIN.password !== cur){ msg.className='modal-msg error'; msg.textContent='Current password incorrect'; return; }
+      ADMIN.password = nw;
+      if(saveAdmin(ADMIN)){
+        msg.className='modal-msg success'; msg.textContent='Password updated!';
+        showToast('Admin password changed','success');
+        setTimeout(closePwdModal, 800);
+      }
+    } else {
+      const key = currentUser.username;
+      const rec = VIEWERS[key];
+      if(!rec || rec.password !== cur){ msg.className='modal-msg error'; msg.textContent='Current password incorrect'; return; }
+      rec.password = nw;
+      VIEWERS[key] = rec;
+      if(saveViewers(VIEWERS)){
+        msg.className='modal-msg success'; msg.textContent='Password updated!';
+        showToast('Password changed','success');
+        setTimeout(closePwdModal, 800);
+      }
+    }
+  }
+
+  function openEmpModal(){
+    document.getElementById('empUser').value = '';
+    document.getElementById('empPass').value = '';
+    document.getElementById('empLink').value = '';
+    document.getElementById('empManagerWrap').style.display = 'none';
+    document.getElementById('empMsg').textContent = '';
+    document.getElementById('empMsg').className = 'modal-msg';
+    if(knownManagers.length === 0) detectManagers(rawData);
+    const sel = document.getElementById('empManagerName');
+    sel.innerHTML = knownManagers.map(m => `<option value="${m}">${m}</option>`).join('') ||
+      '<option value="">No managers detected — upload data first</option>';
+    renderEmployeeTable();
+    document.getElementById('empModal').classList.add('show');
+  }
+  function closeEmpModal(){ document.getElementById('empModal').classList.remove('show'); }
+
+  function renderEmployeeTable(){
+    const tbody = document.getElementById('empTableBody');
+    const keys = Object.keys(VIEWERS);
+    document.getElementById('empCount').textContent = keys.length;
+    if(!keys.length){
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:1rem;">No accounts yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = keys.map((k, i) => {
+      const v = VIEWERS[k];
+      const created = v.created ? new Date(v.created).toLocaleDateString() : '-';
+      const linkLabel = v.managerLink
+        ? `<span class="emp-link"><i class="fas fa-user-tie"></i> ${v.managerLink}</span>`
+        : `<span style="color:#047857;font-weight:600;"><i class="fas fa-unlock"></i> Full Access</span>`;
+      return `<tr>
+        <td>${i+1}</td>
+        <td><strong>${k}</strong></td>
+        <td><code style="background:#f1f5f9;padding:.1rem .35rem;border-radius:4px;font-size:.72rem;">${v.password}</code></td>
+        <td>${linkLabel}</td>
+        <td>${created}</td>
+        <td style="text-align:right;"><button class="del-btn" data-user="${k}"><i class="fas fa-trash"></i> Delete</button></td>
+      </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const user = btn.getAttribute('data-user');
+        if(confirm(`Delete account "${user}"?`)){
+          delete VIEWERS[user];
+          saveViewers(VIEWERS);
+          renderEmployeeTable();
+          showToast(`Deleted ${user}`,'info');
+        }
+      });
+    });
+  }
+
+  function addEmployee(){
+    const u = document.getElementById('empUser').value.trim();
+    const p = document.getElementById('empPass').value;
+    const link = document.getElementById('empLink').value;
+    const managerName = link === '__MANAGER__' ? document.getElementById('empManagerName').value : '';
+    const msg = document.getElementById('empMsg');
+    msg.className = 'modal-msg'; msg.textContent = '';
+
+    if(!u || !p){ msg.className='modal-msg error'; msg.textContent='Enter username and password'; return; }
+    if(u.length < 3){ msg.className='modal-msg error'; msg.textContent='Username must be at least 3 characters'; return; }
+    if(p.length < 4){ msg.className='modal-msg error'; msg.textContent='Password must be at least 4 characters'; return; }
+    if(u.toLowerCase() === ADMIN.username.toLowerCase()){ msg.className='modal-msg error'; msg.textContent='Cannot use admin username'; return; }
+    if(VIEWERS[u]){ msg.className='modal-msg error'; msg.textContent='Username already exists'; return; }
+    if(Object.keys(VIEWERS).length >= MAX_VIEWERS){ msg.className='modal-msg error'; msg.textContent='Maximum 100 accounts reached'; return; }
+    if(link === '__MANAGER__' && !managerName){ msg.className='modal-msg error'; msg.textContent='Pick a manager name'; return; }
+
+    VIEWERS[u] = { password:p, created:new Date().toISOString(), managerLink:managerName };
+    if(saveViewers(VIEWERS)){
+      document.getElementById('empUser').value = '';
+      document.getElementById('empPass').value = '';
+      document.getElementById('empLink').value = '';
+      document.getElementById('empManagerWrap').style.display = 'none';
+      renderEmployeeTable();
+      msg.className='modal-msg success';
+      msg.textContent = managerName ? `Created "${u}" linked to ${managerName}` : `Created "${u}" with full access`;
+      showToast(`Account "${u}" added`,'success');
+    }
+  }
+
+  function openDataMgmt(){
+    updateDataMgmtStatus();
+    document.getElementById('dmMsg').textContent = '';
+    document.getElementById('dmMsg').className = 'modal-msg';
+    document.getElementById('dataMgmtModal').classList.add('show');
+  }
+  function closeDataMgmt(){ document.getElementById('dataMgmtModal').classList.remove('show'); }
+
+  function updateDataMgmtStatus(){
+    const meta = loadDataMeta();
+    const el = document.getElementById('dataMgmtStatus');
+    if(meta && meta.fileName){
+      const d = new Date(meta.uploadedAt);
+      const colCount = rawData[0] ? Object.keys(rawData[0]).length : 0;
+      el.textContent = `${meta.fileName} · ${meta.rowCount.toLocaleString()} rows · ${colCount} cols · uploaded ${d.toLocaleDateString()}`;
+    } else if(rawData.length){
+      el.textContent = `Currently showing ${rawData.length} rows (not saved)`;
+    } else {
+      el.textContent = 'No data stored';
+    }
+  }
+
+  function downloadAsExcel(){
+    if(!rawData.length){ showToast('No data to download','error'); return; }
+    try{
+      const ws = XLSX.utils.json_to_sheet(rawData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sales Data');
+      const meta = loadDataMeta();
+      const baseName = (meta && meta.fileName ? meta.fileName.replace(/\.[^.]+$/,'') : 'shansi_data');
+      XLSX.writeFile(wb, baseName + '_' + new Date().toISOString().slice(0,10) + '.xlsx');
+      showToast('Excel downloaded successfully','success');
+    }catch(e){ showToast('Error: ' + e.message,'error'); }
+  }
+
+  function downloadAsCSV(){
+    if(!rawData.length){ showToast('No data to download','error'); return; }
+    try{
+      const cols = Object.keys(rawData[0]);
+      const escape = v => {
+        if(v === null || v === undefined) return '';
+        const s = String(v);
+        if(s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g,'""') + '"';
+        return s;
+      };
+      let csv = cols.map(escape).join(',') + '\n';
+      rawData.forEach(r => { csv += cols.map(c => escape(r[c])).join(',') + '\n'; });
+      const blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const meta = loadDataMeta();
+      const baseName = (meta && meta.fileName ? meta.fileName.replace(/\.[^.]+$/,'') : 'shansi_data');
+      a.href = url;
+      a.download = baseName + '_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV downloaded','success');
+    }catch(e){ showToast('Error: ' + e.message,'error'); }
+  }
+
+  function clearUploadedDataAndUI(){
+    if(!confirm('Clear all stored data from this browser?')) return;
+    clearUploadedData();
+    rawData = [];
+    filteredData = [];
+    const status = document.getElementById('fileStatus');
+    status.className = 'file-status empty';
+    status.innerHTML = '<i class="fas fa-database"></i> No data loaded';
+    document.getElementById('kpiRow').innerHTML = '';
+    document.getElementById('amTableBody').innerHTML = '';
+    document.getElementById('topClients').innerHTML = '';
+    document.getElementById('bottomClients').innerHTML = '';
+    document.getElementById('pivotOutput').innerHTML = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('debugPanel').style.display = 'none';
+    destroyCharts();
+    showEmptyState();
+    updateStorageBanner();
+    updateHeaderSubtitle();
+    updateDataMgmtStatus();
+    showToast('Uploaded data cleared.','info');
+  }
+
+  function openRawModal(){
+    if(!currentUser || currentUser.role !== 'admin'){
+      showToast('Only admin can view all data','error'); return;
+    }
+    if(!filteredData.length){ showToast('No data to display','error'); return; }
+    const cols = Object.keys(filteredData[0]);
+    document.getElementById('rawSubtitle').textContent = `Complete raw data · ${cols.length} columns detected`;
+    document.getElementById('rawCount').textContent = filteredData.length.toLocaleString() + ' records' +
+      (filteredData.length !== rawData.length ? ` (filtered from ${rawData.length.toLocaleString()})` : '');
+    document.getElementById('rawThead').innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+    document.getElementById('rawTbody').innerHTML = filteredData.map(r => {
+      return '<tr>' + cols.map(c => {
+        let v = r[c];
+        if(v === null || v === undefined) v = '';
+        if(typeof v === 'number') v = v.toLocaleString(undefined, {maximumFractionDigits: 4});
+        return `<td>${v}</td>`;
+      }).join('') + '</tr>';
+    }).join('');
+    document.getElementById('rawModal').classList.add('show');
+  }
+  function closeRawModal(){ document.getElementById('rawModal').classList.remove('show'); }
+
+  function exportRawCSV(){
+    if(!filteredData.length){ showToast('No data to export','error'); return; }
+    const cols = Object.keys(filteredData[0]);
+    const escape = v => {
+      if(v === null || v === undefined) return '';
+      const s = String(v);
+      if(s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g,'""') + '"';
+      return s;
+    };
+    let csv = cols.map(escape).join(',') + '\n';
+    filteredData.forEach(r => { csv += cols.map(c => escape(r[c])).join(',') + '\n'; });
+    const blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'shansi_data_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV exported','success');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+    document.getElementById('changePwdBtn').addEventListener('click', openPwdModal);
+    document.getElementById('pwdCancel').addEventListener('click', closePwdModal);
+    document.getElementById('pwdSave').addEventListener('click', saveNewPassword);
+    document.getElementById('pwdConfirm').addEventListener('keydown', e => { if(e.key==='Enter') saveNewPassword(); });
+    document.getElementById('pwdModal').addEventListener('click', e => { if(e.target.id === 'pwdModal') closePwdModal(); });
+
+    document.getElementById('userAvatar').addEventListener('click', () => {
+      if(currentUser && currentUser.role === 'admin') openAvatarModal();
+      else showToast('Only admin can change profile photo','info');
+    });
+    document.getElementById('pickAvatarBtn').addEventListener('click', () => document.getElementById('avatarInput').click());
+    document.getElementById('avatarInput').addEventListener('change', e => {
+      const f = e.target.files[0]; if(f) handleAvatarFile(f); e.target.value = '';
+    });
+    document.getElementById('avatarCancel').addEventListener('click', closeAvatarModal);
+    document.getElementById('avatarSave').addEventListener('click', saveAvatar);
+    document.getElementById('avatarModal').addEventListener('click', e => { if(e.target.id === 'avatarModal') closeAvatarModal(); });
+
+    document.getElementById('manageEmpBtn').addEventListener('click', openEmpModal);
+    document.getElementById('empClose').addEventListener('click', closeEmpModal);
+    document.getElementById('empAddBtn').addEventListener('click', addEmployee);
+    document.getElementById('empPass').addEventListener('keydown', e => { if(e.key==='Enter') addEmployee(); });
+    document.getElementById('empModal').addEventListener('click', e => { if(e.target.id === 'empModal') closeEmpModal(); });
+
+    document.getElementById('empLink').addEventListener('change', e => {
+      document.getElementById('empManagerWrap').style.display =
+        e.target.value === '__MANAGER__' ? 'block' : 'none';
+    });
+
+    document.getElementById('dataMgmtBtn').addEventListener('click', openDataMgmt);
+    document.getElementById('dmClose').addEventListener('click', closeDataMgmt);
+    document.getElementById('dmExcelBtn').addEventListener('click', downloadAsExcel);
+    document.getElementById('dmCsvBtn').addEventListener('click', downloadAsCSV);
+    document.getElementById('dmClearBtn').addEventListener('click', clearUploadedDataAndUI);
+    document.getElementById('dataMgmtModal').addEventListener('click', e => {
+      if(e.target.id === 'dataMgmtModal') closeDataMgmt();
+    });
+
+    document.getElementById('viewDataBtn').addEventListener('click', openRawModal);
+    document.getElementById('rawClose').addEventListener('click', closeRawModal);
+    document.getElementById('rawExport').addEventListener('click', exportRawCSV);
+    document.getElementById('rawModal').addEventListener('click', e => { if(e.target.id === 'rawModal') closeRawModal(); });
+
+    document.getElementById('debugBtn').addEventListener('click', () => {
+      const panel = document.getElementById('debugPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      updateDebugInfo();
+    });
+
+    document.getElementById('fileInput').addEventListener('change', e => {
+      const f = e.target.files[0]; if(f) handleFile(f); e.target.value = '';
+    });
+    document.getElementById('applyDateBtn').addEventListener('click', applyDateFilter);
+    document.getElementById('clearDateBtn').addEventListener('click', clearDateFilter);
+    document.getElementById('dateFrom').addEventListener('change', applyDateFilter);
+    document.getElementById('dateTo').addEventListener('change', applyDateFilter);
+    document.getElementById('dateFormat').addEventListener('change', () => {
+      autoFillDateFilter();
+      refresh();
+      updateDebugInfo();
+      showToast('Format changed: ' + document.getElementById('dateFormat').value,'info');
+    });
+
+    const savedUser = loadSession();
+    if(savedUser){
+      applyUserUI(savedUser);
+      showToast(`Welcome back, ${savedUser.username}`,'info');
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

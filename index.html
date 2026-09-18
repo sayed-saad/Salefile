@@ -206,6 +206,11 @@
   .kpi-card.slate{background:linear-gradient(135deg,#334155,#1e293b);}
   .kpi-card.amber{background:linear-gradient(135deg,#d97706,#b45309);}
 
+  @keyframes pulseLoss {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(220,38,38,.4), 0 6px 16px rgba(220,38,38,.3); }
+    50% { box-shadow: 0 0 0 7px rgba(220,38,38,.15), 0 6px 22px rgba(220,38,38,.4); }
+  }
+
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;}
   table.am-table{width:100%;border-collapse:collapse;font-size:.74rem;min-width:900px;}
   table.am-table th{background:#f1f5f9;color:#334155;padding:.45rem .55rem;text-align:left;
@@ -500,6 +505,45 @@
   </div>
 </div>
 
+<!-- LOSS ACCOUNTS MODAL (NEW) -->
+<div class="modal-overlay" id="lossModal">
+  <div class="modal-card wide">
+    <h3><i class="fas fa-exclamation-triangle" style="color:#dc2626"></i> Loss-Making Accounts</h3>
+    <p class="sub" id="lossSubtitle">Complete list of loss-making accounts (negative profit).</p>
+
+    <div class="raw-count" id="lossCount" style="background:#fee2e2;color:#991b1b;">0 accounts</div>
+
+    <!-- Bar Chart -->
+    <div style="background:#fff;border-radius:12px;padding:.8rem;border:1px solid var(--border);margin-bottom:1rem;">
+      <div style="font-size:.72rem;font-weight:700;color:#334155;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.4px;">
+        <i class="fas fa-chart-bar" style="color:#dc2626"></i> Top Loss-Making Accounts
+      </div>
+      <div style="position:relative;height:320px;"><canvas id="lossChart"></canvas></div>
+    </div>
+
+    <!-- Table -->
+    <div class="raw-table-wrap" style="max-height:50vh;">
+      <table class="raw-table" id="lossTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Account Manager</th>
+            <th>Client Name</th>
+            <th style="text-align:right;">Profit</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody id="lossTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="lossClose"><i class="fas fa-times"></i> Close</button>
+      <button class="btn-save" id="lossExport"><i class="fas fa-download"></i> Export CSV</button>
+    </div>
+  </div>
+</div>
+
 <!-- DASHBOARD -->
 <div class="dashboard" id="dashboard">
   <div class="app-header">
@@ -651,15 +695,14 @@
 
   if(window.ChartDataLabels){ Chart.register(window.ChartDataLabels); }
 
-  /* ⭐ CONFIG: Excel file name to load from server */
   const SERVER_EXCEL_FILE = 'data.xlsx';
-  const SERVER_EXCEL_ALT = 'sales-data.xlsx'; /* fallback */
+  const SERVER_EXCEL_ALT = 'sales-data.xlsx';
 
-  const KEY_ADMIN = 'shansi_admin_v13';
-  const KEY_VIEWERS = 'shansi_viewers_v13';
-  const KEY_SESSION = 'shansi_session_v13';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v13';
-  const KEY_CACHE_META = 'shansi_cache_meta_v13';
+  const KEY_ADMIN = 'shansi_admin_v14';
+  const KEY_VIEWERS = 'shansi_viewers_v14';
+  const KEY_SESSION = 'shansi_session_v14';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v14';
+  const KEY_CACHE_META = 'shansi_cache_meta_v14';
   const MAX_VIEWERS = 100;
 
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
@@ -703,7 +746,6 @@
   }
   function clearSession(){ try{ localStorage.removeItem(KEY_SESSION); }catch(e){} }
 
-  /* Cache functions (fallback if server fails) */
   function cacheData(data, meta){
     try{
       localStorage.setItem(KEY_CACHE_DATA, JSON.stringify(data));
@@ -938,8 +980,20 @@
       {label:'Loss-Making Accounts', value:fmtInt(tLoss), cls:'rose'}
     ];
     document.getElementById('kpiRow').innerHTML = kpis.map(k => `
-      <div class="kpi-card ${k.cls}"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>
+      <div class="kpi-card ${k.cls}" data-kpi="${k.label}"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>
     `).join('');
+
+    /* Make Loss-Making Accounts card clickable */
+    const lossCard = document.querySelector('[data-kpi="Loss-Making Accounts"]');
+    if(lossCard){
+      lossCard.style.cursor = 'pointer';
+      lossCard.title = 'Click to see loss-making accounts';
+      const lossValue = lossCard.querySelector('.value');
+      if(lossValue && lossValue.textContent !== '0' && lossValue.textContent !== '-'){
+        lossCard.style.animation = 'pulseLoss 2s ease-in-out infinite';
+      }
+      lossCard.addEventListener('click', openLossModal);
+    }
   }
 
   function renderAMTable(rows){
@@ -1309,7 +1363,6 @@
     showToast('Date filter cleared','info');
   }
 
-  /* ⭐⭐⭐ PARSE EXCEL DATA (from ArrayBuffer) — reused by both server + local ⭐⭐⭐ */
   function parseExcelBuffer(buffer){
     const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
     const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -1331,7 +1384,6 @@
       rows.push(rowArr);
     }
 
-    /* Detect header row */
     let headerRowIndex = 0;
     let maxNonEmpty = 0;
     for(let i = 0; i < Math.min(10, rows.length); i++){
@@ -1361,7 +1413,6 @@
       cleaned.push(obj);
     }
 
-    /* Remove Total row */
     const lastRow = cleaned[cleaned.length - 1];
     if(lastRow){
       const lastVals = Object.values(lastRow).map(v => String(v).toLowerCase().trim());
@@ -1373,7 +1424,6 @@
     return cleaned;
   }
 
-  /* ⭐⭐⭐ LOAD EXCEL FROM SERVER (Vercel/GitHub) ⭐⭐⭐ */
   async function loadFromServer(){
     const filesToTry = [SERVER_EXCEL_FILE, SERVER_EXCEL_ALT];
     for(const fname of filesToTry){
@@ -1397,7 +1447,6 @@
     return null;
   }
 
-  /* ⭐ ROBUST FILE PARSER (local upload) */
   function handleFile(file){
     const ext = file.name.split('.').pop().toLowerCase();
     if(!['xlsx','xls','csv'].includes(ext)){ showToast('Please upload .xlsx, .xls or .csv','error'); return; }
@@ -1411,7 +1460,6 @@
         dataSource = 'local';
         detectManagers(cleaned);
 
-        /* Cache locally too */
         cacheData(cleaned, { fileName: file.name, rowCount: cleaned.length, uploadedAt: new Date().toISOString() });
 
         const status = document.getElementById('fileStatus');
@@ -1495,12 +1543,10 @@
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('dashboard').classList.add('active');
 
-    /* ⭐ Show loading state */
     const status = document.getElementById('fileStatus');
     status.className = 'file-status loading';
     status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading data from server...';
 
-    /* ⭐ Try to load from server first */
     const serverResult = await loadFromServer();
 
     if(serverResult){
@@ -1515,7 +1561,6 @@
       return;
     }
 
-    /* ⭐ Fallback: cache */
     const cached = loadCache();
     if(cached && cached.data.length){
       rawData = cached.data;
@@ -1529,7 +1574,6 @@
       return;
     }
 
-    /* ⭐ Nothing available */
     rawData = [];
     dataSource = 'none';
     status.className = 'file-status empty';
@@ -1766,7 +1810,6 @@
     }
   }
 
-  /* ⭐ PUBLISH: download current data as data.xlsx */
   function publishExcel(){
     if(!rawData.length){ showToast('No data to publish','error'); return; }
     try{
@@ -1882,6 +1925,159 @@
     showToast('CSV exported','success');
   }
 
+  /* ⭐⭐⭐ LOSS ACCOUNTS FEATURE ⭐⭐⭐ */
+  function getLossAccounts(data){
+    const colName = findCol(data, ['Name','Client','Customer']);
+    const colAM   = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
+    const colProfit = findCol(data, ['Profit','Total Profit']);
+    if(!colName || !colProfit) return [];
+
+    const map = {};
+    data.forEach(r => {
+      const name = String(r[colName] || '').trim();
+      const am = colAM ? String(r[colAM] || '').trim() : 'Unknown';
+      const profit = parseFloat(r[colProfit]) || 0;
+      if(!name) return;
+
+      const key = am + '||' + name;
+      if(!map[key]) map[key] = { am, name, profit: 0 };
+      map[key].profit += profit;
+    });
+
+    const losses = Object.values(map).filter(x => x.profit < 0);
+
+    losses.forEach(x => {
+      if(Math.abs(x.profit) < 0.01) x.reason = 'Very small loss';
+      else if(x.profit < -100) x.reason = 'Significant loss';
+      else if(x.profit < -10) x.reason = 'Moderate loss';
+      else x.reason = 'Minor loss';
+    });
+
+    losses.sort((a,b) => a.profit - b.profit);
+    return losses;
+  }
+
+  function openLossModal(){
+    const losses = getLossAccounts(filteredData.length ? filteredData : rawData);
+
+    document.getElementById('lossCount').textContent = losses.length + ' account' + (losses.length === 1 ? '' : 's');
+
+    if(!losses.length){
+      document.getElementById('lossTbody').innerHTML =
+        '<tr><td colspan="5" style="text-align:center;color:#059669;padding:2rem;font-weight:600;"><i class="fas fa-check-circle"></i> No loss-making accounts — all profitable!</td></tr>';
+      if(window.lossChartInstance){ try{ window.lossChartInstance.destroy(); }catch(e){} window.lossChartInstance = null; }
+      document.getElementById('lossModal').classList.add('show');
+      return;
+    }
+
+    document.getElementById('lossTbody').innerHTML = losses.map((x, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${x.am}</strong></td>
+        <td>${x.name}</td>
+        <td class="num" style="color:#dc2626;font-weight:700;">${fmtSmart(x.profit)}</td>
+        <td><span style="font-size:.7rem;background:#fee2e2;color:#991b1b;padding:.15rem .5rem;border-radius:20px;">${x.reason}</span></td>
+      </tr>
+    `).join('');
+
+    const top = losses.slice(0, 15);
+    if(window.lossChartInstance){ try{ window.lossChartInstance.destroy(); }catch(e){} }
+    const ctx = document.getElementById('lossChart').getContext('2d');
+    window.lossChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: top.map(x => (x.am ? x.am.split(' ')[0] + ' · ' : '') + x.name.slice(0, 22)),
+        datasets: [{
+          label: 'Loss (Profit)',
+          data: top.map(x => x.profit),
+          backgroundColor: top.map((_, i) => {
+            const colors = ['#dc2626','#e11d48','#be123c','#f43f5e','#ef4444','#b91c1c','#991b1b','#7f1d1d'];
+            return colors[i % colors.length];
+          }),
+          borderRadius: 6,
+          barPercentage: 0.75
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { right: 80, left: 10, top: 5, bottom: 5 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (c) => {
+                const x = top[c.dataIndex];
+                return [
+                  'Manager: ' + x.am,
+                  'Client: ' + x.name,
+                  'Loss: ' + fmtSmart(x.profit),
+                  'Reason: ' + x.reason
+                ];
+              }
+            }
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'right',
+            offset: 6,
+            color: '#7f1d1d',
+            font: { weight: '700', size: 11 },
+            formatter: (v) => fmtSmart(v)
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: false,
+            ticks: { callback: v => fmtSmart(v), color: '#7f1d1d' },
+            grid: { color: '#fee2e2' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    const subtitle = document.getElementById('lossSubtitle');
+    if(currentUser && currentUser.role === 'viewer' && currentUser.managerLink){
+      subtitle.textContent = `Loss-making accounts for ${currentUser.managerLink} (${losses.length} found)`;
+    } else {
+      subtitle.textContent = `Complete list of loss-making accounts across all managers (${losses.length} found)`;
+    }
+
+    document.getElementById('lossModal').classList.add('show');
+  }
+
+  function closeLossModal(){
+    document.getElementById('lossModal').classList.remove('show');
+  }
+
+  function exportLossCSV(){
+    const losses = getLossAccounts(filteredData.length ? filteredData : rawData);
+    if(!losses.length){ showToast('No loss accounts to export','error'); return; }
+    const escape = v => {
+      if(v === null || v === undefined) return '';
+      const s = String(v);
+      if(s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g,'""') + '"';
+      return s;
+    };
+    let csv = 'Account Manager,Client Name,Profit,Reason\n';
+    losses.forEach(x => {
+      csv += [x.am, x.name, x.profit, x.reason].map(escape).join(',') + '\n';
+    });
+    const blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'loss_accounts_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Loss accounts exported','success');
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginBtn').addEventListener('click', doLogin);
     document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -1931,6 +2127,13 @@
     document.getElementById('rawClose').addEventListener('click', closeRawModal);
     document.getElementById('rawExport').addEventListener('click', exportRawCSV);
     document.getElementById('rawModal').addEventListener('click', e => { if(e.target.id === 'rawModal') closeRawModal(); });
+
+    /* Loss modal events */
+    document.getElementById('lossClose').addEventListener('click', closeLossModal);
+    document.getElementById('lossExport').addEventListener('click', exportLossCSV);
+    document.getElementById('lossModal').addEventListener('click', e => {
+      if(e.target.id === 'lossModal') closeLossModal();
+    });
 
     document.getElementById('debugBtn').addEventListener('click', () => {
       const panel = document.getElementById('debugPanel');

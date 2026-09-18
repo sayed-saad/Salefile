@@ -75,6 +75,8 @@
   .btn-excel:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(5,150,105,.3);}
   .btn-csv{background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;}
   .btn-csv:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(124,58,237,.3);}
+  .btn-json{background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;}
+  .btn-json:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(234,88,12,.3);}
   .modal-msg{font-size:.76rem;text-align:center;margin-top:.5rem;min-height:1rem;}
   .modal-msg.error{color:var(--red);}
   .modal-msg.success{color:#059669;}
@@ -153,10 +155,12 @@
   .upload-btn:hover{transform:translateY(-1px);}
   .upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;}
   .file-status{background:#eff6ff;color:#1e40af;padding:.4rem .8rem;border-radius:20px;font-size:.72rem;
-    font-weight:500;display:flex;align-items:center;gap:.35rem;max-width:320px;overflow:hidden;
+    font-weight:500;display:flex;align-items:center;gap:.35rem;max-width:340px;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap;}
   .file-status.empty{background:#f1f5f9;color:var(--muted);}
   .file-status.saved{background:#ecfdf5;color:#047857;font-weight:600;}
+  .file-status.loading{background:#fef3c7;color:#92400e;font-weight:600;}
+  .file-status.server{background:#dbeafe;color:#1e40af;font-weight:600;}
   .date-filter{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-left:auto;}
   .date-filter label{font-size:.72rem;font-weight:600;color:var(--muted);}
   .date-filter input[type="date"]{padding:.4rem .55rem;border:1.5px solid var(--border);border-radius:9px;
@@ -437,22 +441,37 @@
 <div class="modal-overlay" id="dataMgmtModal">
   <div class="modal-card">
     <h3><i class="fas fa-database"></i> Data Management</h3>
-    <p class="sub">Manage uploaded data & download in original format.</p>
+    <p class="sub">Publish updated data to all users via GitHub.</p>
 
     <div style="background:#f8fafc;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;">
-      <div style="font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:.5rem;">Currently Stored</div>
+      <div style="font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:.5rem;">Currently Loaded</div>
       <div id="dataMgmtStatus" style="font-size:.85rem;font-weight:600;color:#1e293b;">—</div>
     </div>
 
-    <div style="font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">📥 Download in Original Format</div>
+    <div style="font-size:.72rem;font-weight:700;color:#ea580c;margin-bottom:.5rem;">🌐 Publish to All Users</div>
+    <div class="modal-actions" style="margin-top:0;margin-bottom:.8rem;">
+      <button class="btn-json" id="dmPublishBtn" style="width:100%;">
+        <i class="fas fa-globe"></i> Download data.xlsx (Upload to GitHub)
+      </button>
+    </div>
+    <div style="background:#fff7ed;border:1px dashed #fdba74;border-radius:8px;padding:.6rem .8rem;font-size:.7rem;color:#9a3412;margin-bottom:1rem;line-height:1.6;">
+      <b>How to publish new data:</b><br>
+      1. Upload your new Excel below (or keep current data)<br>
+      2. Click orange button → <code>data.xlsx</code> downloads<br>
+      3. GitHub repo → delete old <code>data.xlsx</code><br>
+      4. Upload new <code>data.xlsx</code> → Commit<br>
+      5. Wait 30 seconds → all users see new data ✅
+    </div>
+
+    <div style="font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">📥 Download Current Data</div>
     <div class="modal-actions" style="margin-top:0;margin-bottom:1rem;">
-      <button class="btn-excel" id="dmExcelBtn"><i class="fas fa-file-excel"></i> Download Excel</button>
-      <button class="btn-csv" id="dmCsvBtn"><i class="fas fa-file-csv"></i> Download CSV</button>
+      <button class="btn-excel" id="dmExcelBtn"><i class="fas fa-file-excel"></i> Excel</button>
+      <button class="btn-csv" id="dmCsvBtn"><i class="fas fa-file-csv"></i> CSV</button>
     </div>
 
     <div style="font-size:.72rem;font-weight:700;color:var(--red);margin-bottom:.5rem;">⚠️ Danger Zone</div>
     <div class="modal-actions" style="margin-top:0;">
-      <button class="btn-danger" id="dmClearBtn" style="width:100%;"><i class="fas fa-trash"></i> Clear Uploaded Data</button>
+      <button class="btn-danger" id="dmClearBtn" style="width:100%;"><i class="fas fa-trash"></i> Clear Local Cache</button>
     </div>
 
     <div class="modal-actions" style="margin-top:1rem;">
@@ -492,7 +511,7 @@
       <div class="divider"></div>
       <div class="brand-text">
         <h1>Sales Dashboard</h1>
-        <p id="headerSubtitle">Upload your data to begin</p>
+        <p id="headerSubtitle">Loading data from server...</p>
       </div>
     </div>
     <div class="header-actions">
@@ -530,7 +549,7 @@
 
   <div class="storage-banner" id="storageBanner" style="display:none;">
     <i class="fas fa-save"></i>
-    <span id="storageBannerText">Uploaded data is saved in this browser</span>
+    <span id="storageBannerText">Loading...</span>
   </div>
 
   <div class="debug-panel" id="debugPanel" style="display:none;">
@@ -543,7 +562,7 @@
       <i class="fas fa-cloud-upload-alt"></i> Upload Excel / CSV
       <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
     </div>
-    <div class="file-status empty" id="fileStatus"><i class="fas fa-database"></i> No data loaded</div>
+    <div class="file-status empty" id="fileStatus"><i class="fas fa-database"></i> Loading...</div>
     <div class="date-filter" id="dateFilterWrap" style="display:none;">
       <label>From</label>
       <input type="date" id="dateFrom">
@@ -564,7 +583,7 @@
     </div>
   </div>
 
-  <div class="empty-state" id="emptyState">
+  <div class="empty-state" id="emptyState" style="display:none;">
     <i class="fas fa-cloud-upload-alt"></i>
     <h2>No data loaded</h2>
     <p>Please upload your Excel or CSV file to view the dashboard.<br>
@@ -620,7 +639,7 @@
   </div>
 
   <div class="footer-note">
-    <i class="fas fa-database"></i> SHANSI Communications · Uploaded data is automatically saved in this browser
+    <i class="fas fa-database"></i> SHANSI Communications · Data loaded from server (data.xlsx)
   </div>
 </div>
 
@@ -632,11 +651,15 @@
 
   if(window.ChartDataLabels){ Chart.register(window.ChartDataLabels); }
 
-  const KEY_ADMIN = 'shansi_admin_v12';
-  const KEY_VIEWERS = 'shansi_viewers_v12';
-  const KEY_SESSION = 'shansi_session_v12';
-  const KEY_UPLOADED_DATA = 'shansi_uploaded_data_v12';
-  const KEY_DATA_META = 'shansi_data_meta_v12';
+  /* ⭐ CONFIG: Excel file name to load from server */
+  const SERVER_EXCEL_FILE = 'data.xlsx';
+  const SERVER_EXCEL_ALT = 'sales-data.xlsx'; /* fallback */
+
+  const KEY_ADMIN = 'shansi_admin_v13';
+  const KEY_VIEWERS = 'shansi_viewers_v13';
+  const KEY_SESSION = 'shansi_session_v13';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v13';
+  const KEY_CACHE_META = 'shansi_cache_meta_v13';
   const MAX_VIEWERS = 100;
 
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
@@ -680,58 +703,30 @@
   }
   function clearSession(){ try{ localStorage.removeItem(KEY_SESSION); }catch(e){} }
 
-  function saveUploadedData(data, fileName){
+  /* Cache functions (fallback if server fails) */
+  function cacheData(data, meta){
     try{
-      const clean = data.map(r => {
-        const o = {};
-        Object.keys(r).forEach(k => {
-          let v = r[k];
-          if(v === null || v === undefined) v = '';
-          o[k] = v;
-        });
-        return o;
-      });
-      localStorage.setItem(KEY_UPLOADED_DATA, JSON.stringify(clean));
-      localStorage.setItem(KEY_DATA_META, JSON.stringify({
-        fileName: fileName || 'unknown',
-        rowCount: clean.length,
-        uploadedAt: new Date().toISOString()
-      }));
-      return true;
-    }catch(e){
-      if(e.name === 'QuotaExceededError' || (e.message && e.message.toLowerCase().includes('quota'))){
-        showToast('Data too large for browser storage. Use "Download Excel" as backup.','error');
-      } else {
-        showToast('Could not save data: ' + e.message,'error');
+      localStorage.setItem(KEY_CACHE_DATA, JSON.stringify(data));
+      localStorage.setItem(KEY_CACHE_META, JSON.stringify(meta));
+    }catch(e){ console.warn('Cache failed:', e.message); }
+  }
+  function loadCache(){
+    try{
+      const d = localStorage.getItem(KEY_CACHE_DATA);
+      const m = localStorage.getItem(KEY_CACHE_META);
+      if(d){
+        const data = JSON.parse(d);
+        const meta = m ? JSON.parse(m) : null;
+        if(Array.isArray(data) && data.length) return { data, meta };
       }
-      return false;
-    }
-  }
-
-  function loadUploadedData(){
-    try{
-      const r = localStorage.getItem(KEY_UPLOADED_DATA);
-      if(!r) return null;
-      const data = JSON.parse(r);
-      if(!Array.isArray(data) || data.length === 0) return null;
-      return data;
-    }catch(e){ return null; }
-  }
-
-  function loadDataMeta(){
-    try{
-      const r = localStorage.getItem(KEY_DATA_META);
-      if(r) return JSON.parse(r);
     }catch(e){}
     return null;
   }
-
-  function clearUploadedData(){
+  function clearCache(){
     try{
-      localStorage.removeItem(KEY_UPLOADED_DATA);
-      localStorage.removeItem(KEY_DATA_META);
-      return true;
-    }catch(e){ return false; }
+      localStorage.removeItem(KEY_CACHE_DATA);
+      localStorage.removeItem(KEY_CACHE_META);
+    }catch(e){}
   }
 
   let rawData = [];
@@ -741,6 +736,7 @@
   let selectedAvatar = null;
   let selectedLoginRole = 'admin';
   let knownManagers = [];
+  let dataSource = 'none';
 
   const fmt = (n, d=2) => (n===null||n===undefined||isNaN(n)) ? '-' :
     Number(n).toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d});
@@ -882,7 +878,6 @@
     return data.filter(r => String(r[amCol] || '').trim().toLowerCase() === link.trim().toLowerCase());
   }
 
-  /* ⭐⭐⭐ FIXED aggregateByAM — counts ROWS like Excel "Count of Name" ⭐⭐⭐ */
   function aggregateByAM(data){
     const colName = findCol(data, ['Name','Client','Customer']);
     const colAM   = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
@@ -902,10 +897,7 @@
       map[am].profit    += parseFloat(r[colProfit]) || 0;
       map[am].cost      += parseFloat(r[colCost]) || 0;
       map[am].revenue   += parseFloat(r[colRate]) || 0;
-
-      /* ⭐ Count ROWS — matches Excel "Count of Name" */
       if(colName) map[am].clientRows++;
-
       const lossFlag = String(r[colLoss] || '').toLowerCase();
       if(lossFlag.includes('loss') || lossFlag.includes('high') || (parseFloat(r[colProfit])||0) < 0) map[am].lossAccounts++;
     });
@@ -916,7 +908,7 @@
         am:x.am, count:x.count, delivered:x.delivered,
         deliveryPct:+deliveryPct.toFixed(2), profit:+x.profit.toFixed(2), cost:+x.cost.toFixed(2),
         revenue:+x.revenue.toFixed(2), marginPct:+marginPct.toFixed(2),
-        clients:x.clientRows,          /* ⭐ ROW COUNT — matches Excel pivot */
+        clients:x.clientRows,
         lossAccounts:x.lossAccounts,
         avgProfit: x.clientRows ? +(x.profit/x.clientRows).toFixed(2) : 0
       };
@@ -1197,6 +1189,7 @@
 
     panel.className = 'debug-panel ' + (ok ? 'ok' : 'err');
     content.innerHTML = `
+      <div class="dbg-row"><b>Data source:</b><span>${dataSource}</span></div>
       <div class="dbg-row"><b>Total columns:</b><span>${allCols.length}</span></div>
       <div class="dbg-row"><b>Date column:</b><span>${dcol}</span></div>
       <div class="dbg-row"><b>Format:</b><span>${format}</span></div>
@@ -1244,10 +1237,9 @@
   }
 
   function updateHeaderSubtitle(){
-    const meta = loadDataMeta();
     const periodEl = document.getElementById('headerSubtitle');
-    if(!rawData.length || !meta){
-      periodEl.textContent = 'Upload your data to begin';
+    if(!rawData.length){
+      periodEl.textContent = 'No data loaded';
       return;
     }
     const dcol = getDateCol();
@@ -1258,11 +1250,11 @@
         const min = new Date(Math.min(...dates));
         const max = new Date(Math.max(...dates));
         const fmtD = d => d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' }).replace(/ /g,'-');
-        periodEl.textContent = `Report Period: ${fmtD(min)} to ${fmtD(max)}`;
+        periodEl.textContent = `Report Period: ${fmtD(min)} to ${fmtD(max)} · ${rawData.length.toLocaleString()} rows`;
         return;
       }
     }
-    periodEl.textContent = `${meta.fileName} · ${meta.rowCount.toLocaleString()} rows`;
+    periodEl.textContent = `${rawData.length.toLocaleString()} rows loaded`;
   }
 
   function autoFillDateFilter(){
@@ -1281,13 +1273,20 @@
   function updateStorageBanner(){
     const banner = document.getElementById('storageBanner');
     const text = document.getElementById('storageBannerText');
-    const meta = loadDataMeta();
-    if(meta && meta.fileName && meta.rowCount){
-      banner.style.display = 'flex';
-      const d = new Date(meta.uploadedAt);
-      text.textContent = `Saved: ${meta.fileName} · ${meta.rowCount.toLocaleString()} rows · ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-    } else {
+    if(!rawData.length){
       banner.style.display = 'none';
+      return;
+    }
+    banner.style.display = 'flex';
+    if(dataSource === 'server'){
+      banner.style.background = 'linear-gradient(135deg,#059669,#047857)';
+      text.textContent = `🌐 Live data from server · ${rawData.length.toLocaleString()} rows · all users see this`;
+    } else if(dataSource === 'cache'){
+      banner.style.background = 'linear-gradient(135deg,#d97706,#b45309)';
+      text.textContent = `⚠️ Server unavailable · showing cached data · ${rawData.length.toLocaleString()} rows`;
+    } else {
+      banner.style.background = 'linear-gradient(135deg,#0891b2,#0e7490)';
+      text.textContent = `📁 Local data · ${rawData.length.toLocaleString()} rows`;
     }
   }
 
@@ -1310,106 +1309,120 @@
     showToast('Date filter cleared','info');
   }
 
-  /* ⭐ ROBUST FILE PARSER — cell by cell */
+  /* ⭐⭐⭐ PARSE EXCEL DATA (from ArrayBuffer) — reused by both server + local ⭐⭐⭐ */
+  function parseExcelBuffer(buffer){
+    const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    if(!sheet['!ref']) throw new Error('Sheet is empty');
+
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    const rows = [];
+    for(let r = 0; r <= range.e.r; r++){
+      const rowArr = [];
+      for(let c = 0; c <= range.e.c; c++){
+        const cell = sheet[XLSX.utils.encode_cell({r, c})];
+        let val = '';
+        if(cell){
+          if(cell.w !== undefined) val = cell.w;
+          else if(cell.v !== undefined) val = cell.v;
+        }
+        rowArr.push(val);
+      }
+      rows.push(rowArr);
+    }
+
+    /* Detect header row */
+    let headerRowIndex = 0;
+    let maxNonEmpty = 0;
+    for(let i = 0; i < Math.min(10, rows.length); i++){
+      const nonEmpty = rows[i].filter(v => String(v).trim() !== '').length;
+      if(nonEmpty > maxNonEmpty){ maxNonEmpty = nonEmpty; headerRowIndex = i; }
+    }
+
+    const headers = rows[headerRowIndex].map((h, i) => {
+      const clean = String(h || '').replace(/\s+/g, ' ').trim();
+      return clean || `Column_${i+1}`;
+    });
+
+    const cleaned = [];
+    for(let i = headerRowIndex + 1; i < rows.length; i++){
+      const row = rows[i];
+      const hasData = row.some(v => String(v).trim() !== '');
+      if(!hasData) continue;
+      const obj = {};
+      for(let j = 0; j < headers.length; j++){
+        let val = row[j];
+        if(val === null || val === undefined) val = '';
+        if(typeof val === 'string' && val.trim() !== '' && !isNaN(val) && isFinite(val)){
+          if(String(val).length < 15) val = parseFloat(val);
+        }
+        obj[headers[j]] = val;
+      }
+      cleaned.push(obj);
+    }
+
+    /* Remove Total row */
+    const lastRow = cleaned[cleaned.length - 1];
+    if(lastRow){
+      const lastVals = Object.values(lastRow).map(v => String(v).toLowerCase().trim());
+      if(lastVals.some(v => v === 'total' || v === 'grand total' || v === 'totals')){
+        cleaned.pop();
+      }
+    }
+
+    return cleaned;
+  }
+
+  /* ⭐⭐⭐ LOAD EXCEL FROM SERVER (Vercel/GitHub) ⭐⭐⭐ */
+  async function loadFromServer(){
+    const filesToTry = [SERVER_EXCEL_FILE, SERVER_EXCEL_ALT];
+    for(const fname of filesToTry){
+      try{
+        console.log('Trying to fetch:', fname);
+        const resp = await fetch('./' + fname + '?t=' + Date.now(), {cache: 'no-store'});
+        if(!resp.ok){
+          console.log('  → not found (status ' + resp.status + ')');
+          continue;
+        }
+        const buffer = await resp.arrayBuffer();
+        const data = parseExcelBuffer(buffer);
+        if(data.length > 0){
+          console.log('✅ Loaded from server:', fname, '·', data.length, 'rows ·', Object.keys(data[0]).length, 'cols');
+          return { data, fileName: fname, source: 'server' };
+        }
+      }catch(e){
+        console.log('  → error:', e.message);
+      }
+    }
+    return null;
+  }
+
+  /* ⭐ ROBUST FILE PARSER (local upload) */
   function handleFile(file){
     const ext = file.name.split('.').pop().toLowerCase();
     if(!['xlsx','xls','csv'].includes(ext)){ showToast('Please upload .xlsx, .xls or .csv','error'); return; }
     const reader = new FileReader();
     reader.onload = e => {
       try{
-        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-
-        if(!sheet['!ref']){
-          showToast('Sheet is empty','error'); return;
-        }
-        const range = XLSX.utils.decode_range(sheet['!ref']);
-
-        console.log('=== FILE PARSE ===');
-        console.log('Sheet range:', sheet['!ref']);
-
-        /* Read every cell */
-        const rows = [];
-        for(let r = 0; r <= range.e.r; r++){
-          const rowArr = [];
-          for(let c = 0; c <= range.e.c; c++){
-            const cell = sheet[XLSX.utils.encode_cell({r, c})];
-            let val = '';
-            if(cell){
-              if(cell.w !== undefined) val = cell.w;
-              else if(cell.v !== undefined) val = cell.v;
-            }
-            rowArr.push(val);
-          }
-          rows.push(rowArr);
-        }
-
-        /* Detect header row */
-        let headerRowIndex = 0;
-        let maxNonEmpty = 0;
-        for(let i = 0; i < Math.min(10, rows.length); i++){
-          const nonEmpty = rows[i].filter(v => String(v).trim() !== '').length;
-          if(nonEmpty > maxNonEmpty){ maxNonEmpty = nonEmpty; headerRowIndex = i; }
-        }
-
-        const headers = rows[headerRowIndex].map((h, i) => {
-          const clean = String(h || '').replace(/\s+/g, ' ').trim();
-          return clean || `Column_${i+1}`;
-        });
-
-        console.log('Header row index:', headerRowIndex);
-        console.log('Headers (' + headers.length + '):', headers);
-
-        /* Build data */
-        const cleaned = [];
-        for(let i = headerRowIndex + 1; i < rows.length; i++){
-          const row = rows[i];
-          const hasData = row.some(v => String(v).trim() !== '');
-          if(!hasData) continue;
-
-          const obj = {};
-          for(let j = 0; j < headers.length; j++){
-            let val = row[j];
-            if(val === null || val === undefined) val = '';
-            if(typeof val === 'string' && val.trim() !== '' && !isNaN(val) && isFinite(val)){
-              if(String(val).length < 15) val = parseFloat(val);
-            }
-            obj[headers[j]] = val;
-          }
-          cleaned.push(obj);
-        }
-
-        /* Remove Total row */
-        const lastRow = cleaned[cleaned.length - 1];
-        if(lastRow){
-          const lastVals = Object.values(lastRow).map(v => String(v).toLowerCase().trim());
-          if(lastVals.some(v => v === 'total' || v === 'grand total' || v === 'totals')){
-            cleaned.pop();
-            showToast('Removed "Total" row','info');
-          }
-        }
-
-        console.log('Rows:', cleaned.length);
-        console.log('Detected columns:', Object.keys(cleaned[0] || {}));
-        console.log('===================');
+        const cleaned = parseExcelBuffer(e.target.result);
+        if(!cleaned.length){ showToast('File is empty','error'); return; }
 
         rawData = cleaned;
+        dataSource = 'local';
         detectManagers(cleaned);
-        saveUploadedData(cleaned, file.name);
+
+        /* Cache locally too */
+        cacheData(cleaned, { fileName: file.name, rowCount: cleaned.length, uploadedAt: new Date().toISOString() });
 
         const status = document.getElementById('fileStatus');
         status.className = 'file-status saved';
-        status.innerHTML = `<i class="fas fa-save"></i> ${file.name} · ${cleaned.length} rows · ${Object.keys(cleaned[0]||{}).length} cols · saved`;
-        showToast(`${cleaned.length} rows · ${Object.keys(cleaned[0]||{}).length} columns`,'success');
+        status.innerHTML = `<i class="fas fa-save"></i> ${file.name} · ${cleaned.length} rows · ${Object.keys(cleaned[0]||{}).length} cols`;
+        showToast(`${cleaned.length} rows · ${Object.keys(cleaned[0]||{}).length} columns · remember to Publish!`,'success');
 
         setTimeout(() => {
           autoFillDateFilter();
           refresh();
           updateDebugInfo();
-          const dcol = getDateCol();
-          if(!dcol){
-            document.getElementById('debugPanel').style.display = 'block';
-          }
         }, 100);
       }catch(err){
         console.error(err);
@@ -1444,7 +1457,7 @@
     });
   });
 
-  function applyUserUI(user){
+  async function applyUserUI(user){
     currentUser = user;
     document.getElementById('userLabel').textContent = user.username;
     const roleBadge = document.getElementById('roleLabel');
@@ -1482,26 +1495,47 @@
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('dashboard').classList.add('active');
 
-    const saved = loadUploadedData();
-    if(saved && saved.length){
-      rawData = saved;
-      detectManagers(saved);
-      const meta = loadDataMeta();
-      if(meta){
-        const status = document.getElementById('fileStatus');
-        status.className = 'file-status saved';
-        status.innerHTML = `<i class="fas fa-save"></i> ${meta.fileName} · ${meta.rowCount} rows · ${Object.keys(saved[0]||{}).length} cols · restored`;
-      }
+    /* ⭐ Show loading state */
+    const status = document.getElementById('fileStatus');
+    status.className = 'file-status loading';
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading data from server...';
+
+    /* ⭐ Try to load from server first */
+    const serverResult = await loadFromServer();
+
+    if(serverResult){
+      rawData = serverResult.data;
+      dataSource = serverResult.source;
+      detectManagers(rawData);
+      cacheData(rawData, { fileName: serverResult.fileName, rowCount: rawData.length, uploadedAt: new Date().toISOString() });
+      status.className = 'file-status server';
+      status.innerHTML = `<i class="fas fa-globe"></i> Live: ${serverResult.fileName} · ${rawData.length} rows · ${Object.keys(rawData[0]||{}).length} cols`;
       autoFillDateFilter();
       refresh();
-    } else {
-      rawData = [];
-      const status = document.getElementById('fileStatus');
-      status.className = 'file-status empty';
-      status.innerHTML = '<i class="fas fa-database"></i> No data loaded';
-      showEmptyState();
-      updateHeaderSubtitle();
+      return;
     }
+
+    /* ⭐ Fallback: cache */
+    const cached = loadCache();
+    if(cached && cached.data.length){
+      rawData = cached.data;
+      dataSource = 'cache';
+      detectManagers(rawData);
+      status.className = 'file-status saved';
+      status.innerHTML = `<i class="fas fa-database"></i> Cached: ${rawData.length} rows`;
+      showToast('Server data not available — showing cached data','info');
+      autoFillDateFilter();
+      refresh();
+      return;
+    }
+
+    /* ⭐ Nothing available */
+    rawData = [];
+    dataSource = 'none';
+    status.className = 'file-status empty';
+    status.innerHTML = '<i class="fas fa-database"></i> No data on server or cache';
+    showEmptyState();
+    updateHeaderSubtitle();
   }
 
   function doLogin(){
@@ -1723,17 +1757,27 @@
   function closeDataMgmt(){ document.getElementById('dataMgmtModal').classList.remove('show'); }
 
   function updateDataMgmtStatus(){
-    const meta = loadDataMeta();
     const el = document.getElementById('dataMgmtStatus');
-    if(meta && meta.fileName){
-      const d = new Date(meta.uploadedAt);
-      const colCount = rawData[0] ? Object.keys(rawData[0]).length : 0;
-      el.textContent = `${meta.fileName} · ${meta.rowCount.toLocaleString()} rows · ${colCount} cols · uploaded ${d.toLocaleDateString()}`;
-    } else if(rawData.length){
-      el.textContent = `Currently showing ${rawData.length} rows (not saved)`;
+    if(rawData.length){
+      const src = dataSource === 'server' ? '🌐 Server (live)' : dataSource === 'cache' ? '📁 Cache' : '📁 Local';
+      el.textContent = `${rawData.length.toLocaleString()} rows · ${Object.keys(rawData[0]||{}).length} columns · ${src}`;
     } else {
-      el.textContent = 'No data stored';
+      el.textContent = 'No data loaded';
     }
+  }
+
+  /* ⭐ PUBLISH: download current data as data.xlsx */
+  function publishExcel(){
+    if(!rawData.length){ showToast('No data to publish','error'); return; }
+    try{
+      const ws = XLSX.utils.json_to_sheet(rawData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sales Data');
+      XLSX.writeFile(wb, 'data.xlsx');
+      showToast('data.xlsx downloaded! Upload to GitHub repo.','success');
+      document.getElementById('dmMsg').className = 'modal-msg success';
+      document.getElementById('dmMsg').innerHTML = '✅ <b>data.xlsx</b> downloaded. Upload to GitHub repo as <code>data.xlsx</code>';
+    }catch(e){ showToast('Error: ' + e.message,'error'); }
   }
 
   function downloadAsExcel(){
@@ -1742,10 +1786,8 @@
       const ws = XLSX.utils.json_to_sheet(rawData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Sales Data');
-      const meta = loadDataMeta();
-      const baseName = (meta && meta.fileName ? meta.fileName.replace(/\.[^.]+$/,'') : 'shansi_data');
-      XLSX.writeFile(wb, baseName + '_' + new Date().toISOString().slice(0,10) + '.xlsx');
-      showToast('Excel downloaded successfully','success');
+      XLSX.writeFile(wb, 'shansi_data_' + new Date().toISOString().slice(0,10) + '.xlsx');
+      showToast('Excel downloaded','success');
     }catch(e){ showToast('Error: ' + e.message,'error'); }
   }
 
@@ -1764,10 +1806,8 @@
       const blob = new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8;'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const meta = loadDataMeta();
-      const baseName = (meta && meta.fileName ? meta.fileName.replace(/\.[^.]+$/,'') : 'shansi_data');
       a.href = url;
-      a.download = baseName + '_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.download = 'shansi_data_' + new Date().toISOString().slice(0,10) + '.csv';
       a.click();
       URL.revokeObjectURL(url);
       showToast('CSV downloaded','success');
@@ -1775,13 +1815,14 @@
   }
 
   function clearUploadedDataAndUI(){
-    if(!confirm('Clear all stored data from this browser?')) return;
-    clearUploadedData();
+    if(!confirm('Clear local cache? (GitHub data.xlsx will not be deleted)')) return;
+    clearCache();
     rawData = [];
     filteredData = [];
+    dataSource = 'none';
     const status = document.getElementById('fileStatus');
     status.className = 'file-status empty';
-    status.innerHTML = '<i class="fas fa-database"></i> No data loaded';
+    status.innerHTML = '<i class="fas fa-database"></i> Cache cleared';
     document.getElementById('kpiRow').innerHTML = '';
     document.getElementById('amTableBody').innerHTML = '';
     document.getElementById('topClients').innerHTML = '';
@@ -1795,7 +1836,7 @@
     updateStorageBanner();
     updateHeaderSubtitle();
     updateDataMgmtStatus();
-    showToast('Uploaded data cleared.','info');
+    showToast('Local cache cleared. Refresh to reload from server.','info');
   }
 
   function openRawModal(){
@@ -1878,6 +1919,7 @@
 
     document.getElementById('dataMgmtBtn').addEventListener('click', openDataMgmt);
     document.getElementById('dmClose').addEventListener('click', closeDataMgmt);
+    document.getElementById('dmPublishBtn').addEventListener('click', publishExcel);
     document.getElementById('dmExcelBtn').addEventListener('click', downloadAsExcel);
     document.getElementById('dmCsvBtn').addEventListener('click', downloadAsCSV);
     document.getElementById('dmClearBtn').addEventListener('click', clearUploadedDataAndUI);

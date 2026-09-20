@@ -778,13 +778,13 @@
 
   if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 
-  const KEY_ADMIN = 'shansi_admin_v27';
-  const KEY_VIEWERS = 'shansi_viewers_v27';
-  const KEY_SESSION = 'shansi_session_v27';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v27';
-  const KEY_CACHE_META = 'shansi_cache_meta_v27';
-  const KEY_THEME = 'shansi_theme_v27';
-  const KEY_ACCENT = 'shansi_accent_v27';
+  const KEY_ADMIN = 'shansi_admin_v28';
+  const KEY_VIEWERS = 'shansi_viewers_v28';
+  const KEY_SESSION = 'shansi_session_v28';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v28';
+  const KEY_CACHE_META = 'shansi_cache_meta_v28';
+  const KEY_THEME = 'shansi_theme_v28';
+  const KEY_ACCENT = 'shansi_accent_v28';
   const MAX_VIEWERS = 100;
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
 
@@ -1151,7 +1151,7 @@
     const topAM = sorted[0];
     const worstAM = sorted[sorted.length-1];
 
-    // ✅ FIXED: Weighted average (Total Profit / Total Revenue)
+    // Weighted average (Total Profit / Total Revenue)
     const totalProfit = rows.reduce((s,r)=>s+r.profit,0);
     const totalRevenue = rows.reduce((s,r)=>s+r.revenue,0);
     const avgMargin = totalRevenue ? (totalProfit / totalRevenue) * 100 : 0;
@@ -1315,6 +1315,7 @@
         backgroundColor: rows.map((_,i)=>colors[i % colors.length]),
         borderRadius:8, barPercentage:0.7 }]},
       options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        animation:{duration:600},
         layout:{ padding:{ right: 75 } },
         plugins:{
           legend:{display:false},
@@ -1336,6 +1337,7 @@
           tension:0.3, pointRadius:5, pointBackgroundColor:isDark?'#141b2d':'#fff', pointBorderColor:'#f97316', pointBorderWidth:3, fill:true }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
+        animation:{duration:600},
         layout:{ padding:{ top: 28 } },
         plugins:{
           legend:{position:'top', labels:{boxWidth:12, font:{size:11, weight:600}, color:textColor}},
@@ -1354,6 +1356,7 @@
         backgroundColor: rows.map((_,i)=>colors[i % colors.length]),
         borderRadius:8, barPercentage:0.6 }]},
       options:{ responsive:true, maintainAspectRatio:false,
+        animation:{duration:600},
         layout:{ padding:{ top: 28 } },
         plugins:{
           legend:{display:false},
@@ -1371,6 +1374,7 @@
         backgroundColor: rows.map((_,i)=>colors[i % colors.length]),
         borderWidth:2, borderColor:isDark ? '#141b2d' : '#fff' }]},
       options:{ responsive:true, maintainAspectRatio:false,
+        animation:{duration:600},
         plugins:{
           legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}, color:textColor}},
           tooltip:{callbacks:{label:c=>{
@@ -1750,13 +1754,38 @@
     if(!cw.classList.contains('active')){ toast('No data to export','error'); return; }
     toast('Generating PDF... please wait','info');
     try{
+      await new Promise(r => setTimeout(r, 400));
       const canvas = await html2canvas(cw, {
-        scale: 2, useCORS: true, backgroundColor: document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7',
-        onclone: (doc) => {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        backgroundColor: document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7',
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: cw.scrollWidth,
+        windowHeight: cw.scrollHeight,
+        onclone: (doc, originalElement) => {
           doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove());
           doc.querySelectorAll('button').forEach(b => b.style.boxShadow = 'none');
+          const origCanvases = originalElement.querySelectorAll('canvas');
+          const clonedCanvases = doc.querySelectorAll('canvas');
+          clonedCanvases.forEach((cnv, i) => {
+            if(cnv.width === 0 || cnv.height === 0){
+              const orig = origCanvases[i];
+              if(orig){
+                cnv.width = orig.width || 400;
+                cnv.height = orig.height || 200;
+              }
+            }
+          });
         }
       });
+
+      if(!canvas || canvas.width === 0 || canvas.height === 0){
+        throw new Error('Canvas is empty — try again or reload the page');
+      }
+
       const imgData = canvas.toDataURL('image/png');
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -1790,28 +1819,67 @@
     if(!cw.classList.contains('active')){ toast('No data','error'); return; }
     toast('Generating PNG...','info');
     try{
+      await new Promise(r => setTimeout(r, 400));
       const canvas = await html2canvas(cw, {
-        scale: 2, useCORS: true,
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
         backgroundColor: document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7',
-        onclone: (doc) => { doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove()); }
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: cw.scrollWidth,
+        windowHeight: cw.scrollHeight,
+        onclone: (doc, originalElement) => {
+          doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove());
+          doc.querySelectorAll('button').forEach(b => b.style.boxShadow = 'none');
+          const origCanvases = originalElement.querySelectorAll('canvas');
+          const clonedCanvases = doc.querySelectorAll('canvas');
+          clonedCanvases.forEach((cnv, i) => {
+            if(cnv.width === 0 || cnv.height === 0){
+              const orig = origCanvases[i];
+              if(orig){
+                cnv.width = orig.width || 400;
+                cnv.height = orig.height || 200;
+              }
+            }
+          });
+        }
       });
+
+      if(!canvas || canvas.width === 0 || canvas.height === 0){
+        throw new Error('Canvas is empty — try again or reload the page');
+      }
+
       const link = document.createElement('a');
       link.download = 'shansi_dashboard_' + new Date().toISOString().slice(0,10) + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
       toast('PNG downloaded','success');
-    }catch(e){ toast('PNG error: '+e.message,'error'); }
+    }catch(e){
+      console.error(e);
+      toast('PNG error: '+e.message,'error');
+    }
   }
 
   function exportChartPNG(chartId){
     const c = charts[chartId];
     if(!c){ toast('Chart not found','error'); return; }
-    const url = c.toBase64Image();
-    const link = document.createElement('a');
-    link.download = chartId + '_' + new Date().toISOString().slice(0,10) + '.png';
-    link.href = url;
-    link.click();
-    toast('Chart saved as PNG','success');
+    try{
+      const url = c.toBase64Image('image/png', 1);
+      if(!url || url === 'data:,'){
+        toast('Chart is empty — no data to export','error');
+        return;
+      }
+      const link = document.createElement('a');
+      link.download = chartId + '_' + new Date().toISOString().slice(0,10) + '.png';
+      link.href = url;
+      link.click();
+      toast('Chart saved as PNG','success');
+    }catch(e){
+      console.error(e);
+      toast('Chart PNG error: ' + e.message,'error');
+    }
   }
 
   function applyUserUI(user){

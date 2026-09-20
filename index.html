@@ -113,7 +113,7 @@
   @keyframes dashEnter{from{opacity:0;transform:translateY(8px);}}
   .dash-bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 0% 0%,rgba(59,130,246,.08),transparent 40%),radial-gradient(circle at 100% 100%,rgba(139,92,246,.08),transparent 40%),radial-gradient(circle at 50% 50%,rgba(220,38,38,.04),transparent 60%),var(--bg);}
 
-  .app-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:var(--glass-bg);backdrop-filter:blur(20px);border-radius:20px;padding:.85rem 1.2rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:0 8px 24px rgba(15,23,42,.05);}
+  .app-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:var(--glass-bg);backdrop-filter:blur(20px);border-radius:20px;padding:.85rem 1.2rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:0 8px 24px rgba(15,23,42,.05);position:relative;z-index:500;}
   .brand{display:flex;align-items:center;gap:.8rem;min-width:0;}
   .brand .logo-mark-sm{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:800;font-size:1.3rem;color:#fff;box-shadow:0 6px 16px rgba(59,130,246,.35);}
   .brand .brand-text h1{font-family:'Space Grotesk';font-size:1rem;font-weight:700;color:var(--blue);letter-spacing:-.3px;}
@@ -122,12 +122,12 @@
   .header-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
   .user-chip{position:relative;display:flex;align-items:center;gap:.55rem;background:var(--card);padding:.4rem .85rem .4rem .4rem;border-radius:30px;font-size:.76rem;font-weight:600;border:1px solid var(--border);box-shadow:0 2px 8px rgba(15,23,42,.04);cursor:pointer;user-select:none;transition:.2s;}
   .user-chip:hover{box-shadow:0 4px 14px rgba(15,23,42,.1);}
-  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1e3a8a,#0e7490);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85rem;font-weight:700;overflow:hidden;}
-  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1e3a8a,#0e7490);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85rem;font-weight:700;overflow:hidden;flex-shrink:0;}
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block;}
   .role-badge{background:var(--blue);color:#fff;padding:.15rem .5rem;border-radius:20px;font-size:.6rem;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
   .role-badge.manager{background:#7c3aed;}
   .role-badge.viewer{background:var(--teal);}
-  .user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 15px 40px rgba(15,23,42,.15);min-width:220px;padding:.4rem;display:none;z-index:1000;overflow:hidden;}
+  .user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 15px 40px rgba(15,23,42,.25);min-width:230px;padding:.4rem;display:none;z-index:2000;overflow:hidden;}
   .user-dropdown.show{display:block;animation:dropIn .25s ease;}
   @keyframes dropIn{from{opacity:0;transform:translateY(-8px);}}
   .dropdown-header{padding:.6rem .8rem;border-bottom:1px solid var(--border);margin-bottom:.3rem;}
@@ -257,6 +257,16 @@
   .content-wrap{display:none;}
   .content-wrap.active{display:block;}
 
+  /* ==== PHOTO UPLOAD MODAL ==== */
+  .photo-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:1rem;margin:1rem 0;}
+  .photo-preview{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,#1e3a8a,#0e7490);display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.5rem;font-weight:800;overflow:hidden;border:4px solid var(--border);box-shadow:0 12px 30px rgba(15,23,42,.15);}
+  .photo-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-buttons{display:flex;gap:.55rem;flex-wrap:wrap;justify-content:center;}
+  .file-input-label{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:.6rem 1.1rem;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;transition:.2s;}
+  .file-input-label:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,130,246,.35);}
+  .file-input-label input{display:none;}
+  .photo-tip{font-size:.72rem;color:var(--muted);text-align:center;margin-top:.4rem;line-height:1.5;}
+
   @media (max-width:768px){
     .login-glass{padding:2rem 1.5rem 1.8rem;border-radius:24px;}
     .logo-mark{width:46px;height:46px;font-size:1.4rem;}
@@ -384,6 +394,7 @@
             <div class="dh-role" id="dropdownRole">ADMIN</div>
           </div>
           <div class="dropdown-item" id="ddProfile"><i class="fas fa-user-circle"></i> My Profile</div>
+          <div class="dropdown-item" id="ddPhoto"><i class="fas fa-camera"></i> Change Profile Photo</div>
           <div class="dropdown-item" id="ddChangePwd"><i class="fas fa-key"></i> Change Password</div>
           <div class="dropdown-item" id="ddMyData"><i class="fas fa-download"></i> Download My Data</div>
           <div class="dropdown-item danger" id="ddLogout"><i class="fas fa-sign-out-alt"></i> Logout</div>
@@ -506,6 +517,34 @@
   </div>
 </div>
 
+<!-- Profile Photo Modal -->
+<div class="modal-overlay" id="photoModal">
+  <div class="modal-card">
+    <h3><i class="fas fa-camera" style="color:#7c3aed"></i> Change Profile Photo</h3>
+    <p class="sub">Upload a photo. It will be saved to your account.</p>
+
+    <div class="photo-preview-wrap">
+      <div class="photo-preview" id="photoPreview">
+        <span id="photoPreviewLetter">A</span>
+      </div>
+      <div class="photo-buttons">
+        <label class="file-input-label">
+          <i class="fas fa-upload"></i> Choose Image
+          <input type="file" id="photoFileInput" accept="image/*">
+        </label>
+        <button class="btn-cancel" id="photoRemoveBtn" style="flex:0;padding:.6rem 1rem;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;font-size:.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;"><i class="fas fa-trash"></i> Remove</button>
+      </div>
+      <div class="photo-tip">Max 2 MB · JPG / PNG · Saved to your account</div>
+    </div>
+
+    <div class="modal-msg" id="photoMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="photoCancel"><i class="fas fa-times"></i> Cancel</button>
+      <button class="btn-save" id="photoSave"><i class="fas fa-check"></i> Save Photo</button>
+    </div>
+  </div>
+</div>
+
 <!-- My Data Modal -->
 <div class="modal-overlay" id="myDataModal">
   <div class="modal-card">
@@ -588,12 +627,12 @@
   const SERVER_EXCEL_FILE = 'data.xlsx';
   const SERVER_EXCEL_ALT = 'sales-data.xlsx';
 
-  const KEY_ADMIN = 'shansi_admin_v21';
-  const KEY_VIEWERS = 'shansi_viewers_v21';
-  const KEY_SESSION = 'shansi_session_v21';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v21';
-  const KEY_CACHE_META = 'shansi_cache_meta_v21';
-  const KEY_THEME = 'shansi_theme_v21';
+  const KEY_ADMIN = 'shansi_admin_v23';
+  const KEY_VIEWERS = 'shansi_viewers_v23';
+  const KEY_SESSION = 'shansi_session_v23';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v23';
+  const KEY_CACHE_META = 'shansi_cache_meta_v23';
+  const KEY_THEME = 'shansi_theme_v23';
   const MAX_VIEWERS = 100;
 
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
@@ -611,19 +650,21 @@
       if(r){ const p = JSON.parse(r); if(p && typeof p === 'object' && Object.keys(p).length > 0) return p; }
     }catch(e){}
     return {
-      krishna:  { password:'krishna123',  created:new Date().toISOString(), managerLink:'Krishna Chauhan' },
-      roophali: { password:'roophali123', created:new Date().toISOString(), managerLink:'Roophali Vishwakarma' },
-      anup:     { password:'anup123',     created:new Date().toISOString(), managerLink:'Anup Vichare' }
+      krishna:  { password:'krishna123',  created:new Date().toISOString(), managerLink:'Krishna Chauhan', avatar:'' },
+      roophali: { password:'roophali123', created:new Date().toISOString(), managerLink:'Roophali Vishwakarma', avatar:'' },
+      anup:     { password:'anup123',     created:new Date().toISOString(), managerLink:'Anup Vichare', avatar:'' }
     };
   }
   function saveViewers(v){ try{ localStorage.setItem(KEY_VIEWERS, JSON.stringify(v)); return true; }catch(e){ return false; } }
   let VIEWERS = loadViewers();
+  // ensure each viewer has avatar field (for old data)
+  Object.keys(VIEWERS).forEach(k => { if(VIEWERS[k].avatar === undefined) VIEWERS[k].avatar = ''; });
   saveViewers(VIEWERS);
 
-  function saveSession(u){ try{ localStorage.setItem(KEY_SESSION, JSON.stringify(u)); }catch(e){} }
+  function saveSession(u){ try{ sessionStorage.setItem(KEY_SESSION, JSON.stringify(u)); }catch(e){} }
   function loadSession(){
     try{
-      const r = localStorage.getItem(KEY_SESSION);
+      const r = sessionStorage.getItem(KEY_SESSION);
       if(r){
         const s = JSON.parse(r);
         if(s.role === 'admin'){ if(s.username.toLowerCase() === ADMIN.username.toLowerCase()) return s; }
@@ -632,7 +673,7 @@
     }catch(e){}
     return null;
   }
-  function clearSession(){ try{ localStorage.removeItem(KEY_SESSION); }catch(e){} }
+  function clearSession(){ try{ sessionStorage.removeItem(KEY_SESSION); }catch(e){} }
 
   function cacheData(data, meta){ try{ localStorage.setItem(KEY_CACHE_DATA, JSON.stringify(data)); localStorage.setItem(KEY_CACHE_META, JSON.stringify(meta)); }catch(e){} }
   function loadCache(){
@@ -651,6 +692,7 @@
   let selectedLoginRole = 'admin';
   let knownManagers = [];
   let dataSource = 'none';
+  let pendingPhotoData = ''; // temporary storage for photo being edited
 
   const fmt = (n, d=2) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
   const fmtInt = (n) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString();
@@ -1262,6 +1304,107 @@
   }
 
   /* ============================================================
+     PROFILE PHOTO LOGIC
+     ============================================================ */
+  function getUserAvatar(){
+    if(!currentUser) return '';
+    if(currentUser.role === 'admin') return ADMIN.avatar || '';
+    const rec = VIEWERS[currentUser.username];
+    return rec && rec.avatar ? rec.avatar : '';
+  }
+
+  function renderAvatarInto(el, username, avatarData){
+    if(avatarData){
+      el.innerHTML = `<img src="${avatarData}" alt="avatar">`;
+    } else {
+      el.innerHTML = `<span>${String(username||'?').charAt(0).toUpperCase()}</span>`;
+    }
+  }
+
+  function updateAvatarDisplay(){
+    const avatarEl = document.getElementById('userAvatar');
+    const av = getUserAvatar();
+    renderAvatarInto(avatarEl, currentUser?.username, av);
+  }
+
+  function openPhotoModal(){
+    if(!currentUser){ toast('Not logged in','error'); return; }
+    pendingPhotoData = getUserAvatar(); // start with current
+    renderPhotoPreview();
+    document.getElementById('photoMsg').textContent = '';
+    document.getElementById('photoFileInput').value = '';
+    document.getElementById('photoModal').classList.add('show');
+  }
+
+  function renderPhotoPreview(){
+    const preview = document.getElementById('photoPreview');
+    if(pendingPhotoData){
+      preview.innerHTML = `<img src="${pendingPhotoData}" alt="preview">`;
+    } else {
+      preview.innerHTML = `<span id="photoPreviewLetter">${String(currentUser?.username||'?').charAt(0).toUpperCase()}</span>`;
+    }
+  }
+
+  function closePhotoModal(){ document.getElementById('photoModal').classList.remove('show'); }
+
+  function handlePhotoFile(file){
+    const msg = document.getElementById('photoMsg');
+    msg.textContent = '';
+    if(!file){ return; }
+    if(!file.type.startsWith('image/')){ msg.textContent = 'Please select an image file'; msg.style.color = '#dc2626'; return; }
+    if(file.size > 2 * 1024 * 1024){ msg.textContent = 'Image too large (max 2 MB)'; msg.style.color = '#dc2626'; return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pendingPhotoData = e.target.result;
+      renderPhotoPreview();
+      msg.textContent = 'Preview ready. Click Save Photo to confirm.';
+      msg.style.color = '#059669';
+    };
+    reader.onerror = () => { msg.textContent = 'Failed to read file'; msg.style.color = '#dc2626'; };
+    reader.readAsDataURL(file);
+  }
+
+  function removePendingPhoto(){
+    pendingPhotoData = '';
+    renderPhotoPreview();
+    document.getElementById('photoMsg').textContent = 'Photo removed. Click Save Photo to confirm.';
+    document.getElementById('photoMsg').style.color = '#dc2626';
+  }
+
+  function savePhoto(){
+    if(!currentUser){ toast('Not logged in','error'); return; }
+    const msg = document.getElementById('photoMsg');
+    if(currentUser.role === 'admin'){
+      ADMIN.avatar = pendingPhotoData;
+      if(saveAdmin(ADMIN)){
+        updateAvatarDisplay();
+        msg.textContent = 'Profile photo updated!';
+        msg.style.color = '#059669';
+        toast('Profile photo saved','success');
+        setTimeout(closePhotoModal, 700);
+      } else {
+        msg.textContent = 'Could not save (storage full?)';
+        msg.style.color = '#dc2626';
+      }
+    } else {
+      const rec = VIEWERS[currentUser.username];
+      if(!rec){ msg.textContent = 'Account not found'; msg.style.color = '#dc2626'; return; }
+      rec.avatar = pendingPhotoData;
+      VIEWERS[currentUser.username] = rec;
+      if(saveViewers(VIEWERS)){
+        updateAvatarDisplay();
+        msg.textContent = 'Profile photo updated!';
+        msg.style.color = '#059669';
+        toast('Profile photo saved','success');
+        setTimeout(closePhotoModal, 700);
+      } else {
+        msg.textContent = 'Could not save (storage full?)';
+        msg.style.color = '#dc2626';
+      }
+    }
+  }
+
+  /* ============================================================
      LOGIN/LOGOUT
      ============================================================ */
   document.querySelectorAll('.modern-tab').forEach(tab => {
@@ -1286,7 +1429,7 @@
     currentUser = user;
     document.getElementById('userLabel').textContent = user.username;
     document.getElementById('dropdownName').textContent = user.username;
-    document.getElementById('userAvatar').innerHTML = ADMIN.avatar && user.role === 'admin' ? `<img src="${ADMIN.avatar}">` : `<span>${user.username[0].toUpperCase()}</span>`;
+    updateAvatarDisplay();
 
     const rb = document.getElementById('roleLabel');
     if(user.role === 'admin'){ rb.textContent = 'ADMIN'; rb.className = 'role-badge'; }
@@ -1648,7 +1791,7 @@
     if(Object.keys(VIEWERS).length >= MAX_VIEWERS){ msg.textContent = 'Maximum 100 accounts reached'; msg.style.color = '#dc2626'; return; }
     if(link === '__MANAGER__' && !mName){ msg.textContent = 'Pick a manager name'; msg.style.color = '#dc2626'; return; }
 
-    VIEWERS[u] = { password:p, created:new Date().toISOString(), managerLink:mName };
+    VIEWERS[u] = { password:p, created:new Date().toISOString(), managerLink:mName, avatar:'' };
     if(saveViewers(VIEWERS)){
       document.getElementById('empUser').value = '';
       document.getElementById('empPass').value = '';
@@ -1724,28 +1867,30 @@
   document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
   document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
-  /* ===== FIXED DROPDOWN LOGIC ===== */
+  /* ===== DROPDOWN LOGIC ===== */
   const userChip = document.getElementById('userChip');
   const userDropdown = document.getElementById('userDropdown');
 
-  // Toggle dropdown when clicking on chip
   userChip.addEventListener('click', (e) => {
-    e.stopPropagation(); // prevent document click from immediately closing it
+    e.stopPropagation();
     userDropdown.classList.toggle('show');
   });
 
-  // Close dropdown when clicking anywhere outside the chip
   document.addEventListener('click', (e) => {
     if (!userChip.contains(e.target)) {
       userDropdown.classList.remove('show');
     }
   });
 
-  // Dropdown items — each one closes the menu and performs its action
   document.getElementById('ddProfile').addEventListener('click', (e) => {
     e.stopPropagation();
     userDropdown.classList.remove('show');
     toast(`Username: ${currentUser?.username || '-'} · Role: ${currentUser?.role || '-'}`,'info');
+  });
+  document.getElementById('ddPhoto').addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    openPhotoModal();
   });
   document.getElementById('ddChangePwd').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1792,6 +1937,16 @@
   document.getElementById('pwdCancel').addEventListener('click', closePwdModal);
   document.getElementById('pwdSave').addEventListener('click', saveNewPassword);
 
+  /* ==== PHOTO MODAL EVENTS ==== */
+  document.getElementById('photoModal').addEventListener('click', e => { if(e.target.id === 'photoModal') closePhotoModal(); });
+  document.getElementById('photoCancel').addEventListener('click', closePhotoModal);
+  document.getElementById('photoSave').addEventListener('click', savePhoto);
+  document.getElementById('photoRemoveBtn').addEventListener('click', removePendingPhoto);
+  document.getElementById('photoFileInput').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if(file) handlePhotoFile(file);
+  });
+
   document.getElementById('lossClose').addEventListener('click', closeLossModal);
   document.getElementById('lossExport').addEventListener('click', exportLossCSV);
   document.getElementById('lossModal').addEventListener('click', e => { if(e.target.id === 'lossModal') closeLossModal(); });
@@ -1800,7 +1955,7 @@
     if(e.ctrlKey && e.key === 'k'){ e.preventDefault(); document.getElementById('globalSearch')?.focus(); }
     if(e.ctrlKey && e.key === 'd'){ e.preventDefault(); toggleTheme(); }
     if(e.key === 'Escape'){
-      ['lossModal','pwdModal','myDataModal','empModal','rawModal'].forEach(id => document.getElementById(id).classList.remove('show'));
+      ['lossModal','pwdModal','myDataModal','empModal','rawModal','photoModal'].forEach(id => document.getElementById(id).classList.remove('show'));
       userDropdown.classList.remove('show');
     }
   });

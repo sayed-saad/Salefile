@@ -778,13 +778,13 @@
 
   if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 
-  const KEY_ADMIN = 'shansi_admin_v28';
-  const KEY_VIEWERS = 'shansi_viewers_v28';
-  const KEY_SESSION = 'shansi_session_v28';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v28';
-  const KEY_CACHE_META = 'shansi_cache_meta_v28';
-  const KEY_THEME = 'shansi_theme_v28';
-  const KEY_ACCENT = 'shansi_accent_v28';
+  const KEY_ADMIN = 'shansi_admin_v29';
+  const KEY_VIEWERS = 'shansi_viewers_v29';
+  const KEY_SESSION = 'shansi_session_v29';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v29';
+  const KEY_CACHE_META = 'shansi_cache_meta_v29';
+  const KEY_THEME = 'shansi_theme_v29';
+  const KEY_ACCENT = 'shansi_accent_v29';
   const MAX_VIEWERS = 100;
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
 
@@ -1749,12 +1749,91 @@
     }catch(e){ toast('Error: '+e.message,'error'); }
   }
 
+  /* ============================================================
+     BULLETPROOF EXPORT — converts all canvas charts to images
+     before html2canvas runs, then restores them
+     ============================================================ */
+  function snapshotChartsToImages(container){
+    // Returns a restore function
+    const canvases = container.querySelectorAll('canvas');
+    const snapshots = [];
+    canvases.forEach((cnv) => {
+      try{
+        // Only snapshot if canvas has meaningful size
+        if(cnv.width < 5 || cnv.height < 5) return;
+        const dataURL = cnv.toDataURL('image/png');
+        if(!dataURL || dataURL === 'data:,') return;
+
+        const img = document.createElement('img');
+        img.src = dataURL;
+        img.style.cssText = cnv.style.cssText;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        img.style.display = 'block';
+
+        const parent = cnv.parentElement;
+        if(parent){
+          snapshots.push({ cnv, parent, nextSibling: cnv.nextSibling });
+          parent.replaceChild(img, cnv);
+        }
+      }catch(e){
+        console.warn('Could not snapshot canvas:', e);
+      }
+    });
+
+    return function restore(){
+      snapshots.forEach(({ cnv, parent, nextSibling }) => {
+        // Remove the img that replaced it
+        const imgs = parent.querySelectorAll('img');
+        imgs.forEach(im => {
+          if(im.src && im.src.startsWith('data:image/png') && !im.closest('canvas')){
+            // Only remove our injected img
+            if(im.dataset && im.dataset.__chartSnapshot === '1'){
+              // Already marked
+            }
+          }
+        });
+        // Safer: just find the img right before our canvas placeholder
+        // Actually: we saved {cnv, parent}. Just re-append cnv.
+        if(!parent.contains(cnv)){
+          // Remove any direct img child that has data URL matching our snapshot
+          const directImgs = Array.from(parent.children).filter(c => c.tagName === 'IMG' && c.src && c.src.startsWith('data:image/png'));
+          if(directImgs.length) directImgs[0].remove();
+          if(nextSibling && parent.contains(nextSibling)){
+            parent.insertBefore(cnv, nextSibling);
+          } else {
+            parent.appendChild(cnv);
+          }
+        }
+      });
+    };
+  }
+
+  function markInjectedImages(container){
+    // Ensure the injected imgs are flagged for easy removal
+    container.querySelectorAll('img').forEach(im => {
+      if(im.src && im.src.startsWith('data:image/png') && !im.dataset.marked){
+        im.dataset.marked = '1';
+      }
+    });
+  }
+
   async function exportPDF(){
     const cw = document.getElementById('contentWrap');
     if(!cw.classList.contains('active')){ toast('No data to export','error'); return; }
     toast('Generating PDF... please wait','info');
+
+    // 1. Replace charts with static images
+    const restore = snapshotChartsToImages(cw);
+    // mark injected images so we can find them later
+    cw.querySelectorAll('img').forEach(im => {
+      if(im.src && im.src.startsWith('data:image/png')) im.dataset.__chartSnapshot = '1';
+    });
+
     try{
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 300));
+
       const canvas = await html2canvas(cw, {
         scale: 2,
         useCORS: true,
@@ -1765,20 +1844,9 @@
         scrollY: -window.scrollY,
         windowWidth: cw.scrollWidth,
         windowHeight: cw.scrollHeight,
-        onclone: (doc, originalElement) => {
+        onclone: (doc) => {
           doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove());
           doc.querySelectorAll('button').forEach(b => b.style.boxShadow = 'none');
-          const origCanvases = originalElement.querySelectorAll('canvas');
-          const clonedCanvases = doc.querySelectorAll('canvas');
-          clonedCanvases.forEach((cnv, i) => {
-            if(cnv.width === 0 || cnv.height === 0){
-              const orig = origCanvases[i];
-              if(orig){
-                cnv.width = orig.width || 400;
-                cnv.height = orig.height || 200;
-              }
-            }
-          });
         }
       });
 
@@ -1811,6 +1879,19 @@
     }catch(e){
       console.error(e);
       toast('PDF error: ' + e.message,'error');
+    }finally{
+      // 2. Restore charts
+      restore();
+      // Remove any remaining injected imgs
+      cw.querySelectorAll('img[data-__chart-snapshot="1"]').forEach(im => im.remove());
+      cw.querySelectorAll('img').forEach(im => {
+        if(im.dataset.__chartSnapshot === '1') im.remove();
+      });
+      // Re-render charts so they come back
+      if(rawData.length){
+        const amRows = aggregateByAM(filteredData);
+        if(amRows.length) renderCharts(amRows);
+      }
     }
   }
 
@@ -1818,8 +1899,15 @@
     const cw = document.getElementById('contentWrap');
     if(!cw.classList.contains('active')){ toast('No data','error'); return; }
     toast('Generating PNG...','info');
+
+    const restore = snapshotChartsToImages(cw);
+    cw.querySelectorAll('img').forEach(im => {
+      if(im.src && im.src.startsWith('data:image/png')) im.dataset.__chartSnapshot = '1';
+    });
+
     try{
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 300));
+
       const canvas = await html2canvas(cw, {
         scale: 2,
         useCORS: true,
@@ -1830,20 +1918,9 @@
         scrollY: -window.scrollY,
         windowWidth: cw.scrollWidth,
         windowHeight: cw.scrollHeight,
-        onclone: (doc, originalElement) => {
+        onclone: (doc) => {
           doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove());
           doc.querySelectorAll('button').forEach(b => b.style.boxShadow = 'none');
-          const origCanvases = originalElement.querySelectorAll('canvas');
-          const clonedCanvases = doc.querySelectorAll('canvas');
-          clonedCanvases.forEach((cnv, i) => {
-            if(cnv.width === 0 || cnv.height === 0){
-              const orig = origCanvases[i];
-              if(orig){
-                cnv.width = orig.width || 400;
-                cnv.height = orig.height || 200;
-              }
-            }
-          });
         }
       });
 
@@ -1859,6 +1936,15 @@
     }catch(e){
       console.error(e);
       toast('PNG error: '+e.message,'error');
+    }finally{
+      restore();
+      cw.querySelectorAll('img').forEach(im => {
+        if(im.dataset.__chartSnapshot === '1') im.remove();
+      });
+      if(rawData.length){
+        const amRows = aggregateByAM(filteredData);
+        if(amRows.length) renderCharts(amRows);
+      }
     }
   }
 

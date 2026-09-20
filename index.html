@@ -127,7 +127,7 @@
   .role-badge{background:var(--blue);color:#fff;padding:.15rem .5rem;border-radius:20px;font-size:.6rem;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
   .role-badge.manager{background:#7c3aed;}
   .role-badge.viewer{background:var(--teal);}
-  .user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 15px 40px rgba(15,23,42,.15);min-width:220px;padding:.4rem;display:none;z-index:100;overflow:hidden;}
+  .user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 15px 40px rgba(15,23,42,.15);min-width:220px;padding:.4rem;display:none;z-index:1000;overflow:hidden;}
   .user-dropdown.show{display:block;animation:dropIn .25s ease;}
   @keyframes dropIn{from{opacity:0;transform:translateY(-8px);}}
   .dropdown-header{padding:.6rem .8rem;border-bottom:1px solid var(--border);margin-bottom:.3rem;}
@@ -1262,7 +1262,7 @@
   }
 
   /* ============================================================
-     LOGIN/LOGOUT — INSTANT
+     LOGIN/LOGOUT
      ============================================================ */
   document.querySelectorAll('.modern-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -1282,7 +1282,6 @@
     pwdToggle.classList.toggle('fa-eye-slash', isPwd);
   });
 
-  /* ⭐ INSTANT applyUserUI — cache first, server in background */
   function applyUserUI(user){
     currentUser = user;
     document.getElementById('userLabel').textContent = user.username;
@@ -1305,11 +1304,9 @@
       viewDataBtn.style.display = 'none';
     }
 
-    /* INSTANT: hide login, show dashboard */
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('dashboard').classList.add('active');
 
-    /* INSTANT: use cache if available — zero delay */
     const cached = loadCache();
     if(cached && cached.data.length){
       rawData = cached.data;
@@ -1319,7 +1316,6 @@
       console.log('⚡ Instant load from cache:', rawData.length, 'rows');
     }
 
-    /* BACKGROUND: fetch fresh data without blocking */
     loadFromServer().then(serverResult => {
       if(serverResult){
         const oldCount = rawData.length;
@@ -1377,7 +1373,6 @@
   }
 
   function doLogout(){
-    /* INSTANT: clear session and go back */
     clearSession();
     currentUser = null;
     rawData = [];
@@ -1729,20 +1724,44 @@
   document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
   document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
+  /* ===== FIXED DROPDOWN LOGIC ===== */
   const userChip = document.getElementById('userChip');
   const userDropdown = document.getElementById('userDropdown');
+
+  // Toggle dropdown when clicking on chip
   userChip.addEventListener('click', (e) => {
-    if(e.target.closest('.user-dropdown')) return;
+    e.stopPropagation(); // prevent document click from immediately closing it
     userDropdown.classList.toggle('show');
   });
+
+  // Close dropdown when clicking anywhere outside the chip
   document.addEventListener('click', (e) => {
-    if(!userChip.contains(e.target)) userDropdown.classList.remove('show');
+    if (!userChip.contains(e.target)) {
+      userDropdown.classList.remove('show');
+    }
   });
 
-  document.getElementById('ddProfile').addEventListener('click', () => { userDropdown.classList.remove('show'); toast(`Username: ${currentUser?.username || '-'} · Role: ${currentUser?.role || '-'}`,'info'); });
-  document.getElementById('ddChangePwd').addEventListener('click', () => { userDropdown.classList.remove('show'); openPwdModal(); });
-  document.getElementById('ddMyData').addEventListener('click', () => { userDropdown.classList.remove('show'); openMyDataModal(); });
-  document.getElementById('ddLogout').addEventListener('click', () => { userDropdown.classList.remove('show'); doLogout(); });
+  // Dropdown items — each one closes the menu and performs its action
+  document.getElementById('ddProfile').addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    toast(`Username: ${currentUser?.username || '-'} · Role: ${currentUser?.role || '-'}`,'info');
+  });
+  document.getElementById('ddChangePwd').addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    openPwdModal();
+  });
+  document.getElementById('ddMyData').addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    openMyDataModal();
+  });
+  document.getElementById('ddLogout').addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    doLogout();
+  });
 
   document.getElementById('themeBtn').addEventListener('click', toggleTheme);
   document.getElementById('fullscreenBtn').addEventListener('click', () => {

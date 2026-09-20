@@ -778,13 +778,13 @@
 
   if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 
-  const KEY_ADMIN = 'shansi_admin_v26';
-  const KEY_VIEWERS = 'shansi_viewers_v26';
-  const KEY_SESSION = 'shansi_session_v26';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v26';
-  const KEY_CACHE_META = 'shansi_cache_meta_v26';
-  const KEY_THEME = 'shansi_theme_v26';
-  const KEY_ACCENT = 'shansi_accent_v26';
+  const KEY_ADMIN = 'shansi_admin_v27';
+  const KEY_VIEWERS = 'shansi_viewers_v27';
+  const KEY_SESSION = 'shansi_session_v27';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v27';
+  const KEY_CACHE_META = 'shansi_cache_meta_v27';
+  const KEY_THEME = 'shansi_theme_v27';
+  const KEY_ACCENT = 'shansi_accent_v27';
   const MAX_VIEWERS = 100;
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
 
@@ -1150,7 +1150,12 @@
     const sorted = [...rows].sort((a,b)=>b.profit - a.profit);
     const topAM = sorted[0];
     const worstAM = sorted[sorted.length-1];
-    const avgMargin = rows.reduce((s,r)=>s+r.marginPct,0) / rows.length;
+
+    // ✅ FIXED: Weighted average (Total Profit / Total Revenue)
+    const totalProfit = rows.reduce((s,r)=>s+r.profit,0);
+    const totalRevenue = rows.reduce((s,r)=>s+r.revenue,0);
+    const avgMargin = totalRevenue ? (totalProfit / totalRevenue) * 100 : 0;
+
     const bestMargin = [...rows].sort((a,b)=>b.marginPct - a.marginPct)[0];
 
     const insights = [

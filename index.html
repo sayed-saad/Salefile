@@ -224,6 +224,16 @@
   body.dark .storage-banner{background:linear-gradient(135deg,rgba(5,150,105,.75),rgba(4,120,87,.75));border-color:rgba(16,185,129,.35);}
   .warning-banner{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:16px;padding:.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem;font-weight:600;}
 
+  .welcome-banner{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;padding:1rem 1.25rem;border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(16,185,129,.07));box-shadow:0 8px 24px rgba(15,23,42,.06);}
+  .welcome-main{display:flex;align-items:center;gap:.9rem;min-width:0;}
+  .welcome-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;box-shadow:0 8px 18px rgba(59,130,246,.2);flex:none;}
+  .welcome-copy h2{margin:0;font-family:'Space Grotesk';font-size:1.08rem;color:var(--text);font-weight:700;}
+  .welcome-copy p{margin:.2rem 0 0;color:var(--muted);font-size:.76rem;}
+  .welcome-time{text-align:right;white-space:nowrap;}
+  .welcome-time strong{display:block;font-family:'Space Grotesk';font-size:1rem;color:var(--text);}
+  .welcome-time span{font-size:.72rem;color:var(--muted);}
+  body.dark .welcome-banner{background:linear-gradient(135deg,rgba(59,130,246,.13),rgba(16,185,129,.09));box-shadow:none;}
+  @media(max-width:650px){.welcome-banner{align-items:flex-start}.welcome-time{text-align:left}.welcome-main{align-items:flex-start}.welcome-icon{margin-top:.1rem}.welcome-banner{flex-direction:column;}}
   .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;margin-bottom:1rem;}
   .kpi-card{border-radius:18px;padding:1rem 1.15rem;color:#fff;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s;cursor:pointer;box-shadow:0 10px 30px rgba(15,23,42,.12);}
   .kpi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
@@ -440,7 +450,7 @@
       <p>Sign in to your sales dashboard</p>
     </div>
     <div class="modern-tabs">
-      <div class="modern-tab active" data-role="admin"><i class="fas fa-user-shield"></i> Admin</div>
+      <div class="modern-tab active" data-role="admin"><i class="fas fa-user-shield"></i> Sales Head</div>
       <div class="modern-tab" data-role="viewer"><i class="fas fa-user-tie"></i> Manager</div>
     </div>
     <div class="input-field">
@@ -455,7 +465,7 @@
       <i class="fas fa-eye pwd-toggle" id="pwdToggle"></i>
     </div>
     <button class="btn-modern" id="loginBtn">
-      <span id="loginBtnText">Sign in as Admin</span>
+      <span id="loginBtnText">Sign in as Sales Head</span>
       <i class="fas fa-arrow-right"></i>
     </button>
     <div class="login-error" id="loginError"></div>
@@ -493,13 +503,13 @@
 
       <div class="user-chip" id="userChip">
         <div class="avatar" id="userAvatar"><span>A</span></div>
-        <span id="userLabel">admin</span>
+        <span id="userLabel">Sales Head</span>
         <span class="role-badge" id="roleLabel">ADMIN</span>
         <i class="fas fa-chevron-down" style="font-size:.65rem;opacity:.6;"></i>
         <div class="user-dropdown" id="userDropdown">
           <div class="dropdown-header">
-            <div class="dh-name" id="dropdownName">admin</div>
-            <div class="dh-role" id="dropdownRole">ADMIN</div>
+            <div class="dh-name" id="dropdownName">Sales Head</div>
+            <div class="dh-role" id="dropdownRole">SALES HEAD</div>
           </div>
           <div class="dropdown-item" id="ddProfile"><i class="fas fa-user-circle"></i> My Profile</div>
           <div class="dropdown-item" id="ddPhoto"><i class="fas fa-camera"></i> Change Profile Photo</div>
@@ -549,6 +559,20 @@
     <h2>No data loaded</h2>
     <p>Admin can upload Excel/CSV file to get started. Data will be saved locally in browser.</p>
     <button class="btn-save" id="emptyUploadBtn" style="padding:.7rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;border:none;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;"><i class="fas fa-upload"></i> Upload Data File</button>
+  </div>
+
+  <div class="welcome-banner" id="welcomeBanner" aria-live="polite">
+    <div class="welcome-main">
+      <div class="welcome-icon"><i class="fas fa-sun" id="welcomeIcon"></i></div>
+      <div class="welcome-copy">
+        <h2 id="welcomeGreeting">Good Morning, Sales Head</h2>
+        <p id="welcomeMessage">Here is your live sales overview for today.</p>
+      </div>
+    </div>
+    <div class="welcome-time">
+      <strong id="welcomeTime">--:--:--</strong>
+      <span id="welcomeDate">Loading date...</span>
+    </div>
   </div>
 
   <div class="content-wrap" id="contentWrap">
@@ -908,11 +932,42 @@
   }
 
   function updateLiveDate(){
-    const el = document.getElementById('liveDate');
-    if(!el) return;
     const d = new Date();
-    const opts = { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true };
-    el.textContent = d.toLocaleString('en-GB', opts).replace(',', ' ·');
+    const el = document.getElementById('liveDate');
+    if(el){
+      const opts = { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true };
+      el.textContent = d.toLocaleString('en-GB', opts).replace(',', ' ·');
+    }
+    updateWelcomeGreeting(d);
+  }
+
+  function updateWelcomeGreeting(d){
+    const greetingEl = document.getElementById('welcomeGreeting');
+    const msgEl = document.getElementById('welcomeMessage');
+    const timeEl = document.getElementById('welcomeTime');
+    const dateEl = document.getElementById('welcomeDate');
+    const iconEl = document.getElementById('welcomeIcon');
+    if(!greetingEl || !timeEl || !dateEl) return;
+
+    const hour = d.getHours();
+    let greeting = 'Good Evening';
+    let icon = 'fa-moon';
+    if(hour >= 5 && hour < 12){ greeting = 'Good Morning'; icon = 'fa-sun'; }
+    else if(hour >= 12 && hour < 17){ greeting = 'Good Afternoon'; icon = 'fa-cloud-sun'; }
+
+    let displayName = 'Sales Head';
+    if(currentUser){
+      displayName = currentUser.role === 'admin' ? 'Sales Head' : currentUser.username;
+    }
+    greetingEl.textContent = `${greeting}, ${displayName}`;
+    if(msgEl){
+      msgEl.textContent = currentUser && currentUser.role === 'admin'
+        ? 'Here is your live sales overview. Review performance, margins and action items.'
+        : 'Here is your live manager performance overview. Stay focused on today\'s results.';
+    }
+    timeEl.textContent = d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+    dateEl.textContent = d.toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    if(iconEl) iconEl.className = 'fas ' + icon;
   }
 
   (function createParticles(){
@@ -1993,12 +2048,14 @@
 
   function applyUserUI(user){
     currentUser = user;
-    document.getElementById('userLabel').textContent = user.username;
-    document.getElementById('dropdownName').textContent = user.username;
+    updateWelcomeGreeting(new Date());
+    const displayName = user.role === 'admin' ? 'Sales Head' : user.username;
+    document.getElementById('userLabel').textContent = displayName;
+    document.getElementById('dropdownName').textContent = displayName;
     updateAvatarDisplay();
 
     const rb = document.getElementById('roleLabel');
-    if(user.role === 'admin'){ rb.textContent = 'ADMIN'; rb.className = 'role-badge'; }
+    if(user.role === 'admin'){ rb.textContent = 'SALES HEAD'; rb.className = 'role-badge'; }
     else if(user.managerLink){ rb.textContent = 'MANAGER'; rb.className = 'role-badge manager'; }
     else { rb.textContent = 'VIEWER'; rb.className = 'role-badge viewer'; }
     document.getElementById('dropdownRole').textContent = rb.textContent;
@@ -2052,8 +2109,10 @@
 
     let matched = null;
     if(selectedLoginRole === 'admin'){
-      if(u.toLowerCase() === ADMIN.username.toLowerCase() && p === ADMIN.password){
+      if((u.toLowerCase() === ADMIN.username.toLowerCase() || u.toLowerCase() === 'saleshead') && p === ADMIN.password){
         matched = { username:ADMIN.username, role:'admin', managerLink:'' };
+        // 'saleshead' is a display/login alias; stored admin credentials remain unchanged.
+
       }
     } else {
       const key = Object.keys(VIEWERS).find(k => k.toLowerCase() === u.toLowerCase());
@@ -2061,7 +2120,7 @@
         matched = { username:key, role:'viewer', managerLink:VIEWERS[key].managerLink || '' };
       }
     }
-    if(!matched){ err.textContent = 'Invalid ' + selectedLoginRole + ' credentials'; return; }
+    if(!matched){ err.textContent = 'Invalid ' + (selectedLoginRole === 'admin' ? 'Sales Head' : 'Manager') + ' credentials'; return; }
 
     const btn = document.getElementById('loginBtn');
     const btnText = document.getElementById('loginBtnText');
@@ -2074,7 +2133,7 @@
       applyUserUI(matched);
       btnText.textContent = originalText;
       btn.disabled = false;
-      toast(`Welcome, ${matched.username}`,'success');
+      toast(`Welcome, ${matched.role === 'admin' ? 'Sales Head' : matched.username}`,'success');
     }, 150);
   }
 
@@ -2334,7 +2393,7 @@
       document.querySelectorAll('.modern-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       selectedLoginRole = tab.getAttribute('data-role');
-      document.getElementById('loginBtnText').textContent = selectedLoginRole === 'admin' ? 'Sign in as Admin' : 'Sign in as Manager';
+      document.getElementById('loginBtnText').textContent = selectedLoginRole === 'admin' ? 'Sign in as Sales Head' : 'Sign in as Manager';
     });
   });
 
@@ -2489,7 +2548,7 @@
     }catch(e){}
 
     updateLiveDate();
-    setInterval(updateLiveDate, 60000);
+    setInterval(updateLiveDate, 1000);
 
     document.getElementById('footerYear').textContent = new Date().getFullYear();
 
@@ -2500,7 +2559,7 @@
     const savedUser = loadSession();
     if(savedUser){
       applyUserUI(savedUser);
-      toast(`Welcome back, ${savedUser.username}`,'info');
+      toast(`Welcome back, ${savedUser.role === 'admin' ? 'Sales Head' : savedUser.username}`,'info');
     }
   });
 

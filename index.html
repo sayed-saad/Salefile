@@ -575,19 +575,19 @@
     <div class="charts-grid">
       <div class="chart-box">
         <h3><i class="fas fa-chart-bar" style="color:#3b82f6"></i> Count by AM
-          <div class="chart-actions"><button class="chart-action-btn" data-chart="chart1" data-action="png" title="Save PNG"><i class="fas fa-image"></i></button></div>
+          <div class="chart-actions"><button class="chart-action-btn" data-chart="chart1" data-action="png" title="Save JPEG"><i class="fas fa-image"></i></button></div>
         </h3>
         <div class="chart-canvas-wrap"><canvas id="chart1"></canvas></div>
       </div>
       <div class="chart-box">
         <h3><i class="fas fa-chart-line" style="color:#f97316"></i> Count vs Delivered
-          <div class="chart-actions"><button class="chart-action-btn" data-chart="chart2" data-action="png" title="Save PNG"><i class="fas fa-image"></i></button></div>
+          <div class="chart-actions"><button class="chart-action-btn" data-chart="chart2" data-action="png" title="Save JPEG"><i class="fas fa-image"></i></button></div>
         </h3>
         <div class="chart-canvas-wrap"><canvas id="chart2"></canvas></div>
       </div>
       <div class="chart-box">
         <h3><i class="fas fa-percent" style="color:#059669"></i> Margin %
-          <div class="chart-actions"><button class="chart-action-btn" data-chart="chart3" data-action="png" title="Save PNG"><i class="fas fa-image"></i></button></div>
+          <div class="chart-actions"><button class="chart-action-btn" data-chart="chart3" data-action="png" title="Save JPEG"><i class="fas fa-image"></i></button></div>
         </h3>
         <div class="chart-canvas-wrap"><canvas id="chart3"></canvas></div>
       </div>
@@ -600,7 +600,7 @@
 
     <div class="chart-box" style="margin-bottom:1rem;">
       <h3><i class="fas fa-chart-pie" style="color:#7c3aed"></i> Profit Share
-        <div class="chart-actions"><button class="chart-action-btn" data-chart="chartPie" data-action="png" title="Save PNG"><i class="fas fa-image"></i></button></div>
+        <div class="chart-actions"><button class="chart-action-btn" data-chart="chartPie" data-action="png" title="Save JPEG"><i class="fas fa-image"></i></button></div>
       </h3>
       <div class="chart-canvas-wrap" style="height:300px;max-width:520px;margin:0 auto;"><canvas id="chartPie"></canvas></div>
     </div>
@@ -763,7 +763,7 @@
     <p class="sub">Choose format for your dashboard report</p>
     <div style="display:flex;flex-direction:column;gap:.5rem;margin:1rem 0;">
       <button class="btn-pdf" id="reportPdf" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-file-pdf"></i> Download PDF Report</button>
-      <button class="btn-png" id="reportPng" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-image"></i> Download PNG Snapshot</button>
+      <button class="btn-png" id="reportPng" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-image"></i> Download JPEG Snapshot</button>
       <button class="btn-excel" id="reportExcel" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-file-excel"></i> Download Excel Data</button>
     </div>
     <div class="modal-actions">
@@ -810,11 +810,25 @@
   function loadViewers(){
     try{
       const r = localStorage.getItem(KEY_VIEWERS);
-      if(r){ const p = JSON.parse(r); if(p && typeof p === 'object' && Object.keys(p).length > 0) return p; }
+      if(r){
+        const p = JSON.parse(r);
+        if(p && typeof p === 'object' && Object.keys(p).length > 0){
+          // Migrate the old misspelled Roophali account to the requested Roopali account.
+          if(p.roophali){
+            if(!p.roopali) p.roopali = Object.assign({}, p.roophali);
+            delete p.roophali;
+          }
+          if(p.roopali){
+            p.roopali.password = 'roopali123';
+            p.roopali.managerLink = 'Roopali Vishwakarma';
+          }
+          return p;
+        }
+      }
     }catch(e){}
     return {
       krishna:  { password:'krishna123',  created:new Date().toISOString(), managerLink:'Krishna Chauhan', avatar:'' },
-      roophali: { password:'roophali123', created:new Date().toISOString(), managerLink:'Roophali Vishwakarma', avatar:'' },
+      roopali:  { password:'roopali123',  created:new Date().toISOString(), managerLink:'Roopali Vishwakarma', avatar:'' },
       anup:     { password:'anup123',     created:new Date().toISOString(), managerLink:'Anup Vichare', avatar:'' }
     };
   }
@@ -1265,7 +1279,7 @@
     rows.sort((a,b) => b.profit - a.profit);
 
     const total = rows.length;
-    const limited = rows.slice(0, 500);
+    const limited = rows;
 
     if(!limited.length){
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem;">No matching records</td></tr>';
@@ -1750,22 +1764,23 @@
   }
 
   /* ============================================================
-     BULLETPROOF EXPORT — converts all canvas charts to images
-     before html2canvas runs, then restores them
+     ROBUST DASHBOARD EXPORT
+     - JPEG snapshot for the full dashboard
+     - Multi-page PDF with every dashboard section
+     - Charts are converted to images before html2canvas
      ============================================================ */
   function snapshotChartsToImages(container){
-    // Returns a restore function
     const canvases = container.querySelectorAll('canvas');
     const snapshots = [];
     canvases.forEach((cnv) => {
       try{
-        // Only snapshot if canvas has meaningful size
         if(cnv.width < 5 || cnv.height < 5) return;
         const dataURL = cnv.toDataURL('image/png');
         if(!dataURL || dataURL === 'data:,') return;
 
         const img = document.createElement('img');
         img.src = dataURL;
+        img.dataset.__chartSnapshot = '1';
         img.style.cssText = cnv.style.cssText;
         img.style.width = '100%';
         img.style.height = '100%';
@@ -1774,120 +1789,125 @@
 
         const parent = cnv.parentElement;
         if(parent){
-          snapshots.push({ cnv, parent, nextSibling: cnv.nextSibling });
+          snapshots.push({cnv, parent, nextSibling:cnv.nextSibling, img});
           parent.replaceChild(img, cnv);
         }
       }catch(e){
-        console.warn('Could not snapshot canvas:', e);
+        console.warn('Could not snapshot chart:', e);
       }
     });
 
     return function restore(){
-      snapshots.forEach(({ cnv, parent, nextSibling }) => {
-        // Remove the img that replaced it
-        const imgs = parent.querySelectorAll('img');
-        imgs.forEach(im => {
-          if(im.src && im.src.startsWith('data:image/png') && !im.closest('canvas')){
-            // Only remove our injected img
-            if(im.dataset && im.dataset.__chartSnapshot === '1'){
-              // Already marked
-            }
-          }
-        });
-        // Safer: just find the img right before our canvas placeholder
-        // Actually: we saved {cnv, parent}. Just re-append cnv.
+      snapshots.forEach(({cnv, parent, nextSibling, img}) => {
+        if(img && img.parentElement === parent) img.remove();
         if(!parent.contains(cnv)){
-          // Remove any direct img child that has data URL matching our snapshot
-          const directImgs = Array.from(parent.children).filter(c => c.tagName === 'IMG' && c.src && c.src.startsWith('data:image/png'));
-          if(directImgs.length) directImgs[0].remove();
-          if(nextSibling && parent.contains(nextSibling)){
-            parent.insertBefore(cnv, nextSibling);
-          } else {
-            parent.appendChild(cnv);
-          }
+          if(nextSibling && nextSibling.parentElement === parent) parent.insertBefore(cnv, nextSibling);
+          else parent.appendChild(cnv);
         }
       });
     };
   }
 
-  function markInjectedImages(container){
-    // Ensure the injected imgs are flagged for easy removal
-    container.querySelectorAll('img').forEach(im => {
-      if(im.src && im.src.startsWith('data:image/png') && !im.dataset.marked){
-        im.dataset.marked = '1';
+  async function captureExportCanvas(element, background){
+    if(document.fonts && document.fonts.ready){
+      try{ await document.fonts.ready; }catch(e){}
+    }
+
+    const maxDimension = 14000;
+    const naturalW = Math.max(element.scrollWidth, element.clientWidth, 1);
+    const naturalH = Math.max(element.scrollHeight, element.clientHeight, 1);
+    const safeScale = Math.min(1.6, maxDimension / Math.max(naturalW, naturalH));
+
+    return await html2canvas(element, {
+      scale: Math.max(.7, safeScale),
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      backgroundColor: background,
+      scrollX: 0,
+      scrollY: 0,
+      width: naturalW,
+      height: naturalH,
+      windowWidth: Math.max(window.innerWidth, naturalW),
+      windowHeight: Math.max(window.innerHeight, naturalH),
+      onclone: (doc) => {
+        // Make export contain all rows/sections instead of clipped scroll areas.
+        doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove());
+        doc.querySelectorAll('.raw-table-wrap').forEach(w => {
+          w.style.maxHeight = 'none';
+          w.style.height = 'auto';
+          w.style.overflow = 'visible';
+        });
+        doc.querySelectorAll('.chart-canvas-wrap').forEach(w => {
+          w.style.overflow = 'visible';
+        });
+        doc.querySelectorAll('button').forEach(b => {
+          b.style.boxShadow = 'none';
+        });
       }
     });
+  }
+
+  function addCanvasToPDF(pdf, canvas, firstPage){
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 5;
+    const usableW = pageW - margin * 2;
+    const usableH = pageH - margin * 2;
+    const imgW = usableW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+
+    let remaining = imgH;
+    let position = margin;
+
+    if(!firstPage) pdf.addPage();
+
+    const imgData = canvas.toDataURL('image/jpeg', .94);
+    pdf.addImage(imgData, 'JPEG', margin, position, imgW, imgH);
+    remaining -= usableH;
+
+    while(remaining > 0){
+      position = margin + remaining - imgH;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', margin, position, imgW, imgH);
+      remaining -= usableH;
+    }
   }
 
   async function exportPDF(){
     const cw = document.getElementById('contentWrap');
     if(!cw.classList.contains('active')){ toast('No data to export','error'); return; }
-    toast('Generating PDF... please wait','info');
 
-    // 1. Replace charts with static images
+    toast('Generating complete PDF report... please wait','info');
     const restore = snapshotChartsToImages(cw);
-    // mark injected images so we can find them later
-    cw.querySelectorAll('img').forEach(im => {
-      if(im.src && im.src.startsWith('data:image/png')) im.dataset.__chartSnapshot = '1';
-    });
+    const background = document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7';
 
     try{
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 250));
 
-      const canvas = await html2canvas(cw, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        backgroundColor: document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7',
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        windowWidth: cw.scrollWidth,
-        windowHeight: cw.scrollHeight,
-        onclone: (doc) => {
-          doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove());
-          doc.querySelectorAll('button').forEach(b => b.style.boxShadow = 'none');
-        }
-      });
-
-      if(!canvas || canvas.width === 0 || canvas.height === 0){
-        throw new Error('Canvas is empty — try again or reload the page');
-      }
-
-      const imgData = canvas.toDataURL('image/png');
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW - 10;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      let position = 5;
-      let heightLeft = imgH;
+      const sections = Array.from(cw.children).filter(el => el && el.offsetWidth > 0);
+      let firstPage = true;
 
-      pdf.addImage(imgData, 'PNG', 5, position, imgW, imgH);
-      heightLeft -= (pageH - 10);
-
-      while(heightLeft > 0){
-        position = heightLeft - imgH + 5;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 5, position, imgW, imgH);
-        heightLeft -= (pageH - 10);
+      // Each dashboard section gets its own PDF flow, preventing oversized
+      // browser canvases from breaking the download.
+      for(const section of sections){
+        const canvas = await captureExportCanvas(section, background);
+        if(!canvas || !canvas.width || !canvas.height) continue;
+        addCanvasToPDF(pdf, canvas, firstPage);
+        firstPage = false;
       }
 
+      if(firstPage) throw new Error('No dashboard sections were available for export');
+
       pdf.save('shansi_report_' + new Date().toISOString().slice(0,10) + '.pdf');
-      toast('PDF downloaded','success');
+      toast('PDF downloaded successfully','success');
     }catch(e){
       console.error(e);
       toast('PDF error: ' + e.message,'error');
     }finally{
-      // 2. Restore charts
       restore();
-      // Remove any remaining injected imgs
-      cw.querySelectorAll('img[data-__chart-snapshot="1"]').forEach(im => im.remove());
-      cw.querySelectorAll('img').forEach(im => {
-        if(im.dataset.__chartSnapshot === '1') im.remove();
-      });
-      // Re-render charts so they come back
       if(rawData.length){
         const amRows = aggregateByAM(filteredData);
         if(amRows.length) renderCharts(amRows);
@@ -1895,52 +1915,32 @@
     }
   }
 
-  async function exportPNG(){
+  async function exportJPEG(){
     const cw = document.getElementById('contentWrap');
-    if(!cw.classList.contains('active')){ toast('No data','error'); return; }
-    toast('Generating PNG...','info');
+    if(!cw.classList.contains('active')){ toast('No data to export','error'); return; }
 
+    toast('Generating JPEG... please wait','info');
     const restore = snapshotChartsToImages(cw);
-    cw.querySelectorAll('img').forEach(im => {
-      if(im.src && im.src.startsWith('data:image/png')) im.dataset.__chartSnapshot = '1';
-    });
+    const background = document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7';
 
     try{
-      await new Promise(r => setTimeout(r, 300));
-
-      const canvas = await html2canvas(cw, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        backgroundColor: document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7',
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        windowWidth: cw.scrollWidth,
-        windowHeight: cw.scrollHeight,
-        onclone: (doc) => {
-          doc.querySelectorAll('.chart-action-btn').forEach(b => b.remove());
-          doc.querySelectorAll('button').forEach(b => b.style.boxShadow = 'none');
-        }
-      });
+      await new Promise(r => setTimeout(r, 250));
+      const canvas = await captureExportCanvas(cw, background);
 
       if(!canvas || canvas.width === 0 || canvas.height === 0){
-        throw new Error('Canvas is empty — try again or reload the page');
+        throw new Error('Dashboard image is empty — try again or reload the page');
       }
 
       const link = document.createElement('a');
-      link.download = 'shansi_dashboard_' + new Date().toISOString().slice(0,10) + '.png';
-      link.href = canvas.toDataURL('image/png');
+      link.download = 'shansi_dashboard_' + new Date().toISOString().slice(0,10) + '.jpeg';
+      link.href = canvas.toDataURL('image/jpeg', .94);
       link.click();
-      toast('PNG downloaded','success');
+      toast('JPEG downloaded successfully','success');
     }catch(e){
       console.error(e);
-      toast('PNG error: '+e.message,'error');
+      toast('JPEG error: ' + e.message,'error');
     }finally{
       restore();
-      cw.querySelectorAll('img').forEach(im => {
-        if(im.dataset.__chartSnapshot === '1') im.remove();
-      });
       if(rawData.length){
         const amRows = aggregateByAM(filteredData);
         if(amRows.length) renderCharts(amRows);
@@ -1948,23 +1948,23 @@
     }
   }
 
-  function exportChartPNG(chartId){
+  function exportChartJPEG(chartId){
     const c = charts[chartId];
     if(!c){ toast('Chart not found','error'); return; }
     try{
-      const url = c.toBase64Image('image/png', 1);
+      const url = c.toBase64Image('image/jpeg', .94);
       if(!url || url === 'data:,'){
         toast('Chart is empty — no data to export','error');
         return;
       }
       const link = document.createElement('a');
-      link.download = chartId + '_' + new Date().toISOString().slice(0,10) + '.png';
+      link.download = chartId + '_' + new Date().toISOString().slice(0,10) + '.jpeg';
       link.href = url;
       link.click();
-      toast('Chart saved as PNG','success');
+      toast('Chart saved as JPEG','success');
     }catch(e){
       console.error(e);
-      toast('Chart PNG error: ' + e.message,'error');
+      toast('Chart JPEG error: ' + e.message,'error');
     }
   }
 
@@ -2416,7 +2416,7 @@
   document.getElementById('reportCancel').addEventListener('click', closeReportModal);
   document.getElementById('reportModal').addEventListener('click', e => { if(e.target.id === 'reportModal') closeReportModal(); });
   document.getElementById('reportPdf').addEventListener('click', () => { closeReportModal(); exportPDF(); });
-  document.getElementById('reportPng').addEventListener('click', () => { closeReportModal(); exportPNG(); });
+  document.getElementById('reportPng').addEventListener('click', () => { closeReportModal(); exportJPEG(); });
   document.getElementById('reportExcel').addEventListener('click', () => { closeReportModal(); exportExcel(); });
 
   document.getElementById('lossClose').addEventListener('click', closeLossModal);
@@ -2437,7 +2437,7 @@
   document.querySelectorAll('.chart-action-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const chartId = btn.getAttribute('data-chart');
-      exportChartPNG(chartId);
+      exportChartJPEG(chartId);
     });
   });
 

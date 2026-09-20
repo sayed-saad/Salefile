@@ -1770,26 +1770,43 @@
      - Charts are converted to images before html2canvas
      ============================================================ */
   function snapshotChartsToImages(container){
-    const canvases = container.querySelectorAll('canvas');
+    const canvases = Array.from(container.querySelectorAll('canvas'));
     const snapshots = [];
+
     canvases.forEach((cnv) => {
       try{
-        if(cnv.width < 5 || cnv.height < 5) return;
+        // A zero-sized canvas is exactly what causes Chrome's
+        // "createPattern ... width or height of 0" error during html2canvas.
+        if(!cnv.width || !cnv.height || cnv.width < 2 || cnv.height < 2) return;
+
+        const rect = cnv.getBoundingClientRect();
+        const cssW = Math.max(2, Math.round(rect.width || cnv.clientWidth || cnv.width));
+        const cssH = Math.max(2, Math.round(rect.height || cnv.clientHeight || cnv.height));
         const dataURL = cnv.toDataURL('image/png');
         if(!dataURL || dataURL === 'data:,') return;
 
         const img = document.createElement('img');
         img.src = dataURL;
         img.dataset.__chartSnapshot = '1';
+        img.width = cssW;
+        img.height = cssH;
         img.style.cssText = cnv.style.cssText;
-        img.style.width = '100%';
-        img.style.height = '100%';
+        img.style.width = cssW + 'px';
+        img.style.height = cssH + 'px';
+        img.style.minWidth = cssW + 'px';
+        img.style.minHeight = cssH + 'px';
         img.style.objectFit = 'contain';
         img.style.display = 'block';
+        img.style.visibility = 'visible';
 
         const parent = cnv.parentElement;
         if(parent){
-          snapshots.push({cnv, parent, nextSibling:cnv.nextSibling, img});
+          // Keep the chart wrapper from collapsing when the canvas is replaced.
+          const parentRect = parent.getBoundingClientRect();
+          const oldMinH = parent.style.minHeight;
+          if(parentRect.height < cssH) parent.style.minHeight = cssH + 'px';
+
+          snapshots.push({cnv, parent, nextSibling:cnv.nextSibling, img, oldMinH});
           parent.replaceChild(img, cnv);
         }
       }catch(e){
@@ -1798,8 +1815,9 @@
     });
 
     return function restore(){
-      snapshots.forEach(({cnv, parent, nextSibling, img}) => {
+      snapshots.forEach(({cnv, parent, nextSibling, img, oldMinH}) => {
         if(img && img.parentElement === parent) img.remove();
+        parent.style.minHeight = oldMinH || '';
         if(!parent.contains(cnv)){
           if(nextSibling && nextSibling.parentElement === parent) parent.insertBefore(cnv, nextSibling);
           else parent.appendChild(cnv);
@@ -1840,6 +1858,13 @@
         });
         doc.querySelectorAll('.chart-canvas-wrap').forEach(w => {
           w.style.overflow = 'visible';
+        });
+        // Never let html2canvas process a zero-sized canvas. This is the
+        // source of Chrome's CanvasRenderingContext2D/createPattern error.
+        doc.querySelectorAll('canvas').forEach(c => {
+          const w = c.width || c.clientWidth || 0;
+          const h = c.height || c.clientHeight || 0;
+          if(w < 2 || h < 2) c.remove();
         });
         doc.querySelectorAll('button').forEach(b => {
           b.style.boxShadow = 'none';

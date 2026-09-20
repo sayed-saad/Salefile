@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHANSI Communications · Sales Dashboard Pro</title>
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22SHANSI%20Dashboard%22%2C%22short_name%22%3A%22SHANSI%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230b1220%22%2C%22theme_color%22%3A%22%233b82f6%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520rx%253D%2527100%2527%2520fill%253D%2527%252323b82f6%2527%2F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527340%2527%2520font-size%253D%2527280%2527%2520font-family%253D%2527Arial%2527%2520font-weight%253D%2527bold%2527%2520fill%253D%2527white%2527%2520text-anchor%253D%2527middle%2527%253ES%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22SHANSI%20Dashboard%22%2C%22short_name%22%3A%22SHANSI%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230b1220%22%2C%22theme_color%22%3A%22%233b82f6%22%7D">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -62,7 +62,6 @@
     radial-gradient(circle at 0% 0%,rgba(59,130,246,.10),transparent 45%),
     radial-gradient(circle at 100% 100%,rgba(139,92,246,.08),transparent 45%);}
 
-  /* ===== THEME SWATCHES ===== */
   .theme-swatches{display:flex;gap:.4rem;align-items:center;}
   .theme-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.2s;}
   .theme-swatch:hover{transform:scale(1.15);}
@@ -74,7 +73,6 @@
   .theme-swatch.amber{background:#f59e0b;}
   .theme-swatch.cyan{background:#06b6d4;}
 
-  /* ===== TOAST ===== */
   .toast-container{position:fixed;top:1rem;right:1rem;z-index:99999;display:flex;flex-direction:column;gap:.5rem;}
   .toast{background:var(--card);color:var(--text);border:1px solid var(--border);border-left:4px solid var(--accent);padding:.75rem 1rem;border-radius:12px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:.6rem;font-size:.82rem;font-weight:600;min-width:260px;max-width:380px;animation:toastIn .4s cubic-bezier(.34,1.4,.64,1);}
   .toast.success{border-left-color:#10b981;}
@@ -88,7 +86,6 @@
   .toast.hide{animation:toastOut .35s ease forwards;}
   @keyframes toastOut{to{transform:translateX(120%);opacity:0;}}
 
-  /* ===== LOGIN ===== */
   .login-overlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:#05070d;transition:opacity .6s,visibility .6s;overflow:hidden;padding:1rem;}
   .login-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
   .aurora-bg{position:absolute;inset:0;overflow:hidden;z-index:0;}
@@ -146,7 +143,6 @@
   .modern-footer{margin-top:1.5rem;padding-top:1.4rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.72rem;color:rgba(255,255,255,.4);}
   .modern-footer i{color:#34d399;}
 
-  /* ===== DASHBOARD ===== */
   .dashboard{max-width:1600px;margin:0 auto;padding:1rem 1.2rem 2rem;display:none;}
   .dashboard.active{display:block;animation:dashEnter .35s ease;}
   @keyframes dashEnter{from{opacity:0;transform:translateY(8px);}}
@@ -205,7 +201,6 @@
   body.dark .logout-btn{background:rgba(239,68,68,.12);color:#f87171;border-color:rgba(239,68,68,.3);}
   .logout-btn:hover{background:#dc2626;color:#fff;transform:translateY(-1px);}
 
-  /* ===== TOP BAR ===== */
   .top-bar{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;background:var(--glass-bg);backdrop-filter:blur(20px);border-radius:16px;padding:.65rem 1rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:0 6px 20px rgba(15,23,42,.04);}
   body.dark .top-bar{background:linear-gradient(180deg,rgba(20,27,45,.85),rgba(15,22,38,.85));border-color:#243044;}
   .search-box{position:relative;flex:1;min-width:200px;max-width:320px;}
@@ -229,12 +224,10 @@
   .live-clock i{color:#10b981;font-size:.5rem;}
   .live-clock b{color:var(--text);font-family:'Space Grotesk';}
 
-  /* ===== BANNERS ===== */
   .storage-banner{background:linear-gradient(135deg,rgba(5,150,105,.95),rgba(4,120,87,.95));color:#fff;border-radius:16px;padding:.75rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:.7rem;font-size:.82rem;font-weight:500;border:1px solid rgba(255,255,255,.15);}
   body.dark .storage-banner{background:linear-gradient(135deg,rgba(5,150,105,.75),rgba(4,120,87,.75));border-color:rgba(16,185,129,.35);}
   .warning-banner{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:16px;padding:.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem;font-weight:600;}
 
-  /* ===== KPI ===== */
   .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;margin-bottom:1rem;}
   .kpi-card{border-radius:18px;padding:1rem 1.15rem;color:#fff;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s;cursor:pointer;box-shadow:0 10px 30px rgba(15,23,42,.12);}
   .kpi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
@@ -258,14 +251,12 @@
   body.dark .kpi-card.slate{background:linear-gradient(135deg,#1e293b,#0f172a);}
   body.dark .kpi-card.amber{background:linear-gradient(135deg,#b45309,#92400e);}
 
-  /* ===== CARD ===== */
   .card{background:var(--glass-bg);backdrop-filter:blur(15px);border-radius:20px;padding:1.1rem 1.2rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);}
   body.dark .card{background:linear-gradient(180deg,#141b2d,#111827);border-color:#243044;}
   .section-title{font-family:'Space Grotesk';font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);}
   body.dark .section-title{border-bottom-color:#243044;}
   .section-title i{color:var(--accent);}
 
-  /* ===== TABLE ===== */
   .table-wrap{overflow-x:auto;border-radius:12px;}
   table.am-table{width:100%;border-collapse:collapse;font-size:.76rem;min-width:900px;}
   table.am-table th{background:var(--table-th-bg);color:var(--table-th-text);padding:.6rem .7rem;text-align:left;font-weight:700;white-space:nowrap;border-bottom:2px solid var(--table-th-border);font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;}
@@ -278,7 +269,6 @@
   body.dark .pos{color:#34d399;}
   body.dark .neg{color:#f87171;}
 
-  /* ===== CHARTS ===== */
   .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:.9rem;margin-bottom:1rem;}
   .chart-box{background:var(--glass-bg);backdrop-filter:blur(15px);border-radius:20px;padding:1.1rem;border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);transition:.3s;}
   body.dark .chart-box{background:linear-gradient(180deg,#141b2d,#111827);border-color:#243044;}
@@ -290,7 +280,6 @@
   .chart-action-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
   .chart-canvas-wrap{position:relative;height:240px;}
 
-  /* ===== CLIENTS ===== */
   .clients-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-bottom:1rem;}
   .client-list{background:var(--glass-bg);backdrop-filter:blur(15px);border-radius:20px;padding:1rem;border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);}
   body.dark .client-list{background:linear-gradient(180deg,#141b2d,#111827);border-color:#243044;}
@@ -311,7 +300,6 @@
 
   .footer-note{text-align:center;color:var(--muted);font-size:.72rem;padding:1rem 0 .3rem;font-family:'Space Grotesk';}
 
-  /* ===== MODALS ===== */
   .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:11000;padding:1rem;overflow-y:auto;}
   body.dark .modal-overlay{background:rgba(0,0,0,.75);}
   .modal-overlay.show{display:flex;}
@@ -359,7 +347,6 @@
   .content-wrap{display:none;}
   .content-wrap.active{display:block;}
 
-  /* ===== DRAG DROP UPLOAD ===== */
   .drop-zone{border:2px dashed var(--border);border-radius:16px;padding:2rem;text-align:center;background:rgba(59,130,246,.03);cursor:pointer;transition:.25s;margin-bottom:1rem;}
   body.dark .drop-zone{border-color:#243044;background:rgba(59,130,246,.05);}
   .drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:rgba(59,130,246,.08);transform:scale(1.01);}
@@ -367,7 +354,6 @@
   .drop-zone h4{font-family:'Space Grotesk';font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.3rem;}
   .drop-zone p{font-size:.78rem;color:var(--muted);}
 
-  /* ===== PHOTO MODAL ===== */
   .photo-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:1rem;margin:1rem 0;}
   .photo-preview{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.5rem;font-weight:800;overflow:hidden;border:4px solid var(--border);box-shadow:0 12px 30px rgba(15,23,42,.15);}
   body.dark .photo-preview{border-color:#243044;}
@@ -377,7 +363,6 @@
   .file-input-label input{display:none;}
   .photo-tip{font-size:.72rem;color:var(--muted);text-align:center;margin-top:.4rem;}
 
-  /* ===== INSIGHT CARDS ===== */
   .insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.7rem;margin-bottom:1rem;}
   .insight-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:.9rem 1rem;display:flex;gap:.7rem;align-items:flex-start;transition:.25s;}
   body.dark .insight-card{background:linear-gradient(180deg,#141b2d,#111827);border-color:#243044;}
@@ -393,7 +378,6 @@
   .insight-body p{font-size:.86rem;font-weight:600;color:var(--text);line-height:1.4;}
   .insight-body small{font-size:.7rem;color:var(--muted);}
 
-  /* ===== PIVOT dark fix ===== */
   body.dark .pvtUi{color:var(--text);}
   body.dark .pvtUi select,body.dark .pvtUi input{background:#0b1323;color:#e2e8f0;border-color:#243044;}
   body.dark table.pvtTable{color:var(--text);border-color:#243044;background:#0f172a;}
@@ -423,12 +407,10 @@
   }
   @media (max-width:400px){ .kpi-row{grid-template-columns:1fr;} }
 
-  /* ===== PRINT ===== */
   @media print{
     .app-header,.top-bar,.icon-btn,.logout-btn,.user-chip,.header-actions,.storage-banner,.warning-banner,.footer-note,.chart-actions{display:none !important;}
     body{background:#fff !important;color:#000 !important;}
     .card,.chart-box,.client-list{box-shadow:none !important;border:1px solid #ccc !important;background:#fff !important;}
-    .kpi-card{color:#000 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   }
 </style>
 </head>
@@ -436,7 +418,6 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- LOGIN -->
 <div class="login-overlay" id="loginOverlay">
   <div class="aurora-bg">
     <div class="aurora-blob b1"></div><div class="aurora-blob b2"></div>
@@ -484,7 +465,6 @@
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div class="dashboard" id="dashboard">
   <div class="app-header">
     <div class="brand">
@@ -573,7 +553,6 @@
 
   <div class="content-wrap" id="contentWrap">
     <div class="kpi-row" id="kpiRow"></div>
-
     <div class="insights-grid" id="insightsGrid"></div>
 
     <div class="card">
@@ -635,7 +614,6 @@
   <div class="footer-note"><i class="fas fa-database"></i> SHANSI Communications · <span id="footerYear"></span></div>
 </div>
 
-<!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal-card">
     <h3><i class="fas fa-cloud-upload-alt"></i> Upload Data File</h3>
@@ -653,7 +631,6 @@
   </div>
 </div>
 
-<!-- LOSS MODAL -->
 <div class="modal-overlay" id="lossModal">
   <div class="modal-card wide">
     <h3><i class="fas fa-exclamation-triangle" style="color:#dc2626"></i> Loss-Making Accounts</h3>
@@ -672,7 +649,6 @@
   </div>
 </div>
 
-<!-- PASSWORD MODAL -->
 <div class="modal-overlay" id="pwdModal">
   <div class="modal-card">
     <h3><i class="fas fa-key"></i> Change Password</h3>
@@ -688,7 +664,6 @@
   </div>
 </div>
 
-<!-- PHOTO MODAL -->
 <div class="modal-overlay" id="photoModal">
   <div class="modal-card">
     <h3><i class="fas fa-camera" style="color:#7c3aed"></i> Profile Photo</h3>
@@ -711,13 +686,12 @@
   </div>
 </div>
 
-<!-- EMPLOYEES MODAL -->
 <div class="modal-overlay" id="empModal">
   <div class="modal-card wide">
     <h3><i class="fas fa-users-cog"></i> Manage Manager Accounts</h3>
     <p class="sub">Create up to 100 manager/viewer accounts.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:.5rem;margin-bottom:.8rem;">
-      <input type="text" id="empUser" placeholder="Username" class="form-group" style="margin:0;padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
+      <input type="text" id="empUser" placeholder="Username" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
       <input type="text" id="empPass" placeholder="Password" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
       <select id="empLink" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
         <option value="">🔓 Full Access</option>
@@ -741,7 +715,6 @@
   </div>
 </div>
 
-<!-- RAW DATA MODAL -->
 <div class="modal-overlay" id="rawModal">
   <div class="modal-card wide">
     <h3><i class="fas fa-table"></i> All Data</h3>
@@ -760,7 +733,6 @@
   </div>
 </div>
 
-<!-- REPORT MODAL -->
 <div class="modal-overlay" id="reportModal">
   <div class="modal-card">
     <h3><i class="fas fa-file-pdf" style="color:#dc2626"></i> Export Report</h3>
@@ -775,13 +747,13 @@
     </div>
   </div>
 </div>
+
 <script>
 (function(){
   "use strict";
 
   if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 
-  /* ====== CONSTANTS ====== */
   const KEY_ADMIN = 'shansi_admin_v25';
   const KEY_VIEWERS = 'shansi_viewers_v25';
   const KEY_SESSION = 'shansi_session_v25';
@@ -792,7 +764,6 @@
   const MAX_VIEWERS = 100;
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
 
-  /* ====== STATE ====== */
   let ADMIN = loadAdmin();
   let VIEWERS = loadViewers();
   let rawData = [];
@@ -806,7 +777,6 @@
   let activeDateFrom = null;
   let activeDateTo = null;
 
-  /* ====== STORAGE ====== */
   function loadAdmin(){
     try{ const r = localStorage.getItem(KEY_ADMIN); if(r) return Object.assign({}, DEFAULT_ADMIN, JSON.parse(r)); }catch(e){}
     return { ...DEFAULT_ADMIN };
@@ -851,7 +821,6 @@
     return null;
   }
 
-  /* ====== FORMATTERS ====== */
   const fmt = (n, d=2) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
   const fmtInt = (n) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString();
   const fmtPct = (n) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toFixed(2)+'%';
@@ -864,7 +833,6 @@
     return Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
   }
 
-  /* ====== TOAST ====== */
   function toast(msg, type='info'){
     const c = document.getElementById('toastContainer');
     const t = document.createElement('div');
@@ -875,7 +843,6 @@
     setTimeout(() => { t.classList.add('hide'); setTimeout(()=>t.remove(), 350); }, 3200);
   }
 
-  /* ====== THEME ====== */
   function applyTheme(theme){
     document.body.classList.toggle('dark', theme === 'dark');
     const btn = document.getElementById('themeBtn');
@@ -904,7 +871,6 @@
     }
   }
 
-  /* ====== LIVE DATE ====== */
   function updateLiveDate(){
     const el = document.getElementById('liveDate');
     if(!el) return;
@@ -913,7 +879,6 @@
     el.textContent = d.toLocaleString('en-GB', opts).replace(',', ' ·');
   }
 
-  /* ====== BACKGROUND EFFECTS ====== */
   (function createParticles(){
     const c = document.getElementById('particles');
     if(!c) return;
@@ -946,7 +911,6 @@
     }
   })();
 
-  /* ====== DATA HELPERS ====== */
   function findCol(data, candidates){
     if(!data.length) return null;
     const keys = Object.keys(data[0]);
@@ -1001,10 +965,8 @@
     return null;
   }
 
-  /* ====== FILTERS ====== */
   function applyAllFilters(data){
     let d = data.slice();
-    // Role filter
     if(currentUser && currentUser.role !== 'admin'){
       const link = currentUser.managerLink || '';
       if(link){
@@ -1025,7 +987,6 @@
       document.getElementById('warningBanner').style.display = 'none';
     }
 
-    // Date filter
     if(activeDateFrom || activeDateTo){
       const dcol = getDateCol();
       if(dcol){
@@ -1042,7 +1003,6 @@
     return d;
   }
 
-  /* ====== AGGREGATION ====== */
   function aggregateByAM(data){
     const cName = findCol(data,['Name','Client','Customer']);
     const cAM = findCol(data,['Account Manager','AccountManager','AM','Manager']);
@@ -1099,7 +1059,6 @@
     return losses;
   }
 
-  /* ====== ANIMATION ====== */
   function animateCount(el, target, opts={}){
     const duration = opts.duration || 900;
     const formatter = opts.formatter || ((v) => Number(v).toLocaleString());
@@ -1116,7 +1075,6 @@
     requestAnimationFrame(tick);
   }
 
-  /* ====== RENDER KPI ====== */
   function renderKPIs(rows){
     const tCount = rows.reduce((s,r)=>s+r.count,0);
     const tDeliv = rows.reduce((s,r)=>s+r.delivered,0);
@@ -1162,17 +1120,14 @@
     }
   }
 
-  /* ====== RENDER INSIGHTS ====== */
   function renderInsights(rows){
     const el = document.getElementById('insightsGrid');
     if(!rows.length){ el.innerHTML = ''; return; }
-
     const sorted = [...rows].sort((a,b)=>b.profit - a.profit);
     const topAM = sorted[0];
     const worstAM = sorted[sorted.length-1];
     const avgMargin = rows.reduce((s,r)=>s+r.marginPct,0) / rows.length;
     const bestMargin = [...rows].sort((a,b)=>b.marginPct - a.marginPct)[0];
-    const totalProfit = rows.reduce((s,r)=>s+r.profit,0);
 
     const insights = [
       { icon:'fa-trophy', cls:'green', title:'Top Performer', value: topAM.am, sub:`Profit ${fmtSmart(topAM.profit)}` },
@@ -1193,7 +1148,6 @@
     `).join('');
   }
 
-  /* ====== RENDER AM TABLE ====== */
   function renderAMTable(rows){
     const tbody = document.getElementById('amTableBody');
     if(!rows.length){ tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:1.2rem;">No data</td></tr>'; return; }
@@ -1235,7 +1189,6 @@
       </tr>`;
   }
 
-  /* ====== CHARTS ====== */
   const BAR_COLORS = ['#3b82f6','#f97316','#10b981','#a855f7','#e11d48','#0891b2','#d97706','#6366f1','#14b8a6','#ec4899','#8b5cf6','#22c55e'];
   const BAR_COLORS_DARK = ['#60a5fa','#fb923c','#34d399','#c084fc','#f87171','#22d3ee','#fbbf24','#818cf8','#2dd4bf','#f472b6','#a78bfa','#4ade80'];
 
@@ -1336,7 +1289,6 @@
     });
   }
 
-  /* ====== CLIENTS ====== */
   function renderClients(data){
     const cName = findCol(data,['Name','Client','Customer']);
     const cProfit = findCol(data,['Profit','Total Profit']);
@@ -1374,32 +1326,77 @@
     `).join('') || '<div style="color:var(--muted);">No data</div>';
   }
 
-  /* ====== PIVOT ====== */
   function renderPivot(data){
     const $p = $('#pivotOutput');
     $p.empty();
-    if(!data.length) return;
-    if(typeof $.fn.pivot !== 'function'){ setTimeout(()=>renderPivot(data), 500); return; }
+    if(!data.length){
+      $p.html('<div style="color:var(--muted);padding:1rem;text-align:center;">No data to pivot</div>');
+      return;
+    }
+    if(typeof $.fn.pivot !== 'function'){
+      setTimeout(()=>renderPivot(data), 500);
+      return;
+    }
+
     try{
+      const allCols = Object.keys(data[0] || {});
       const isMgr = currentUser && currentUser.role === 'viewer' && currentUser.managerLink;
-      const rowsField = isMgr ? (findCol(data,['Name','Client','Customer']) || 'Name') : 'Account Manager';
-      const hasFlag = data.length && ('Profitability Flag' in data[0]);
+      const amCol = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
+      const clientCol = findCol(data, ['Name','Client','Customer']);
+      const rowsField = isMgr ? (clientCol || amCol) : (amCol || clientCol);
+
+      const numericCols = [];
+      allCols.forEach(c => {
+        let isNum = false;
+        for(let i = 0; i < Math.min(data.length, 20); i++){
+          const v = data[i][c];
+          if(typeof v === 'number' && !isNaN(v)){ isNum = true; break; }
+          if(typeof v === 'string' && v.trim() !== '' && !isNaN(v) && isFinite(v)){ isNum = true; break; }
+        }
+        if(isNum) numericCols.push(c);
+      });
+
+      const preferredOrder = ['Profit','Total Profit','Count','Total Count','Delivered','Total Delivered','Total Cost','Cost','Total Rate','Revenue','Total Revenue','Rate'];
+      const preferred = preferredOrder.filter(p => numericCols.find(nc => nc.toLowerCase().replace(/[^a-z0-9]/g,'') === p.toLowerCase().replace(/[^a-z0-9]/g,'')));
+      const finalVals = preferred.length ? preferred : numericCols.slice(0, 5);
+
+      if(!rowsField){
+        $p.html('<div style="color:var(--muted);padding:1rem;text-align:center;">Cannot detect rows field. Need "Account Manager" or "Client/Name" column.</div>');
+        return;
+      }
+      if(!finalVals.length){
+        $p.html('<div style="color:var(--muted);padding:1rem;text-align:center;">No numeric columns detected for pivot values.</div>');
+        return;
+      }
+
+      const flagCol = allCols.find(c => c.toLowerCase().includes('profitability') || c.toLowerCase().includes('flag'));
+
       const config = {
         rows: [rowsField],
         aggregator: 'Sum',
         aggregatorName: 'Sum',
-        vals: ['Profit','Count','Delivered','Total Cost'],
+        vals: finalVals,
         rendererName: 'Table'
       };
-      if(hasFlag) config.cols = ['Profitability Flag'];
+      if(flagCol) config.cols = [flagCol];
+
       $p.pivot(data, config);
     }catch(e){
-      console.error(e);
-      $p.html('<div style="color:#dc2626;padding:.8rem;">Pivot error: '+e.message+'</div>');
+      console.error('Pivot error:', e);
+      const cols = Object.keys(data[0] || {});
+      $p.html(`
+        <div style="padding:1rem;text-align:center;color:var(--muted);font-size:.8rem;">
+          <i class="fas fa-info-circle" style="color:var(--accent);font-size:1.2rem;display:block;margin-bottom:.5rem;"></i>
+          <div style="font-weight:600;color:var(--text);margin-bottom:.3rem;">Pivot needs specific columns</div>
+          <div style="margin-bottom:.5rem;">Detected columns:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.3rem;justify-content:center;margin-top:.5rem;">
+            ${cols.map(c => `<span style="background:var(--bg);border:1px solid var(--border);padding:.15rem .5rem;border-radius:6px;font-size:.7rem;color:var(--text);">${c}</span>`).join('')}
+          </div>
+        </div>
+      `);
     }
   }
 
-  /* ====== REFRESH ====== */
   function refresh(){
     const contentWrap = document.getElementById('contentWrap');
     const emptyState = document.getElementById('emptyState');
@@ -1460,7 +1457,6 @@
     }
   }
 
-  /* ====== EXCEL PARSING ====== */
   function parseExcelBuffer(buffer){
     const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
     const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -1546,7 +1542,6 @@
     if(sel) sel.innerHTML = knownManagers.map(m => `<option value="${m}">${m}</option>`).join('') || '<option value="">No managers</option>';
   }
 
-  /* ====== PROFILE PHOTO ====== */
   function getUserAvatar(){
     if(!currentUser) return '';
     if(currentUser.role === 'admin') return ADMIN.avatar || '';
@@ -1634,7 +1629,6 @@
     }
   }
 
-  /* ====== UPLOAD ====== */
   function openUploadModal(){
     document.getElementById('uploadMsg').textContent = '';
     document.getElementById('fileInput').value = '';
@@ -1680,7 +1674,6 @@
     reader.readAsArrayBuffer(file);
   }
 
-  /* ====== EXPORTS ====== */
   function exportCSV(){
     const data = filteredData.length ? filteredData : rawData;
     if(!data.length){ toast('No data','error'); return; }
@@ -1788,7 +1781,6 @@
     toast('Chart saved as PNG','success');
   }
 
-  /* ====== LOGIN ====== */
   function applyUserUI(user){
     currentUser = user;
     document.getElementById('userLabel').textContent = user.username;
@@ -1817,7 +1809,6 @@
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('dashboard').classList.add('active');
 
-    // Load from cache instantly
     const cached = loadCache();
     if(cached && cached.data.length){
       rawData = cached.data;
@@ -1826,7 +1817,6 @@
       refresh();
     }
 
-    // Then try server
     loadFromServer().then(serverResult => {
       if(serverResult){
         const oldCount = rawData.length;
@@ -1904,7 +1894,6 @@
     toast('Logged out','info');
   }
 
-  /* ====== MODALS ====== */
   function openLossModal(){
     const data = filteredData.length ? filteredData : rawData;
     const losses = getLossAccounts(data);
@@ -2064,7 +2053,6 @@
   function openReportModal(){ document.getElementById('reportModal').classList.add('show'); }
   function closeReportModal(){ document.getElementById('reportModal').classList.remove('show'); }
 
-  /* ====== SEARCH ====== */
   function setupSearch(){
     const s = document.getElementById('globalSearch');
     if(!s) return;
@@ -2084,7 +2072,6 @@
     });
   }
 
-  /* ====== DATE FILTERS ====== */
   function setupDateFilters(){
     const dateFrom = document.getElementById('dateFrom');
     const dateTo = document.getElementById('dateTo');
@@ -2121,7 +2108,6 @@
     });
   }
 
-  /* ====== EVENT LISTENERS ====== */
   document.querySelectorAll('.modern-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.modern-tab').forEach(t => t.classList.remove('active'));
@@ -2269,15 +2255,12 @@
     }
   });
 
-  /* ====== INIT ====== */
   document.addEventListener('DOMContentLoaded', () => {
-    // Theme
     try{
       const savedTheme = localStorage.getItem(KEY_THEME);
       applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
     }catch(e){ applyTheme('light'); }
 
-    // Accent
     try{
       const saved = localStorage.getItem(KEY_ACCENT);
       if(saved){
@@ -2294,7 +2277,6 @@
     setupSearch();
     setupDateFilters();
 
-    // Auto login if session exists
     const savedUser = loadSession();
     if(savedUser){
       applyUserUI(savedUser);

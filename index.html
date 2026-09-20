@@ -763,9 +763,6 @@
     <p class="sub">Choose format for your dashboard report</p>
     <div style="display:flex;flex-direction:column;gap:.5rem;margin:1rem 0;">
       <button class="btn-excel" id="reportExcel" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-file-excel"></i> Download Excel Data</button>
-      <button class="btn-jpeg" id="reportJPEG" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;background:#0f8faf;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-image"></i> Save JPEG Snapshot</button>
-      <button class="btn-pdf" id="reportPDF" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;background:#e52b32;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-file-pdf"></i> Save PDF Report</button>
-      <button class="btn-whatsapp" id="reportWhatsApp" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;background:#128c7e;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fab fa-whatsapp"></i> Share via WhatsApp</button>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" id="reportCancel"><i class="fas fa-times"></i> Close</button>
@@ -1900,119 +1897,6 @@
     }
   }
 
-  async function buildPDFFile(){
-    const cw = document.getElementById('contentWrap');
-    if(!cw.classList.contains('active')) throw new Error('No data to export');
-
-    const restore = snapshotChartsToImages(cw);
-    const background = document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7';
-    try{
-      await new Promise(r => setTimeout(r, 250));
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const sections = Array.from(cw.children).filter(el => el && el.offsetWidth > 0);
-      let firstPage = true;
-      for(const section of sections){
-        const canvas = await captureExportCanvas(section, background);
-        if(!canvas || !canvas.width || !canvas.height) continue;
-        addCanvasToPDF(pdf, canvas, firstPage);
-        firstPage = false;
-      }
-      if(firstPage) throw new Error('No dashboard sections were available for export');
-      const blob = pdf.output('blob');
-      return new File([blob], 'shansi_report_' + new Date().toISOString().slice(0,10) + '.pdf', {type:'application/pdf'});
-    } finally {
-      restore();
-      if(rawData.length){
-        const amRows = aggregateByAM(filteredData);
-        if(amRows.length) renderCharts(amRows);
-      }
-    }
-  }
-
-  async function buildJPEGFile(){
-    const cw = document.getElementById('contentWrap');
-    if(!cw.classList.contains('active')) throw new Error('No data to export');
-
-    const restore = snapshotChartsToImages(cw);
-    const background = document.body.classList.contains('dark') ? '#0b1220' : '#eef2f7';
-    try{
-      await new Promise(r => setTimeout(r, 250));
-      const canvas = await captureExportCanvas(cw, background);
-      if(!canvas || !canvas.width || !canvas.height) throw new Error('Dashboard image is empty');
-      const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('Could not create JPEG')), 'image/jpeg', .94));
-      return new File([blob], 'shansi_dashboard_' + new Date().toISOString().slice(0,10) + '.jpeg', {type:'image/jpeg'});
-    } finally {
-      restore();
-      if(rawData.length){
-        const amRows = aggregateByAM(filteredData);
-        if(amRows.length) renderCharts(amRows);
-      }
-    }
-  }
-
-  async function saveJPEGFile(){
-    toast('Generating JPEG... please wait','info');
-    try{
-      const file = await buildJPEGFile();
-      const url = URL.createObjectURL(file);
-      const link = document.createElement('a');
-      link.download = file.name;
-      link.href = url;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-      toast('JPEG saved successfully','success');
-    }catch(e){ console.error(e); toast('JPEG error: '+e.message,'error'); }
-  }
-
-  async function savePDFFile(){
-    toast('Generating PDF... please wait','info');
-    try{
-      const file = await buildPDFFile();
-      const url = URL.createObjectURL(file);
-      const link = document.createElement('a');
-      link.download = file.name;
-      link.href = url;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-      toast('PDF saved successfully','success');
-    }catch(e){ console.error(e); toast('PDF error: '+e.message,'error'); }
-  }
-
-  async function shareViaWhatsApp(){
-    closeReportModal();
-    toast('Preparing JPEG and PDF for sharing... please wait','info');
-    try{
-      const [jpeg, pdf] = await Promise.all([buildJPEGFile(), buildPDFFile()]);
-      const files = [jpeg, pdf];
-      if(navigator.share && navigator.canShare && navigator.canShare({files})){
-        await navigator.share({
-          title: 'SHANSI Sales Dashboard Report',
-          text: 'SHANSI Sales Dashboard report',
-          files
-        });
-        toast('Share dialog opened','success');
-        return;
-      }
-      // Desktop browsers often cannot attach local files directly to WhatsApp.
-      // Save both files and open WhatsApp with a ready message as a fallback.
-      for(const file of files){
-        const url = URL.createObjectURL(file);
-        const link = document.createElement('a');
-        link.download = file.name;
-        link.href = url;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1200);
-      }
-      const msg = encodeURIComponent('SHANSI Sales Dashboard report — JPEG and PDF files have been saved. Please attach them to this WhatsApp chat.');
-      window.open('https://wa.me/?text='+msg, '_blank');
-      toast('Files saved; WhatsApp opened. Attach the saved files.','success');
-    }catch(e){
-      console.error(e);
-      toast('WhatsApp share error: '+e.message,'error');
-    }
-  }
-
   async function exportPDF(){
     const cw = document.getElementById('contentWrap');
     if(!cw.classList.contains('active')){ toast('No data to export','error'); return; }
@@ -2555,9 +2439,6 @@
   document.getElementById('reportCancel').addEventListener('click', closeReportModal);
   document.getElementById('reportModal').addEventListener('click', e => { if(e.target.id === 'reportModal') closeReportModal(); });
   document.getElementById('reportExcel').addEventListener('click', () => { closeReportModal(); exportExcel(); });
-  document.getElementById('reportJPEG').addEventListener('click', () => { closeReportModal(); saveJPEGFile(); });
-  document.getElementById('reportPDF').addEventListener('click', () => { closeReportModal(); savePDFFile(); });
-  document.getElementById('reportWhatsApp').addEventListener('click', shareViaWhatsApp);
 
   document.getElementById('lossClose').addEventListener('click', closeLossModal);
   document.getElementById('lossExport').addEventListener('click', () => {

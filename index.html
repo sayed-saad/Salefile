@@ -9,10 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.css">
-<script src="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -378,11 +374,15 @@
   .insight-body p{font-size:.86rem;font-weight:600;color:var(--text);line-height:1.4;}
   .insight-body small{font-size:.7rem;color:var(--muted);}
 
-  body.dark .pvtUi{color:var(--text);}
-  body.dark .pvtUi select,body.dark .pvtUi input{background:#0b1323;color:#e2e8f0;border-color:#243044;}
-  body.dark table.pvtTable{color:var(--text);border-color:#243044;background:#0f172a;}
-  body.dark table.pvtTable thead tr th,body.dark table.pvtTable tbody tr th{background:#1a2338;color:#a4b4cc;border-color:#243044;}
-  body.dark table.pvtTable tbody tr td{background:#0f172a;color:#e2e8f0;border-color:#1e2b42;}
+  .detail-filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem;}
+  .detail-filters select,
+  .detail-filters input{padding:.5rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);font-weight:600;outline:none;}
+  body.dark .detail-filters select,
+  body.dark .detail-filters input{background:#0b1323;border-color:#243044;color:#e2e8f0;}
+  .detail-filters select:focus,
+  .detail-filters input:focus{border-color:var(--accent);}
+  .detail-filters input{flex:1;min-width:200px;}
+  .detail-count{font-size:.72rem;color:var(--muted);margin-top:.5rem;text-align:right;}
 
   ::-webkit-scrollbar{width:8px;height:8px;}
   ::-webkit-scrollbar-track{background:transparent;}
@@ -606,8 +606,32 @@
     </div>
 
     <div class="card">
-      <div class="section-title"><i class="fas fa-table"></i> Pivot Explorer</div>
-      <div id="pivotOutput" style="overflow-x:auto;"></div>
+      <div class="section-title"><i class="fas fa-table"></i> Detailed Client Analysis</div>
+      <div class="detail-filters">
+        <select id="detailFilter">
+          <option value="">All Account Managers</option>
+        </select>
+        <input type="text" id="detailSearch" placeholder="Filter client...">
+      </div>
+      <div class="raw-table-wrap" style="max-height:500px;">
+        <table class="raw-table" id="detailTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Account Manager</th>
+              <th>Client</th>
+              <th style="text-align:right;">Count</th>
+              <th style="text-align:right;">Delivered</th>
+              <th style="text-align:right;">Profit</th>
+              <th style="text-align:right;">Cost</th>
+              <th style="text-align:right;">Revenue</th>
+              <th style="text-align:right;">Margin %</th>
+            </tr>
+          </thead>
+          <tbody id="detailTableBody"></tbody>
+        </table>
+      </div>
+      <div class="detail-count">Showing <b id="detailCount">0</b> records</div>
     </div>
   </div>
 
@@ -754,13 +778,13 @@
 
   if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 
-  const KEY_ADMIN = 'shansi_admin_v25';
-  const KEY_VIEWERS = 'shansi_viewers_v25';
-  const KEY_SESSION = 'shansi_session_v25';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v25';
-  const KEY_CACHE_META = 'shansi_cache_meta_v25';
-  const KEY_THEME = 'shansi_theme_v25';
-  const KEY_ACCENT = 'shansi_accent_v25';
+  const KEY_ADMIN = 'shansi_admin_v26';
+  const KEY_VIEWERS = 'shansi_viewers_v26';
+  const KEY_SESSION = 'shansi_session_v26';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v26';
+  const KEY_CACHE_META = 'shansi_cache_meta_v26';
+  const KEY_THEME = 'shansi_theme_v26';
+  const KEY_ACCENT = 'shansi_accent_v26';
   const MAX_VIEWERS = 100;
   const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
 
@@ -1189,6 +1213,79 @@
       </tr>`;
   }
 
+  function renderDetailTable(data){
+    const tbody = document.getElementById('detailTableBody');
+    const amFilter = document.getElementById('detailFilter');
+    const searchInput = document.getElementById('detailSearch');
+    if(!tbody) return;
+
+    if(!data.length){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem;">No data available</td></tr>';
+      if(document.getElementById('detailCount')) document.getElementById('detailCount').textContent = '0';
+      return;
+    }
+
+    const cName = findCol(data,['Name','Client','Customer']);
+    const cAM = findCol(data,['Account Manager','AccountManager','AM','Manager']);
+    const cCount = findCol(data,['Count','Total Count','Units']);
+    const cDeliv = findCol(data,['Delivered','Total Delivered']);
+    const cProfit = findCol(data,['Profit','Total Profit']);
+    const cCost = findCol(data,['Total Cost','Cost']);
+    const cRate = findCol(data,['Total Rate','Revenue','Total Revenue','Rate']);
+
+    if(amFilter && !amFilter.dataset.populated){
+      const amList = cAM ? [...new Set(data.map(r => String(r[cAM] || '').trim()).filter(Boolean))].sort() : [];
+      amFilter.innerHTML = '<option value="">All Account Managers</option>' + amList.map(a => `<option value="${a}">${a}</option>`).join('');
+      amFilter.dataset.populated = '1';
+    }
+
+    const groups = {};
+    data.forEach(r => {
+      const am = cAM ? String(r[cAM] || 'Unknown').trim() : 'Unknown';
+      const client = cName ? String(r[cName] || 'Unknown').trim() : 'Unknown';
+      const key = am + '|||' + client;
+      if(!groups[key]) groups[key] = {am, client, count:0, delivered:0, profit:0, cost:0, revenue:0};
+      groups[key].count += parseFloat(r[cCount]) || 0;
+      groups[key].delivered += parseFloat(r[cDeliv]) || 0;
+      groups[key].profit += parseFloat(r[cProfit]) || 0;
+      groups[key].cost += parseFloat(r[cCost]) || 0;
+      groups[key].revenue += parseFloat(r[cRate]) || 0;
+    });
+
+    let rows = Object.values(groups);
+    const selectedAM = amFilter ? amFilter.value : '';
+    if(selectedAM) rows = rows.filter(r => r.am === selectedAM);
+    const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    if(q) rows = rows.filter(r => r.client.toLowerCase().includes(q) || r.am.toLowerCase().includes(q));
+    rows.sort((a,b) => b.profit - a.profit);
+
+    const total = rows.length;
+    const limited = rows.slice(0, 500);
+
+    if(!limited.length){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem;">No matching records</td></tr>';
+      if(document.getElementById('detailCount')) document.getElementById('detailCount').textContent = '0';
+      return;
+    }
+
+    tbody.innerHTML = limited.map((r,i) => {
+      const margin = r.revenue ? (r.profit / r.revenue) * 100 : 0;
+      return `<tr>
+        <td>${i+1}</td>
+        <td><strong>${r.am}</strong></td>
+        <td>${r.client}</td>
+        <td class="num">${fmtInt(r.count)}</td>
+        <td class="num">${fmtInt(r.delivered)}</td>
+        <td class="num ${r.profit >= 0 ? 'pos' : 'neg'}">${fmt(r.profit)}</td>
+        <td class="num">${fmt(r.cost)}</td>
+        <td class="num">${fmt(r.revenue)}</td>
+        <td class="num">${fmtPct(margin)}</td>
+      </tr>`;
+    }).join('');
+
+    if(document.getElementById('detailCount')) document.getElementById('detailCount').textContent = total.toLocaleString();
+  }
+
   const BAR_COLORS = ['#3b82f6','#f97316','#10b981','#a855f7','#e11d48','#0891b2','#d97706','#6366f1','#14b8a6','#ec4899','#8b5cf6','#22c55e'];
   const BAR_COLORS_DARK = ['#60a5fa','#fb923c','#34d399','#c084fc','#f87171','#22d3ee','#fbbf24','#818cf8','#2dd4bf','#f472b6','#a78bfa','#4ade80'];
 
@@ -1326,77 +1423,6 @@
     `).join('') || '<div style="color:var(--muted);">No data</div>';
   }
 
-  function renderPivot(data){
-    const $p = $('#pivotOutput');
-    $p.empty();
-    if(!data.length){
-      $p.html('<div style="color:var(--muted);padding:1rem;text-align:center;">No data to pivot</div>');
-      return;
-    }
-    if(typeof $.fn.pivot !== 'function'){
-      setTimeout(()=>renderPivot(data), 500);
-      return;
-    }
-
-    try{
-      const allCols = Object.keys(data[0] || {});
-      const isMgr = currentUser && currentUser.role === 'viewer' && currentUser.managerLink;
-      const amCol = findCol(data, ['Account Manager','AccountManager','AM','Manager']);
-      const clientCol = findCol(data, ['Name','Client','Customer']);
-      const rowsField = isMgr ? (clientCol || amCol) : (amCol || clientCol);
-
-      const numericCols = [];
-      allCols.forEach(c => {
-        let isNum = false;
-        for(let i = 0; i < Math.min(data.length, 20); i++){
-          const v = data[i][c];
-          if(typeof v === 'number' && !isNaN(v)){ isNum = true; break; }
-          if(typeof v === 'string' && v.trim() !== '' && !isNaN(v) && isFinite(v)){ isNum = true; break; }
-        }
-        if(isNum) numericCols.push(c);
-      });
-
-      const preferredOrder = ['Profit','Total Profit','Count','Total Count','Delivered','Total Delivered','Total Cost','Cost','Total Rate','Revenue','Total Revenue','Rate'];
-      const preferred = preferredOrder.filter(p => numericCols.find(nc => nc.toLowerCase().replace(/[^a-z0-9]/g,'') === p.toLowerCase().replace(/[^a-z0-9]/g,'')));
-      const finalVals = preferred.length ? preferred : numericCols.slice(0, 5);
-
-      if(!rowsField){
-        $p.html('<div style="color:var(--muted);padding:1rem;text-align:center;">Cannot detect rows field. Need "Account Manager" or "Client/Name" column.</div>');
-        return;
-      }
-      if(!finalVals.length){
-        $p.html('<div style="color:var(--muted);padding:1rem;text-align:center;">No numeric columns detected for pivot values.</div>');
-        return;
-      }
-
-      const flagCol = allCols.find(c => c.toLowerCase().includes('profitability') || c.toLowerCase().includes('flag'));
-
-      const config = {
-        rows: [rowsField],
-        aggregator: 'Sum',
-        aggregatorName: 'Sum',
-        vals: finalVals,
-        rendererName: 'Table'
-      };
-      if(flagCol) config.cols = [flagCol];
-
-      $p.pivot(data, config);
-    }catch(e){
-      console.error('Pivot error:', e);
-      const cols = Object.keys(data[0] || {});
-      $p.html(`
-        <div style="padding:1rem;text-align:center;color:var(--muted);font-size:.8rem;">
-          <i class="fas fa-info-circle" style="color:var(--accent);font-size:1.2rem;display:block;margin-bottom:.5rem;"></i>
-          <div style="font-weight:600;color:var(--text);margin-bottom:.3rem;">Pivot needs specific columns</div>
-          <div style="margin-bottom:.5rem;">Detected columns:</div>
-          <div style="display:flex;flex-wrap:wrap;gap:.3rem;justify-content:center;margin-top:.5rem;">
-            ${cols.map(c => `<span style="background:var(--bg);border:1px solid var(--border);padding:.15rem .5rem;border-radius:6px;font-size:.7rem;color:var(--text);">${c}</span>`).join('')}
-          </div>
-        </div>
-      `);
-    }
-  }
-
   function refresh(){
     const contentWrap = document.getElementById('contentWrap');
     const emptyState = document.getElementById('emptyState');
@@ -1419,7 +1445,7 @@
     renderAMTable(amRows);
     renderCharts(amRows);
     renderClients(filteredData);
-    renderPivot(filteredData);
+    renderDetailTable(filteredData);
     updateStorageBanner();
     updateHeaderSubtitle();
   }
@@ -1659,6 +1685,8 @@
         dataSource = 'upload';
         detectManagers(rawData);
         cacheData(rawData, { fileName:file.name, rowCount:data.length, uploadedAt:new Date().toISOString() });
+        const detailFilter = document.getElementById('detailFilter');
+        if(detailFilter) detailFilter.dataset.populated = '';
         refresh();
         msg.textContent = `✅ ${data.length} rows loaded from ${file.name}`;
         msg.style.color = '#059669';
@@ -1886,9 +1914,9 @@
     document.getElementById('kpiRow').innerHTML = '';
     document.getElementById('insightsGrid').innerHTML = '';
     document.getElementById('amTableBody').innerHTML = '';
+    document.getElementById('detailTableBody').innerHTML = '';
     document.getElementById('topClients').innerHTML = '';
     document.getElementById('bottomClients').innerHTML = '';
-    document.getElementById('pivotOutput').innerHTML = '';
     Object.values(charts).forEach(c => { try{c.destroy();}catch(e){} });
 
     toast('Logged out','info');
@@ -2068,7 +2096,7 @@
       renderAMTable(amRows);
       renderCharts(amRows);
       renderClients(filteredData);
-      renderPivot(filteredData);
+      renderDetailTable(filteredData);
     });
   }
 
@@ -2106,6 +2134,17 @@
         refresh();
       });
     });
+  }
+
+  function setupDetailFilters(){
+    const amFilter = document.getElementById('detailFilter');
+    const searchInput = document.getElementById('detailSearch');
+    if(amFilter){
+      amFilter.addEventListener('change', () => renderDetailTable(filteredData));
+    }
+    if(searchInput){
+      searchInput.addEventListener('input', () => renderDetailTable(filteredData));
+    }
   }
 
   document.querySelectorAll('.modern-tab').forEach(tab => {
@@ -2276,6 +2315,7 @@
 
     setupSearch();
     setupDateFilters();
+    setupDetailFilters();
 
     const savedUser = loadSession();
     if(savedUser){

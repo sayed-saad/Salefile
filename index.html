@@ -1643,14 +1643,12 @@
     return cleaned;
   }
 
-  // LocalStorage-first data loading.
-  // Supports both this version (v30) and the previous dashboard cache (v29)
-  // so existing saved Excel data can be reused without uploading again.
+  // Primary source: data.xlsx in the same folder as this HTML.
+  // LocalStorage is only used as a fallback when data.xlsx cannot be read.
   function cacheData(data, meta){
     try{
       localStorage.setItem(KEY_CACHE_DATA, JSON.stringify(data));
       localStorage.setItem(KEY_CACHE_META, JSON.stringify(meta || {}));
-      // Keep a compatibility copy for the previous dashboard version.
       localStorage.setItem('shansi_cache_data_v29', JSON.stringify(data));
       localStorage.setItem('shansi_cache_meta_v29', JSON.stringify(meta || {}));
     }catch(e){}
@@ -1675,34 +1673,37 @@
         }
       }catch(e){}
     }
-
-    // Last-resort recovery: inspect localStorage for a JSON array/object
-    // that looks like dashboard row data.
-    try{
-      for(let i=0;i<localStorage.length;i++){
-        const key = localStorage.key(i);
-        if(!key || /session|theme|accent|users|photo|settings/i.test(key)) continue;
-        const value = localStorage.getItem(key);
-        if(!value || value.length < 20) continue;
-        const parsed = JSON.parse(value);
-        const candidate = Array.isArray(parsed) ? parsed :
-          (parsed && Array.isArray(parsed.data) ? parsed.data : null);
-        if(candidate && candidate.length && typeof candidate[0] === 'object'){
-          const sample = Object.keys(candidate[0]).map(k => k.toLowerCase());
-          if(sample.some(k => /account.?manager|manager|^am$/.test(k)) &&
-             sample.some(k => /client|customer|^name$/.test(k))){
-            return {data:candidate, meta:{recoveredFrom:key}};
-          }
-        }
-      }
-    }catch(e){}
-
     return null;
   }
 
   async function loadFromServer(){
-    // Intentionally disabled in the one-file version.
-    // Data comes from LocalStorage only.
+    // Try the current data.xlsx FIRST. This is the live source.
+    // Expected layout:
+    //   same folder / data.xlsx
+    // If opened through file://, browsers may block fetch; in that case
+    // the saved LocalStorage cache is used as fallback.
+    try{
+      const response = await fetch('./data.xlsx?ts=' + Date.now(), {
+        cache: 'no-store'
+      });
+      if(!response.ok) throw new Error('data.xlsx HTTP ' + response.status);
+
+      const buffer = await response.arrayBuffer();
+      const parsed = parseExcelBuffer(buffer);
+
+      if(parsed && parsed.data && parsed.data.length){
+        rawData = parsed.data;
+        dataSource = 'server';
+        cacheData(rawData, parsed.meta || {file:'data.xlsx', loadedAt:new Date().toISOString()});
+        detectManagers(rawData);
+        refresh();
+        return parsed;
+      }
+    }catch(e){
+      console.warn('Could not load ./data.xlsx automatically:', e);
+    }
+
+    // Fallback only if data.xlsx cannot be read.
     const cached = loadCache();
     if(cached && cached.data.length){
       rawData = cached.data;
@@ -1711,6 +1712,7 @@
       refresh();
       return cached;
     }
+
     return null;
   }
 
@@ -2165,21 +2167,12 @@
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('dashboard').classList.add('active');
 
-    // Load the already-saved dashboard data immediately from LocalStorage.
-    // No data.xlsx / sales-data.xlsx file is required.
-    const cached = loadCache();
-    if(cached && cached.data.length){
-      rawData = cached.data;
-      dataSource = 'cache';
-      detectManagers(rawData);
-      refresh();
-    } else {
-      rawData = [];
-      filteredData = [];
-      dataSource = 'none';
-      refresh();
-    }
-
+    // Always try the live data.xlsx first; LocalStorage is fallback only.
+    rawData = [];
+    filteredData = [];
+    dataSource = 'none';
+    refresh();
+    loadFromServer();
     loadUsers();
   }
 

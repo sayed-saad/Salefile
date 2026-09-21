@@ -1254,11 +1254,61 @@
       </tr>`;
   }
 
+  function refreshDetailAMFilter(){
+    const amFilter = document.getElementById('detailFilter');
+    if(!amFilter) return;
+
+    // IMPORTANT: rebuild this slicer every time the user/session changes.
+    // Sales Head/Admin gets every manager from the full raw dataset.
+    // Account Manager login gets only the currently logged-in manager.
+    const cAM = findCol(rawData, ['Account Manager','AccountManager','AM','Manager']);
+    const previousValue = amFilter.value;
+
+    if(currentUser && currentUser.role !== 'admin'){
+      const loggedManager = String(currentUser.managerLink || '').trim();
+
+      if(loggedManager){
+        // Use the actual manager name from the data when possible, so the
+        // selected value exactly matches the table's Account Manager field.
+        const actualName = cAM
+          ? [...new Set(rawData.map(r => String(r[cAM] || '').trim()).filter(Boolean))]
+              .find(name => managerMatch(name, loggedManager))
+          : '';
+        const displayName = actualName || loggedManager;
+
+        amFilter.innerHTML = `<option value="${displayName}">${displayName}</option>`;
+        amFilter.value = displayName;
+      } else {
+        amFilter.innerHTML = '<option value="">All Account Managers</option>';
+        amFilter.value = '';
+      }
+      return;
+    }
+
+    // Sales Head/Admin: ALWAYS show all managers from rawData, not just the
+    // currently filtered/date-filtered rows.
+    const amList = cAM
+      ? [...new Set(rawData.map(r => String(r[cAM] || '').trim()).filter(Boolean))]
+          .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}))
+      : [];
+
+    amFilter.innerHTML =
+      '<option value="">All Account Managers</option>' +
+      amList.map(a => `<option value="${a}">${a}</option>`).join('');
+
+    // Preserve an existing selection only if it still exists.
+    amFilter.value = (previousValue && amList.includes(previousValue)) ? previousValue : '';
+  }
+
   function renderDetailTable(data){
     const tbody = document.getElementById('detailTableBody');
     const amFilter = document.getElementById('detailFilter');
     const searchInput = document.getElementById('detailSearch');
     if(!tbody) return;
+
+    // Refresh the slicer on every render so it can never retain another
+    // manager's options after a login/logout or data refresh.
+    refreshDetailAMFilter();
 
     if(!data.length){
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem;">No data available</td></tr>';
@@ -1273,12 +1323,6 @@
     const cProfit = findCol(data,['Profit','Total Profit']);
     const cCost = findCol(data,['Total Cost','Cost']);
     const cRate = findCol(data,['Total Rate','Revenue','Total Revenue','Rate']);
-
-    if(amFilter && !amFilter.dataset.populated){
-      const amList = cAM ? [...new Set(data.map(r => String(r[cAM] || '').trim()).filter(Boolean))].sort() : [];
-      amFilter.innerHTML = '<option value="">All Account Managers</option>' + amList.map(a => `<option value="${a}">${a}</option>`).join('');
-      amFilter.dataset.populated = '1';
-    }
 
     const groups = {};
     data.forEach(r => {
@@ -1735,7 +1779,10 @@
         detectManagers(rawData);
         cacheData(rawData, { fileName:file.name, rowCount:data.length, uploadedAt:new Date().toISOString() });
         const detailFilter = document.getElementById('detailFilter');
-        if(detailFilter) detailFilter.dataset.populated = '';
+        if(detailFilter){
+          detailFilter.value = '';
+          delete detailFilter.dataset.populated;
+        }
         refresh();
         msg.textContent = `✅ ${data.length} rows loaded from ${file.name}`;
         msg.style.color = '#059669';
@@ -2100,6 +2147,15 @@
 
     setTimeout(() => {
       saveSession(matched);
+
+      // Clear the Detailed Client Analysis slicer before applying the new
+      // user context. It will then be rebuilt from the correct role/user.
+      const detailFilter = document.getElementById('detailFilter');
+      if(detailFilter){
+        detailFilter.value = '';
+        delete detailFilter.dataset.populated;
+      }
+
       applyUserUI(matched);
       btnText.textContent = originalText;
       btn.disabled = false;
@@ -2126,6 +2182,12 @@
     document.getElementById('insightsGrid').innerHTML = '';
     document.getElementById('amTableBody').innerHTML = '';
     document.getElementById('detailTableBody').innerHTML = '';
+    const detailFilter = document.getElementById('detailFilter');
+    if(detailFilter){
+      detailFilter.innerHTML = '<option value="">All Account Managers</option>';
+      detailFilter.value = '';
+      delete detailFilter.dataset.populated;
+    }
     document.getElementById('topClients').innerHTML = '';
     document.getElementById('bottomClients').innerHTML = '';
     Object.values(charts).forEach(c => { try{c.destroy();}catch(e){} });

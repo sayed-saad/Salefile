@@ -1643,7 +1643,76 @@
     return cleaned;
   }
 
-  async function loadFromServer(){ return null; }
+  // LocalStorage-first data loading.
+  // Supports both this version (v30) and the previous dashboard cache (v29)
+  // so existing saved Excel data can be reused without uploading again.
+  function cacheData(data, meta){
+    try{
+      localStorage.setItem(KEY_CACHE_DATA, JSON.stringify(data));
+      localStorage.setItem(KEY_CACHE_META, JSON.stringify(meta || {}));
+      // Keep a compatibility copy for the previous dashboard version.
+      localStorage.setItem('shansi_cache_data_v29', JSON.stringify(data));
+      localStorage.setItem('shansi_cache_meta_v29', JSON.stringify(meta || {}));
+    }catch(e){}
+  }
+
+  function loadCache(){
+    const dataKeys = [KEY_CACHE_DATA, 'shansi_cache_data_v29'];
+    const metaKeys = [KEY_CACHE_META, 'shansi_cache_meta_v29'];
+
+    for(let i=0;i<dataKeys.length;i++){
+      try{
+        const d = localStorage.getItem(dataKeys[i]);
+        if(!d) continue;
+        const data = JSON.parse(d);
+        if(Array.isArray(data) && data.length && typeof data[0] === 'object'){
+          let meta = null;
+          try{
+            const m = localStorage.getItem(metaKeys[i]);
+            meta = m ? JSON.parse(m) : null;
+          }catch(e){}
+          return {data, meta};
+        }
+      }catch(e){}
+    }
+
+    // Last-resort recovery: inspect localStorage for a JSON array/object
+    // that looks like dashboard row data.
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const key = localStorage.key(i);
+        if(!key || /session|theme|accent|users|photo|settings/i.test(key)) continue;
+        const value = localStorage.getItem(key);
+        if(!value || value.length < 20) continue;
+        const parsed = JSON.parse(value);
+        const candidate = Array.isArray(parsed) ? parsed :
+          (parsed && Array.isArray(parsed.data) ? parsed.data : null);
+        if(candidate && candidate.length && typeof candidate[0] === 'object'){
+          const sample = Object.keys(candidate[0]).map(k => k.toLowerCase());
+          if(sample.some(k => /account.?manager|manager|^am$/.test(k)) &&
+             sample.some(k => /client|customer|^name$/.test(k))){
+            return {data:candidate, meta:{recoveredFrom:key}};
+          }
+        }
+      }
+    }catch(e){}
+
+    return null;
+  }
+
+  async function loadFromServer(){
+    // Intentionally disabled in the one-file version.
+    // Data comes from LocalStorage only.
+    const cached = loadCache();
+    if(cached && cached.data.length){
+      rawData = cached.data;
+      dataSource = 'cache';
+      detectManagers(rawData);
+      refresh();
+      return cached;
+    }
+    return null;
+  }
 
   function detectManagers(data){
     const cAM = findCol(data,['Account Manager','AccountManager','AM','Manager']);
@@ -2096,11 +2165,18 @@
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('dashboard').classList.add('active');
 
+    // Load the already-saved dashboard data immediately from LocalStorage.
+    // No data.xlsx / sales-data.xlsx file is required.
     const cached = loadCache();
     if(cached && cached.data.length){
       rawData = cached.data;
       dataSource = 'cache';
       detectManagers(rawData);
+      refresh();
+    } else {
+      rawData = [];
+      filteredData = [];
+      dataSource = 'none';
       refresh();
     }
 

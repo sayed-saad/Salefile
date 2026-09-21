@@ -818,13 +818,32 @@
     const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
   }
-  function ensureDefaultUsers(){
+  async function ensureDefaultUsers(){
     VIEWERS=getUsers();
     if(!VIEWERS.admin) VIEWERS.admin={id:'admin',username:'admin',role:'admin',managerLink:'',permissions:{},avatar:'',passwordHash:HASH_ADMIN,created:'built-in'};
     if(!VIEWERS['NOC Department']) VIEWERS['NOC Department']={id:'noc-department',username:'NOC Department',role:'noc',managerLink:'',permissions:NOC_PERMISSIONS,avatar:'',passwordHash:HASH_NOC,created:'built-in'};
+
+    // Built-in manager accounts from the original dashboard. Each account is
+    // permanently linked to one Account Manager name in the sales data.
+    const builtInManagers=[
+      ['krishna','Krishna Chauhan','krishna123'],
+      ['roopali','Roopali Vishwakarma','roopali123'],
+      ['anup','Anup Vichare','anup123']
+    ];
+    for(const [username,managerLink,password] of builtInManagers){
+      if(!VIEWERS[username]){
+        VIEWERS[username]={id:username,username,role:'manager',managerLink,permissions:DEFAULT_PERMISSIONS,avatar:'',passwordHash:await sha256(password),created:'built-in'};
+      }else{
+        // Preserve an existing custom password, but always keep the manager
+        // account tied to its intended manager and role.
+        VIEWERS[username].role='manager';
+        VIEWERS[username].managerLink=managerLink;
+        VIEWERS[username].permissions=normalizePermissions(VIEWERS[username].permissions);
+      }
+    }
     saveUsers();
   }
-  function loadUsers(){ VIEWERS=getUsers(); ensureDefaultUsers(); }
+  async function loadUsers(){ await ensureDefaultUsers(); }
 
   const fmt = (n, d=2) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
   const fmtInt = (n) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString();
@@ -957,15 +976,25 @@
     return null;
   }
 
-  function normalizeName(s){ return String(s||'').toLowerCase().trim().replace(/\s+/g,' ').replace(/ro{1,2}p/gi,'roop').replace(/roop[ae]li/gi,'roopali'); }
+  function normalizeName(s){
+    return String(s||'')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,' ')
+      .trim().replace(/\s+/g,' ');
+  }
   function managerMatch(actual, target){
     if(!target) return false;
-    const a = normalizeName(actual), t = normalizeName(target);
-    if(a === t) return true;
-    const ap = a.split(' '), tp = t.split(' ');
-    if(ap.length && tp.length){
-      if(ap[0] === tp[0]) return true;
-      if(ap[0].startsWith(tp[0]) || tp[0].startsWith(ap[0])) return true;
+    const a=normalizeName(actual), t=normalizeName(target);
+    if(!a || !t) return false;
+    if(a===t) return true;
+    // Allow the account's manager link to match minor spelling/spacing
+    // differences in the Excel Account Manager column.
+    const ap=a.split(' '), tp=t.split(' ');
+    if(ap[0]===tp[0]) return true;
+    if(ap.length>1 && tp.length>1){
+      const aLast=ap[ap.length-1], tLast=tp[tp.length-1];
+      if(aLast===tLast && (ap[0].startsWith(tp[0]) || tp[0].startsWith(ap[0]))) return true;
     }
     return false;
   }
@@ -999,23 +1028,29 @@
 
   function applyAllFilters(data){
     let d = data.slice();
-    if(currentUser && currentUser.role !== 'admin'){
-      const link = currentUser.managerLink || '';
-      if(link){
-        const amCol = findCol(d, ['Account Manager','AccountManager','AM','Manager']);
-        if(amCol){
-          d = d.filter(r => managerMatch(r[amCol], link));
-          const warn = document.getElementById('warningBanner');
-          if(d.length === 0 && data.length > 0){
-            const all = [...new Set(data.map(r => String(r[amCol] || '').trim()))].filter(Boolean);
-            warn.style.display = 'flex';
-            document.getElementById('warningBannerText').innerHTML = `No data for "<b>${link}</b>". Available: <b>${all.join(' · ')}</b>`;
-          } else {
-            warn.style.display = 'none';
-          }
+
+    if(currentUser && currentUser.role === 'manager'){
+      const link = String(currentUser.managerLink || '').trim();
+      const amCol = findCol(d, ['Account Manager','AccountManager','AM','Manager']);
+
+      if(link && amCol){
+        d = d.filter(r => managerMatch(r[amCol], link));
+        const warn = document.getElementById('warningBanner');
+        if(d.length === 0 && data.length > 0){
+          const all = [...new Set(data.map(r => String(r[amCol] || '').trim()))].filter(Boolean);
+          warn.style.display = 'flex';
+          document.getElementById('warningBannerText').innerHTML = `No data for "<b>${link}</b>". Available: <b>${all.join(' · ')}</b>`;
+        } else {
+          warn.style.display = 'none';
         }
+      } else if(link && !amCol){
+        document.getElementById('warningBanner').style.display = 'flex';
+        document.getElementById('warningBannerText').innerHTML = 'Account Manager column was not found in the uploaded data.';
+      } else {
+        document.getElementById('warningBanner').style.display = 'none';
       }
     } else {
+      // Sales Head and NOC see the complete dataset.
       document.getElementById('warningBanner').style.display = 'none';
     }
 
@@ -1031,7 +1066,6 @@
         });
       }
     }
-
     return d;
   }
 
@@ -2077,7 +2111,7 @@
     const u=document.getElementById('loginUser').value.trim(); const p=document.getElementById('loginPass').value;
     const err=document.getElementById('loginError'); err.textContent='';
     if(!u||!p){err.textContent='Please enter username and password';return;}
-    loadUsers(); const account=VIEWERS[u] || VIEWERS[Object.keys(VIEWERS).find(k=>k.toLowerCase()===u.toLowerCase())||''];
+    await loadUsers(); const key=Object.keys(VIEWERS).find(k=>k.toLowerCase()===u.toLowerCase()); const account=key?VIEWERS[key]:null;
     if(!account || (await sha256(p))!==account.passwordHash){err.textContent='Invalid ID or password';return;}
     if(selectedLoginRole==='admin' && account.role!=='admin'){err.textContent='Select the Manager / NOC login tab for this account';return;}
     if(selectedLoginRole!=='admin' && account.role==='admin'){err.textContent='Select Sales Head for this account';return;}

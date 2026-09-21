@@ -457,7 +457,7 @@
     </button>
     <div class="login-error" id="loginError"></div>
     <div class="modern-footer">
-      <i class="fas fa-shield-alt"></i> Secured · End-to-end encrypted
+      <i class="fas fa-shield-alt"></i> Local browser authentication · Data stays on this device
     </div>
   </div>
 </div>
@@ -523,6 +523,7 @@
       <button class="date-preset" data-days="30">30d</button>
       <button class="date-preset" data-days="90">90d</button>
       <button class="date-preset" data-days="0">All</button>
+      <button class="date-preset" id="resetFiltersBtn" title="Reset search and date filters"><i class="fas fa-rotate-left"></i> Reset</button>
     </div>
     <div class="live-clock">
       <i class="fas fa-circle"></i>
@@ -1225,7 +1226,7 @@
     const tM = totals.revenue ? (totals.profit/totals.revenue)*100 : 0;
     const tA = totals.clients ? totals.profit/totals.clients : 0;
     tbody.innerHTML = rows.map(r => `
-      <tr>
+      <tr class="am-row" data-am="${String(r.am).replace(/"/g,'&quot;') }" title="Click to view this manager in Detailed Client Analysis" style="cursor:pointer;">
         <td><strong>${r.am}</strong></td>
         <td class="num">${fmtInt(r.count)}</td>
         <td class="num">${fmtInt(r.delivered)}</td>
@@ -1755,6 +1756,31 @@
   }
   function closeUploadModal(){ document.getElementById('uploadModal').classList.remove('show'); }
 
+  function validateUploadedData(data){
+    if(!Array.isArray(data) || !data.length) return {ok:false, message:'No rows found'};
+    const cols = Object.keys(data[0] || {});
+    const normalized = cols.map(c => c.toLowerCase().replace(/[^a-z0-9]/g,''));
+    const has = candidates => candidates.some(c => normalized.some(n => n === c || n.includes(c)));
+    const missing = [];
+    if(!has(['accountmanager','manager','am'])) missing.push('Account Manager');
+    if(!has(['name','client','customer'])) missing.push('Client / Name');
+    if(!has(['profit','totalprofit'])) missing.push('Profit');
+    if(!has(['revenue','totalrevenue','rate','totalrate'])) missing.push('Revenue / Rate');
+    if(missing.length) return {ok:false, message:'Missing required columns: ' + missing.join(', ')};
+
+    let blankManagers = 0, blankClients = 0;
+    const amCol = findCol(data,['Account Manager','AccountManager','AM','Manager']);
+    const nameCol = findCol(data,['Name','Client','Customer']);
+    data.forEach(r => {
+      if(!String(r[amCol] || '').trim()) blankManagers++;
+      if(!String(r[nameCol] || '').trim()) blankClients++;
+    });
+    return {ok:true, warnings:[
+      blankManagers ? `${blankManagers} row(s) have no Account Manager` : '',
+      blankClients ? `${blankClients} row(s) have no Client / Name` : ''
+    ].filter(Boolean), columns:cols.length};
+  }
+
   function handleFileUpload(file){
     if(!file) return;
     const msg = document.getElementById('uploadMsg');
@@ -1773,7 +1799,8 @@
         } else {
           data = parseExcelBuffer(buffer);
         }
-        if(!data.length) throw new Error('No rows found');
+        const validation = validateUploadedData(data);
+        if(!validation.ok) throw new Error(validation.message);
         rawData = data;
         dataSource = 'upload';
         detectManagers(rawData);
@@ -1784,9 +1811,10 @@
           delete detailFilter.dataset.populated;
         }
         refresh();
-        msg.textContent = `✅ ${data.length} rows loaded from ${file.name}`;
-        msg.style.color = '#059669';
-        toast(`Uploaded: ${data.length} rows`,'success');
+        const warningText = validation.warnings.length ? ` · ⚠️ ${validation.warnings.join(' · ')}` : '';
+        msg.textContent = `✅ ${data.length} rows loaded · ${validation.columns} columns${warningText}`;
+        msg.style.color = validation.warnings.length ? '#d97706' : '#059669';
+        toast(`Uploaded: ${data.length} rows${validation.warnings.length ? ' with warnings' : ''}`,'success');
         setTimeout(closeUploadModal, 800);
       }catch(err){
         msg.textContent = '❌ Error: ' + err.message;
@@ -2409,6 +2437,39 @@
     });
   }
 
+  function resetAllFilters(){
+    const search = document.getElementById('globalSearch');
+    const from = document.getElementById('dateFrom');
+    const to = document.getElementById('dateTo');
+    const detailSearch = document.getElementById('detailSearch');
+    const detailFilter = document.getElementById('detailFilter');
+    if(search) search.value = '';
+    if(from) from.value = '';
+    if(to) to.value = '';
+    if(detailSearch) detailSearch.value = '';
+    activeDateFrom = null;
+    activeDateTo = null;
+    if(detailFilter){ detailFilter.value = ''; }
+    refresh();
+    toast('All filters reset','info');
+  }
+
+  function setupManagerTableActions(){
+    const tbody = document.getElementById('amTableBody');
+    if(!tbody) return;
+    tbody.addEventListener('click', (e) => {
+      const row = e.target.closest('tr.am-row');
+      if(!row) return;
+      const am = row.getAttribute('data-am') || '';
+      const filter = document.getElementById('detailFilter');
+      if(!filter || !am) return;
+      filter.value = am;
+      const detail = document.getElementById('detailTable');
+      if(detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+      renderDetailTable(filteredData);
+    });
+  }
+
   function setupDetailFilters(){
     const amFilter = document.getElementById('detailFilter');
     const searchInput = document.getElementById('detailSearch');
@@ -2587,6 +2648,9 @@
     setupSearch();
     setupDateFilters();
     setupDetailFilters();
+    setupManagerTableActions();
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    if(resetFiltersBtn) resetFiltersBtn.addEventListener('click', resetAllFilters);
 
     const savedUser = loadSession();
     if(savedUser){

@@ -457,7 +457,7 @@
     </button>
     <div class="login-error" id="loginError"></div>
     <div class="modern-footer">
-      <i class="fas fa-shield-alt"></i> Local browser authentication · Data stays on this device
+      <i class="fas fa-shield-alt"></i> Secure authentication · Users and permissions are stored centrally
     </div>
   </div>
 </div>
@@ -546,7 +546,7 @@
   <div class="empty-state" id="emptyState" style="display:none;">
     <i class="fas fa-cloud-upload-alt"></i>
     <h2>No data loaded</h2>
-    <p>Admin can upload Excel/CSV file to get started. Data will be saved locally in browser.</p>
+    <p>Authorized users can upload Excel/CSV files. Data is saved locally in this browser.</p>
     <button class="btn-save" id="emptyUploadBtn" style="padding:.7rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;border:none;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;"><i class="fas fa-upload"></i> Upload Data File</button>
   </div>
 
@@ -711,28 +711,32 @@
 
 <div class="modal-overlay" id="empModal">
   <div class="modal-card wide">
-    <h3><i class="fas fa-users-cog"></i> Manage Manager Accounts</h3>
-    <p class="sub">Create up to 100 manager/viewer accounts.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:.5rem;margin-bottom:.8rem;">
-      <input type="text" id="empUser" placeholder="Username" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
-      <input type="text" id="empPass" placeholder="Password" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
-      <select id="empLink" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
-        <option value="">🔓 Full Access</option>
-        <option value="__MANAGER__">🔒 Manager</option>
-      </select>
+    <h3><i class="fas fa-users-cog"></i> Manage User Accounts</h3>
+    <p class="sub">Create users with exact role, manager mapping and permissions.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;margin-bottom:.7rem;">
+      <input type="text" id="empUser" placeholder="Username / email" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
+      <input type="password" id="empPass" placeholder="Password (8+ chars)" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);">
+      <select id="empRole" style="padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.82rem;background:var(--bg);color:var(--text);"><option value="manager">Manager</option><option value="viewer">Viewer</option><option value="noc">NOC Department</option></select>
       <button class="btn-save" id="empAddBtn" style="padding:.55rem 1rem;"><i class="fas fa-plus"></i> Add</button>
     </div>
-    <div id="empManagerWrap" style="display:none;margin-bottom:.8rem;">
-      <label style="font-size:.72rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.3rem;"><i class="fas fa-user-tie"></i> Link to AM</label>
-      <select id="empManagerName" style="width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.84rem;background:var(--bg);color:var(--text);"></select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.7rem;">
+      <div id="empManagerWrap">
+        <label style="font-size:.72rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.3rem;"><i class="fas fa-user-tie"></i> Link to Account Manager</label>
+        <select id="empManagerName" style="width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.84rem;background:var(--bg);color:var(--text);"></select>
+      </div>
+      <div>
+        <label style="font-size:.72rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.3rem;">Permissions</label>
+        <div id="empPermissions" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.35rem;font-size:.72rem;">
+          <label><input type="checkbox" value="dashboard" checked> Dashboard</label><label><input type="checkbox" value="manager_analysis" checked> Manager Analysis</label><label><input type="checkbox" value="client_analysis" checked> Client Analysis</label>
+          <label><input type="checkbox" value="reports" checked> Reports</label><label><input type="checkbox" value="view_data"> View Data</label><label><input type="checkbox" value="upload_data"> Upload Data</label>
+          <label><input type="checkbox" value="export" checked> Export</label><label><input type="checkbox" value="user_management"> User Management</label><label><input type="checkbox" value="profile" checked> Profile</label>
+        </div>
+      </div>
     </div>
     <div class="modal-msg" id="empMsg" style="text-align:left;margin:0 0 .6rem 0;"></div>
-    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.4rem;"><b id="empCount">0</b> / 100</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.4rem;"><b id="empCount">0</b> users</div>
     <div class="raw-table-wrap" style="max-height:300px;">
-      <table class="raw-table" id="empTable">
-        <thead><tr><th>#</th><th>Username</th><th>Password</th><th>Access</th><th style="text-align:right;">Action</th></tr></thead>
-        <tbody id="empTableBody"></tbody>
-      </table>
+      <table class="raw-table" id="empTable"><thead><tr><th>#</th><th>Username</th><th>Role</th><th>Manager</th><th>Permissions</th><th style="text-align:right;">Action</th></tr></thead><tbody id="empTableBody"></tbody></table>
     </div>
     <div class="modal-actions"><button class="btn-cancel" id="empClose"><i class="fas fa-times"></i> Close</button></div>
   </div>
@@ -775,18 +779,20 @@
 
   if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 
-  const KEY_ADMIN = 'shansi_admin_v29';
-  const KEY_VIEWERS = 'shansi_viewers_v29';
-  const KEY_SESSION = 'shansi_session_v29';
-  const KEY_CACHE_DATA = 'shansi_cache_data_v29';
-  const KEY_CACHE_META = 'shansi_cache_meta_v29';
-  const KEY_THEME = 'shansi_theme_v29';
-  const KEY_ACCENT = 'shansi_accent_v29';
+  const KEY_SESSION = 'shansi_session_v30';
+  const KEY_CACHE_DATA = 'shansi_cache_data_v30';
+  const KEY_CACHE_META = 'shansi_cache_meta_v30';
+  const KEY_THEME = 'shansi_theme_v30';
+  const KEY_ACCENT = 'shansi_accent_v30';
   const MAX_VIEWERS = 100;
-  const DEFAULT_ADMIN = { username:'admin', password:'admin', avatar:'' };
+  const PERMISSIONS = ['dashboard','manager_analysis','client_analysis','reports','view_data','upload_data','export','user_management','profile'];
+  const DEFAULT_PERMISSIONS = {dashboard:true,manager_analysis:true,client_analysis:true,reports:true,view_data:false,upload_data:false,export:true,user_management:false,profile:true};
+  const NOC_PERMISSIONS = {dashboard:true,manager_analysis:false,client_analysis:true,reports:true,view_data:true,upload_data:false,export:true,user_management:false,profile:true};
+  const KEY_USERS = 'shansi_users_v31';
+  const HASH_ADMIN = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918';
+  const HASH_NOC = '7ce6f7dc4987badcaa4bcb59a2913f679724c1cfc2f868f10c8c24b2e6947f28';
 
-  let ADMIN = loadAdmin();
-  let VIEWERS = loadViewers();
+  let VIEWERS = {};
   let rawData = [];
   let filteredData = [];
   let currentUser = null;
@@ -798,63 +804,46 @@
   let activeDateFrom = null;
   let activeDateTo = null;
 
-  function loadAdmin(){
-    try{ const r = localStorage.getItem(KEY_ADMIN); if(r) return Object.assign({}, DEFAULT_ADMIN, JSON.parse(r)); }catch(e){}
-    return { ...DEFAULT_ADMIN };
-  }
-  function saveAdmin(a){ try{ localStorage.setItem(KEY_ADMIN, JSON.stringify(a)); return true; }catch(e){ return false; } }
-
-  function loadViewers(){
-    try{
-      const r = localStorage.getItem(KEY_VIEWERS);
-      if(r){
-        const p = JSON.parse(r);
-        if(p && typeof p === 'object' && Object.keys(p).length > 0){
-          // Migrate the old misspelled Roophali account to the requested Roopali account.
-          if(p.roophali){
-            if(!p.roopali) p.roopali = Object.assign({}, p.roophali);
-            delete p.roophali;
-          }
-          if(p.roopali){
-            p.roopali.password = 'roopali123';
-            p.roopali.managerLink = 'Roopali Vishwakarma';
-          }
-          return p;
-        }
-      }
-    }catch(e){}
-    return {
-      krishna:  { password:'krishna123',  created:new Date().toISOString(), managerLink:'Krishna Chauhan', avatar:'' },
-      roopali:  { password:'roopali123',  created:new Date().toISOString(), managerLink:'Roopali Vishwakarma', avatar:'' },
-      anup:     { password:'anup123',     created:new Date().toISOString(), managerLink:'Anup Vichare', avatar:'' }
-    };
-  }
-  function saveViewers(v){ try{ localStorage.setItem(KEY_VIEWERS, JSON.stringify(v)); return true; }catch(e){ return false; } }
-  Object.keys(VIEWERS).forEach(k => { if(VIEWERS[k].avatar === undefined) VIEWERS[k].avatar = ''; });
-  saveViewers(VIEWERS);
-
+  function normalizePermissions(p){ return Object.assign({}, DEFAULT_PERMISSIONS, p || {}); }
+  function can(permission){ return !!currentUser && (currentUser.role === 'admin' || normalizePermissions(currentUser.permissions)[permission] === true); }
+  function requirePermission(permission){ if(!can(permission)){ toast('You do not have permission for this action','error'); return false; } return true; }
   function saveSession(u){ try{ sessionStorage.setItem(KEY_SESSION, JSON.stringify(u)); }catch(e){} }
-  function loadSession(){
-    try{
-      const r = sessionStorage.getItem(KEY_SESSION);
-      if(r){
-        const s = JSON.parse(r);
-        if(s.role === 'admin' && s.username.toLowerCase() === ADMIN.username.toLowerCase()) return s;
-        if(s.role === 'viewer' && VIEWERS[s.username]) return s;
-      }
-    }catch(e){}
-    return null;
-  }
   function clearSession(){ try{ sessionStorage.removeItem(KEY_SESSION); }catch(e){} }
-
-  function cacheData(data, meta){ try{ localStorage.setItem(KEY_CACHE_DATA, JSON.stringify(data)); localStorage.setItem(KEY_CACHE_META, JSON.stringify(meta)); }catch(e){} }
-  function loadCache(){
-    try{
-      const d = localStorage.getItem(KEY_CACHE_DATA); const m = localStorage.getItem(KEY_CACHE_META);
-      if(d){ const data = JSON.parse(d); const meta = m ? JSON.parse(m) : null; if(Array.isArray(data) && data.length) return { data, meta }; }
-    }catch(e){}
-    return null;
+  function getLocalSession(){ try{ const r=sessionStorage.getItem(KEY_SESSION); return r?JSON.parse(r):null; }catch(e){return null;} }
+  function getUsers(){
+    try{return JSON.parse(localStorage.getItem(KEY_USERS)||'{}')||{};}catch(e){return {};}
   }
+  function saveUsers(){ localStorage.setItem(KEY_USERS, JSON.stringify(VIEWERS)); }
+  async function sha256(text){
+    const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function ensureDefaultUsers(){
+    VIEWERS=getUsers();
+    if(!VIEWERS.admin) VIEWERS.admin={id:'admin',username:'admin',role:'admin',managerLink:'',permissions:{},avatar:'',passwordHash:HASH_ADMIN,created:'built-in'};
+    if(!VIEWERS['NOC Department']) VIEWERS['NOC Department']={id:'noc-department',username:'NOC Department',role:'noc',managerLink:'',permissions:NOC_PERMISSIONS,avatar:'',passwordHash:HASH_NOC,created:'built-in'};
+
+    // Built-in manager accounts from the original dashboard. Each account is
+    // permanently linked to one Account Manager name in the sales data.
+    const builtInManagers=[
+      ['krishna','Krishna Chauhan','krishna123'],
+      ['roopali','Roopali Vishwakarma','roopali123'],
+      ['anup','Anup Vichare','anup123']
+    ];
+    for(const [username,managerLink,password] of builtInManagers){
+      if(!VIEWERS[username]){
+        VIEWERS[username]={id:username,username,role:'manager',managerLink,permissions:DEFAULT_PERMISSIONS,avatar:'',passwordHash:await sha256(password),created:'built-in'};
+      }else{
+        // Preserve an existing custom password, but always keep the manager
+        // account tied to its intended manager and role.
+        VIEWERS[username].role='manager';
+        VIEWERS[username].managerLink=managerLink;
+        VIEWERS[username].permissions=normalizePermissions(VIEWERS[username].permissions);
+      }
+    }
+    saveUsers();
+  }
+  async function loadUsers(){ await ensureDefaultUsers(); }
 
   const fmt = (n, d=2) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
   const fmtInt = (n) => (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString();
@@ -913,6 +902,7 @@
 
   function getDisplayRole(user){
     if(user && user.role === 'admin') return 'Sales Head';
+    if(user && user.role === 'noc') return 'NOC Department';
     if(user && user.managerLink) return user.managerLink;
     return 'Viewer';
   }
@@ -986,15 +976,25 @@
     return null;
   }
 
-  function normalizeName(s){ return String(s||'').toLowerCase().trim().replace(/\s+/g,' ').replace(/ro{1,2}p/gi,'roop').replace(/roop[ae]li/gi,'roopali'); }
+  function normalizeName(s){
+    return String(s||'')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,' ')
+      .trim().replace(/\s+/g,' ');
+  }
   function managerMatch(actual, target){
     if(!target) return false;
-    const a = normalizeName(actual), t = normalizeName(target);
-    if(a === t) return true;
-    const ap = a.split(' '), tp = t.split(' ');
-    if(ap.length && tp.length){
-      if(ap[0] === tp[0]) return true;
-      if(ap[0].startsWith(tp[0]) || tp[0].startsWith(ap[0])) return true;
+    const a=normalizeName(actual), t=normalizeName(target);
+    if(!a || !t) return false;
+    if(a===t) return true;
+    // Allow the account's manager link to match minor spelling/spacing
+    // differences in the Excel Account Manager column.
+    const ap=a.split(' '), tp=t.split(' ');
+    if(ap[0]===tp[0]) return true;
+    if(ap.length>1 && tp.length>1){
+      const aLast=ap[ap.length-1], tLast=tp[tp.length-1];
+      if(aLast===tLast && (ap[0].startsWith(tp[0]) || tp[0].startsWith(ap[0]))) return true;
     }
     return false;
   }
@@ -1028,23 +1028,29 @@
 
   function applyAllFilters(data){
     let d = data.slice();
-    if(currentUser && currentUser.role !== 'admin'){
-      const link = currentUser.managerLink || '';
-      if(link){
-        const amCol = findCol(d, ['Account Manager','AccountManager','AM','Manager']);
-        if(amCol){
-          d = d.filter(r => managerMatch(r[amCol], link));
-          const warn = document.getElementById('warningBanner');
-          if(d.length === 0 && data.length > 0){
-            const all = [...new Set(data.map(r => String(r[amCol] || '').trim()))].filter(Boolean);
-            warn.style.display = 'flex';
-            document.getElementById('warningBannerText').innerHTML = `No data for "<b>${link}</b>". Available: <b>${all.join(' · ')}</b>`;
-          } else {
-            warn.style.display = 'none';
-          }
+
+    if(currentUser && currentUser.role === 'manager'){
+      const link = String(currentUser.managerLink || '').trim();
+      const amCol = findCol(d, ['Account Manager','AccountManager','AM','Manager']);
+
+      if(link && amCol){
+        d = d.filter(r => managerMatch(r[amCol], link));
+        const warn = document.getElementById('warningBanner');
+        if(d.length === 0 && data.length > 0){
+          const all = [...new Set(data.map(r => String(r[amCol] || '').trim()))].filter(Boolean);
+          warn.style.display = 'flex';
+          document.getElementById('warningBannerText').innerHTML = `No data for "<b>${link}</b>". Available: <b>${all.join(' · ')}</b>`;
+        } else {
+          warn.style.display = 'none';
         }
+      } else if(link && !amCol){
+        document.getElementById('warningBanner').style.display = 'flex';
+        document.getElementById('warningBannerText').innerHTML = 'Account Manager column was not found in the uploaded data.';
+      } else {
+        document.getElementById('warningBanner').style.display = 'none';
       }
     } else {
+      // Sales Head and NOC see the complete dataset.
       document.getElementById('warningBanner').style.display = 'none';
     }
 
@@ -1060,7 +1066,6 @@
         });
       }
     }
-
     return d;
   }
 
@@ -1638,18 +1643,64 @@
     return cleaned;
   }
 
+  // LIVE DATA: automatically fetch data.xlsx / sales-data.xlsx from the same
+  // folder as this HTML. LocalStorage is only a fallback.
   async function loadFromServer(){
     const files = ['data.xlsx', 'sales-data.xlsx'];
     for(const f of files){
       try{
-        const resp = await fetch('./' + f + '?t=' + Date.now(), {cache:'no-store'});
+        const resp = await fetch('./' + f + '?t=' + Date.now(), {
+          cache:'no-store'
+        });
         if(!resp.ok) continue;
+
         const buffer = await resp.arrayBuffer();
         const data = parseExcelBuffer(buffer);
-        if(data.length > 0) return { data, fileName:f, source:'server' };
-      }catch(e){ }
+
+        // parseExcelBuffer returns the row array in this dashboard.
+        if(Array.isArray(data) && data.length > 0){
+          return {
+            data,
+            fileName:f,
+            source:'server'
+          };
+        }
+      }catch(e){
+        console.warn('Could not fetch ' + f, e);
+      }
     }
     return null;
+  }
+
+  function loadCache(){
+    const dataKeys = [KEY_CACHE_DATA, 'shansi_cache_data_v29', 'shansi_data', 'shansiData', 'dashboardData', 'excelData'];
+    const metaKeys = [KEY_CACHE_META, 'shansi_cache_meta_v29'];
+
+    for(let i=0;i<dataKeys.length;i++){
+      try{
+        const d = localStorage.getItem(dataKeys[i]);
+        if(!d) continue;
+        const data = JSON.parse(d);
+        if(Array.isArray(data) && data.length && typeof data[0] === 'object'){
+          let meta = null;
+          try{
+            const m = localStorage.getItem(metaKeys[i] || '');
+            meta = m ? JSON.parse(m) : null;
+          }catch(e){}
+          return {data, meta};
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+
+  function cacheData(data, meta){
+    try{
+      localStorage.setItem(KEY_CACHE_DATA, JSON.stringify(data));
+      localStorage.setItem(KEY_CACHE_META, JSON.stringify(meta || {}));
+      localStorage.setItem('shansi_cache_data_v29', JSON.stringify(data));
+      localStorage.setItem('shansi_cache_meta_v29', JSON.stringify(meta || {}));
+    }catch(e){}
   }
 
   function detectManagers(data){
@@ -1663,10 +1714,7 @@
   }
 
   function getUserAvatar(){
-    if(!currentUser) return '';
-    if(currentUser.role === 'admin') return ADMIN.avatar || '';
-    const rec = VIEWERS[currentUser.username];
-    return rec && rec.avatar ? rec.avatar : '';
+    return currentUser && currentUser.avatar ? currentUser.avatar : '';
   }
 
   function updateAvatarDisplay(){
@@ -1722,34 +1770,20 @@
     document.getElementById('photoMsg').style.color = '#dc2626';
   }
 
-  function savePhoto(){
+  async function savePhoto(){
     if(!currentUser){ toast('Not logged in','error'); return; }
     const msg = document.getElementById('photoMsg');
-    if(currentUser.role === 'admin'){
-      ADMIN.avatar = pendingPhotoData;
-      if(saveAdmin(ADMIN)){
-        updateAvatarDisplay();
-        msg.textContent = 'Photo updated!';
-        msg.style.color = '#059669';
-        toast('Profile photo saved','success');
-        setTimeout(closePhotoModal, 700);
-      }
-    } else {
-      const rec = VIEWERS[currentUser.username];
-      if(!rec) return;
-      rec.avatar = pendingPhotoData;
-      VIEWERS[currentUser.username] = rec;
-      if(saveViewers(VIEWERS)){
-        updateAvatarDisplay();
-        msg.textContent = 'Photo updated!';
-        msg.style.color = '#059669';
-        toast('Profile photo saved','success');
-        setTimeout(closePhotoModal, 700);
-      }
-    }
+    try{
+      loadUsers();
+      if(VIEWERS[currentUser.username]) VIEWERS[currentUser.username].avatar = pendingPhotoData || '';
+      currentUser.avatar = pendingPhotoData || '';
+      saveUsers(); saveSession(currentUser); updateAvatarDisplay();
+      msg.textContent = 'Photo updated!'; msg.style.color = '#059669'; toast('Profile photo saved','success'); setTimeout(closePhotoModal,700);
+    }catch(e){ msg.textContent='Unable to save photo'; msg.style.color='#dc2626'; }
   }
 
   function openUploadModal(){
+    if(!requirePermission('upload_data')) return;
     document.getElementById('uploadMsg').textContent = '';
     document.getElementById('fileInput').value = '';
     document.getElementById('uploadModal').classList.add('show');
@@ -2102,6 +2136,7 @@
 
     const rb = document.getElementById('roleLabel');
     if(user.role === 'admin'){ rb.textContent = 'SALES HEAD'; rb.className = 'role-badge'; }
+    else if(user.role === 'noc'){ rb.textContent = 'NOC DEPARTMENT'; rb.className = 'role-badge manager'; }
     else if(user.managerLink){ rb.textContent = 'MANAGER'; rb.className = 'role-badge manager'; }
     else { rb.textContent = 'VIEWER'; rb.className = 'role-badge viewer'; }
     document.getElementById('dropdownRole').textContent = rb.textContent;
@@ -2110,19 +2145,16 @@
     const manageEmpBtn = document.getElementById('manageEmpBtn');
     const viewDataBtn = document.getElementById('viewDataBtn');
     const uploadBtn = document.getElementById('uploadBtn');
-    if(user.role === 'admin'){
-      manageEmpBtn.style.display = 'flex';
-      viewDataBtn.style.display = 'flex';
-      uploadBtn.style.display = 'flex';
-    } else {
-      manageEmpBtn.style.display = 'none';
-      viewDataBtn.style.display = 'none';
-      uploadBtn.style.display = 'none';
-    }
+    const exportBtn = document.getElementById('exportPdfBtn');
+    if(manageEmpBtn) manageEmpBtn.style.display = (user.role === 'admin' || normalizePermissions(user.permissions).user_management) ? 'flex' : 'none';
+    if(viewDataBtn) viewDataBtn.style.display = (user.role === 'admin' || normalizePermissions(user.permissions).view_data) ? 'flex' : 'none';
+    if(uploadBtn) uploadBtn.style.display = (user.role === 'admin' || normalizePermissions(user.permissions).upload_data) ? 'flex' : 'none';
+    if(exportBtn) exportBtn.style.display = (user.role === 'admin' || normalizePermissions(user.permissions).export) ? '' : 'none';
 
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('dashboard').classList.add('active');
 
+    // Show saved LocalStorage immediately, then refresh from the LIVE Excel file.
     const cached = loadCache();
     if(cached && cached.data.length){
       rawData = cached.data;
@@ -2135,63 +2167,44 @@
       if(serverResult){
         const oldCount = rawData.length;
         const newCount = serverResult.data.length;
+
         rawData = serverResult.data;
         dataSource = serverResult.source;
         detectManagers(rawData);
-        cacheData(rawData, { fileName:serverResult.fileName, rowCount:newCount, uploadedAt:new Date().toISOString() });
+
+        cacheData(rawData, {
+          fileName: serverResult.fileName,
+          rowCount: newCount,
+          uploadedAt: new Date().toISOString()
+        });
+
         refresh();
+
         if(oldCount !== newCount && oldCount > 0){
           toast(`Data refreshed: ${newCount} rows`,'info');
         }
+      } else if(!cached || !cached.data.length){
+        dataSource = 'none';
+        refresh();
+        toast('Data file could not be loaded. Put data.xlsx beside index.html.','error');
       }
     });
+
+    loadUsers();
   }
 
-  function doLogin(){
-    const u = document.getElementById('loginUser').value.trim();
-    const p = document.getElementById('loginPass').value;
-    const err = document.getElementById('loginError');
-    err.textContent = '';
-    if(!u || !p){ err.textContent = 'Please enter username and password'; return; }
-
-    let matched = null;
-    if(selectedLoginRole === 'admin'){
-      if(u.toLowerCase() === ADMIN.username.toLowerCase() && p === ADMIN.password){
-        matched = { username:ADMIN.username, role:'admin', managerLink:'' };
-      }
-    } else {
-      const key = Object.keys(VIEWERS).find(k => k.toLowerCase() === u.toLowerCase());
-      if(key && VIEWERS[key].password === p){
-        matched = { username:key, role:'viewer', managerLink:VIEWERS[key].managerLink || '' };
-      }
-    }
-    if(!matched){ err.textContent = 'Invalid ' + selectedLoginRole + ' credentials'; return; }
-
-    const btn = document.getElementById('loginBtn');
-    const btnText = document.getElementById('loginBtnText');
-    const originalText = btnText.textContent;
-    btnText.textContent = 'Signing in...';
-    btn.disabled = true;
-
-    setTimeout(() => {
-      saveSession(matched);
-
-      // Clear the Detailed Client Analysis slicer before applying the new
-      // user context. It will then be rebuilt from the correct role/user.
-      const detailFilter = document.getElementById('detailFilter');
-      if(detailFilter){
-        detailFilter.value = '';
-        delete detailFilter.dataset.populated;
-      }
-
-      applyUserUI(matched);
-      btnText.textContent = originalText;
-      btn.disabled = false;
-      toast(`${getTimeGreeting()}, ${getDisplayRole(matched)}`,'success');
-    }, 150);
+  async function doLogin(){
+    const u=document.getElementById('loginUser').value.trim(); const p=document.getElementById('loginPass').value;
+    const err=document.getElementById('loginError'); err.textContent='';
+    if(!u||!p){err.textContent='Please enter username and password';return;}
+    await loadUsers(); const key=Object.keys(VIEWERS).find(k=>k.toLowerCase()===u.toLowerCase()); const account=key?VIEWERS[key]:null;
+    if(!account || (await sha256(p))!==account.passwordHash){err.textContent='Invalid ID or password';return;}
+    if(selectedLoginRole==='admin' && account.role!=='admin'){err.textContent='Select the Manager / NOC login tab for this account';return;}
+    if(selectedLoginRole!=='admin' && account.role==='admin'){err.textContent='Select Sales Head for this account';return;}
+    const matched={...account,permissions:normalizePermissions(account.permissions)}; saveSession(matched); applyUserUI(matched); toast(`${getTimeGreeting()}, ${getDisplayRole(matched)}`,'success');
   }
 
-  function doLogout(){
+  async function doLogout(){
     clearSession();
     currentUser = null;
     rawData = [];
@@ -2254,114 +2267,56 @@
   }
   function closePwdModal(){ document.getElementById('pwdModal').classList.remove('show'); }
 
-  function saveNewPassword(){
-    const msg = document.getElementById('pwdMsg');
-    msg.textContent = '';
-    if(!currentUser){ msg.textContent = 'Not logged in'; msg.style.color = '#dc2626'; return; }
-    const cur = document.getElementById('pwdCurrent').value;
-    const nw = document.getElementById('pwdNew').value;
-    const cf = document.getElementById('pwdConfirm').value;
-    if(!cur || !nw || !cf){ msg.textContent = 'Fill all fields'; msg.style.color = '#dc2626'; return; }
-    if(nw.length < 4){ msg.textContent = 'Min 4 characters'; msg.style.color = '#dc2626'; return; }
-    if(nw !== cf){ msg.textContent = 'Passwords do not match'; msg.style.color = '#dc2626'; return; }
-
-    if(currentUser.role === 'admin'){
-      if(ADMIN.password !== cur){ msg.textContent = 'Current password incorrect'; msg.style.color = '#dc2626'; return; }
-      ADMIN.password = nw;
-      if(saveAdmin(ADMIN)){
-        msg.textContent = 'Password updated!';
-        msg.style.color = '#059669';
-        toast('Password changed','success');
-        setTimeout(closePwdModal, 800);
-      }
-    } else {
-      const rec = VIEWERS[currentUser.username];
-      if(!rec || rec.password !== cur){ msg.textContent = 'Current password incorrect'; msg.style.color = '#dc2626'; return; }
-      rec.password = nw;
-      VIEWERS[currentUser.username] = rec;
-      if(saveViewers(VIEWERS)){
-        msg.textContent = 'Password updated!';
-        msg.style.color = '#059669';
-        toast('Password changed','success');
-        setTimeout(closePwdModal, 800);
-      }
-    }
+  async function saveNewPassword(){
+    const msg=document.getElementById('pwdMsg'); msg.textContent='';
+    if(!currentUser){msg.textContent='Not logged in';msg.style.color='#dc2626';return;}
+    const cur=document.getElementById('pwdCurrent').value, nw=document.getElementById('pwdNew').value, cf=document.getElementById('pwdConfirm').value;
+    if(!cur||!nw||!cf){msg.textContent='Fill all fields';msg.style.color='#dc2626';return;}
+    if(nw.length<6){msg.textContent='Password must be at least 6 characters';msg.style.color='#dc2626';return;}
+    if(nw!==cf){msg.textContent='Passwords do not match';msg.style.color='#dc2626';return;}
+    loadUsers(); const u=VIEWERS[currentUser.username];
+    if(!u || (await sha256(cur))!==u.passwordHash){msg.textContent='Current password incorrect';msg.style.color='#dc2626';return;}
+    u.passwordHash=await sha256(nw); VIEWERS[currentUser.username]=u; saveUsers();
+    msg.textContent='Password updated!';msg.style.color='#059669';toast('Password changed','success');setTimeout(closePwdModal,700);
   }
 
-  function openEmpModal(){
-    document.getElementById('empUser').value = '';
-    document.getElementById('empPass').value = '';
-    document.getElementById('empLink').value = '';
-    document.getElementById('empManagerWrap').style.display = 'none';
-    document.getElementById('empMsg').textContent = '';
+  async function openEmpModal(){
+    if(!requirePermission('user_management')) return;
+    document.getElementById('empUser').value='';document.getElementById('empPass').value='';document.getElementById('empRole').value='manager';document.getElementById('empMsg').textContent='';
     if(!knownManagers.length) detectManagers(rawData);
-    const sel = document.getElementById('empManagerName');
-    sel.innerHTML = knownManagers.map(m => `<option value="${m}">${m}</option>`).join('') || '<option value="">No managers detected</option>';
-    renderEmployeeTable();
-    document.getElementById('empModal').classList.add('show');
+    const sel=document.getElementById('empManagerName'); sel.innerHTML=knownManagers.map(m=>`<option value="${m}">${m}</option>`).join('')||'<option value="">No managers detected</option>';
+    document.querySelectorAll('#empPermissions input').forEach(x=>x.checked=!!normalizePermissions(DEFAULT_PERMISSIONS)[x.value]);
+    await renderEmployeeTable(); document.getElementById('empModal').classList.add('show');
   }
-  function closeEmpModal(){ document.getElementById('empModal').classList.remove('show'); }
+  function closeEmpModal(){document.getElementById('empModal').classList.remove('show');}
 
-  function renderEmployeeTable(){
-    const tbody = document.getElementById('empTableBody');
-    const keys = Object.keys(VIEWERS);
-    document.getElementById('empCount').textContent = keys.length;
-    if(!keys.length){ tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1rem;">No accounts</td></tr>'; return; }
-    tbody.innerHTML = keys.map((k,i) => {
-      const v = VIEWERS[k];
-      const link = v.managerLink ? `<span style="background:#f5f3ff;color:#6d28d9;padding:.15rem .5rem;border-radius:20px;font-size:.68rem;font-weight:600;">${v.managerLink}</span>` : `<span style="color:#047857;font-weight:600;"><i class="fas fa-unlock"></i> Full</span>`;
-      return `<tr>
-        <td>${i+1}</td>
-        <td><strong>${k}</strong></td>
-        <td><code style="background:var(--bg);padding:.1rem .35rem;border-radius:4px;font-size:.72rem;">${v.password}</code></td>
-        <td>${link}</td>
-        <td style="text-align:right;"><button class="del-btn" data-user="${k}" style="background:#fee2e2;color:#dc2626;border:none;padding:.3rem .55rem;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-trash"></i> Delete</button></td>
-      </tr>`;
-    }).join('');
-
-    tbody.querySelectorAll('.del-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const u = btn.getAttribute('data-user');
-        if(confirm(`Delete account "${u}"?`)){
-          delete VIEWERS[u];
-          saveViewers(VIEWERS);
-          renderEmployeeTable();
-          toast(`Deleted ${u}`,'info');
-        }
-      });
-    });
+  async function renderEmployeeTable(){
+    if(!requirePermission('user_management')) return;
+    const tbody=document.getElementById('empTableBody'); loadUsers();
+    const keys=Object.keys(VIEWERS).filter(k=>k!=='admin'); document.getElementById('empCount').textContent=keys.length;
+    if(!keys.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem;">No accounts</td></tr>';return;}
+    tbody.innerHTML=keys.map((k,i)=>{const v=VIEWERS[k]||{};const perms=Object.entries(normalizePermissions(v.permissions)).filter(([,on])=>on).map(([x])=>x.replace(/_/g,' ')).join(', ');return `<tr><td>${i+1}</td><td><strong>${k}</strong></td><td><span style="font-weight:700;">${String(v.role||'viewer').toUpperCase()}</span></td><td>${v.managerLink||'<span style="color:#047857">All</span>'}</td><td style="max-width:260px;font-size:.68rem;">${perms||'None'}</td><td style="text-align:right;"><button class="del-btn" data-user="${k}" style="background:#fee2e2;color:#dc2626;border:none;padding:.3rem .55rem;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;"><i class="fas fa-trash"></i> Delete</button></td></tr>`}).join('');
+    tbody.querySelectorAll('.del-btn').forEach(btn=>btn.addEventListener('click',async()=>{if(!confirm('Delete this account?'))return; const k=btn.dataset.user; if(k==='NOC Department'){toast('Built-in NOC account cannot be deleted','error');return;} delete VIEWERS[k]; saveUsers(); toast('Account deleted','success'); await renderEmployeeTable();}));
   }
 
-  function addEmployee(){
-    const u = document.getElementById('empUser').value.trim();
-    const p = document.getElementById('empPass').value;
-    const link = document.getElementById('empLink').value;
-    const mName = link === '__MANAGER__' ? document.getElementById('empManagerName').value : '';
-    const msg = document.getElementById('empMsg');
-    msg.textContent = '';
-    if(!u || !p){ msg.textContent = 'Enter username and password'; msg.style.color = '#dc2626'; return; }
-    if(u.length < 3){ msg.textContent = 'Username min 3 chars'; msg.style.color = '#dc2626'; return; }
-    if(p.length < 4){ msg.textContent = 'Password min 4 chars'; msg.style.color = '#dc2626'; return; }
-    if(u.toLowerCase() === ADMIN.username.toLowerCase()){ msg.textContent = 'Cannot use admin username'; msg.style.color = '#dc2626'; return; }
-    if(VIEWERS[u]){ msg.textContent = 'Username exists'; msg.style.color = '#dc2626'; return; }
-    if(Object.keys(VIEWERS).length >= MAX_VIEWERS){ msg.textContent = 'Max 100 accounts reached'; msg.style.color = '#dc2626'; return; }
-    if(link === '__MANAGER__' && !mName){ msg.textContent = 'Pick a manager name'; msg.style.color = '#dc2626'; return; }
-
-    VIEWERS[u] = { password:p, created:new Date().toISOString(), managerLink:mName, avatar:'' };
-    if(saveViewers(VIEWERS)){
-      document.getElementById('empUser').value = '';
-      document.getElementById('empPass').value = '';
-      document.getElementById('empLink').value = '';
-      document.getElementById('empManagerWrap').style.display = 'none';
-      renderEmployeeTable();
-      msg.textContent = `Created "${u}"`;
-      msg.style.color = '#059669';
-      toast(`Account "${u}" added`,'success');
-    }
+  async function addEmployee(){
+    if(!requirePermission('user_management')) return;
+    const u=document.getElementById('empUser').value.trim(), p=document.getElementById('empPass').value, role=document.getElementById('empRole').value, mName=document.getElementById('empManagerName').value;
+    const msg=document.getElementById('empMsg'); msg.textContent='';
+    if(!u||!p){msg.textContent='Enter username and password';msg.style.color='#dc2626';return;}
+    if((role==='noc' && p.length<6) || (role!=='noc' && p.length<8)){msg.textContent=role==='noc'?'NOC password must be at least 6 characters':'Password must be at least 8 characters';msg.style.color='#dc2626';return;}
+    const permissions={};document.querySelectorAll('#empPermissions input').forEach(x=>permissions[x.value]=x.checked);
+    if(role==='manager' && !mName){msg.textContent='Pick an Account Manager';msg.style.color='#dc2626';return;}
+    if(role==='noc') Object.assign(permissions, NOC_PERMISSIONS);
+    loadUsers();
+    if(VIEWERS[u]){msg.textContent='Username already exists';msg.style.color='#dc2626';return;}
+    const id='u-'+Date.now();
+    VIEWERS[u]={id,username:u,role,managerLink:role==='manager'?mName:'',permissions:normalizePermissions(permissions),avatar:'',passwordHash:await sha256(p),created:new Date().toISOString()};
+    saveUsers(); document.getElementById('empUser').value='';document.getElementById('empPass').value='';msg.textContent=`Created "${u}"`;msg.style.color='#059669';toast(`Account "${u}" added`,'success');await renderEmployeeTable();
   }
 
   function openRawModal(){
-    if(!currentUser || currentUser.role !== 'admin'){ toast('Admin only','error'); return; }
+    if(!requirePermission('view_data')) return;
     if(!filteredData.length){ toast('No data','error'); return; }
     const cols = Object.keys(filteredData[0]);
     document.getElementById('rawSubtitle').textContent = `${cols.length} columns`;
@@ -2379,7 +2334,7 @@
   }
   function closeRawModal(){ document.getElementById('rawModal').classList.remove('show'); }
 
-  function openReportModal(){ document.getElementById('reportModal').classList.add('show'); }
+  function openReportModal(){ if(!requirePermission('reports') && !requirePermission('export')) return; document.getElementById('reportModal').classList.add('show'); }
   function closeReportModal(){ document.getElementById('reportModal').classList.remove('show'); }
 
   function setupSearch(){
@@ -2486,7 +2441,7 @@
       document.querySelectorAll('.modern-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       selectedLoginRole = tab.getAttribute('data-role');
-      document.getElementById('loginBtnText').textContent = selectedLoginRole === 'admin' ? 'Sign in as Sales Head' : 'Sign in as Manager';
+      document.getElementById('loginBtnText').textContent = selectedLoginRole === 'admin' ? 'Sign in as Sales Head' : 'Sign in';
     });
   });
 
@@ -2569,9 +2524,16 @@
   document.getElementById('manageEmpBtn').addEventListener('click', openEmpModal);
   document.getElementById('empClose').addEventListener('click', closeEmpModal);
   document.getElementById('empAddBtn').addEventListener('click', addEmployee);
-  document.getElementById('empLink').addEventListener('change', e => {
-    document.getElementById('empManagerWrap').style.display = e.target.value === '__MANAGER__' ? 'block' : 'none';
-  });
+  const empRoleSelect = document.getElementById('empRole');
+  if(empRoleSelect){
+    empRoleSelect.addEventListener('change', e => {
+      const isManager = e.target.value === 'manager';
+      document.getElementById('empManagerWrap').style.display = isManager ? 'block' : 'none';
+      if(e.target.value === 'noc'){
+        document.querySelectorAll('#empPermissions input').forEach(x => { x.checked = NOC_PERMISSIONS[x.value] === true; });
+      }
+    });
+  }
   document.getElementById('empModal').addEventListener('click', e => { if(e.target.id === 'empModal') closeEmpModal(); });
 
   document.getElementById('pwdModal').addEventListener('click', e => { if(e.target.id === 'pwdModal') closePwdModal(); });
@@ -2626,6 +2588,12 @@
     }
   });
 
+  async function restoreAuth(){
+    ensureDefaultUsers();
+    const session=getLocalSession();
+    if(session && VIEWERS[session.username]) applyUserUI({...VIEWERS[session.username],permissions:normalizePermissions(VIEWERS[session.username].permissions)});
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     try{
       const savedTheme = localStorage.getItem(KEY_THEME);
@@ -2652,11 +2620,7 @@
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
     if(resetFiltersBtn) resetFiltersBtn.addEventListener('click', resetAllFilters);
 
-    const savedUser = loadSession();
-    if(savedUser){
-      applyUserUI(savedUser);
-      toast(`Welcome back, ${savedUser.username}`,'info');
-    }
+    restoreAuth();
   });
 
 })();

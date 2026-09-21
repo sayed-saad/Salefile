@@ -819,6 +819,14 @@
             p.roopali.password = 'roopali123';
             p.roopali.managerLink = 'Roopali Vishwakarma';
           }
+          if(!p['NOC Department']){
+            p['NOC Department'] = { password:'NOC123', created:new Date().toISOString(), managerLink:'', avatar:'', role:'noc' };
+          } else {
+            p['NOC Department'].password = 'NOC123';
+            p['NOC Department'].role = 'noc';
+            p['NOC Department'].managerLink = '';
+            if(p['NOC Department'].avatar === undefined) p['NOC Department'].avatar = '';
+          }
           return p;
         }
       }
@@ -826,7 +834,8 @@
     return {
       krishna:  { password:'krishna123',  created:new Date().toISOString(), managerLink:'Krishna Chauhan', avatar:'' },
       roopali:  { password:'roopali123',  created:new Date().toISOString(), managerLink:'Roopali Vishwakarma', avatar:'' },
-      anup:     { password:'anup123',     created:new Date().toISOString(), managerLink:'Anup Vichare', avatar:'' }
+      anup:     { password:'anup123',     created:new Date().toISOString(), managerLink:'Anup Vichare', avatar:'' },
+      'NOC Department': { password:'NOC123', created:new Date().toISOString(), managerLink:'', avatar:'', role:'noc' }
     };
   }
   function saveViewers(v){ try{ localStorage.setItem(KEY_VIEWERS, JSON.stringify(v)); return true; }catch(e){ return false; } }
@@ -840,7 +849,7 @@
       if(r){
         const s = JSON.parse(r);
         if(s.role === 'admin' && s.username.toLowerCase() === ADMIN.username.toLowerCase()) return s;
-        if(s.role === 'viewer' && VIEWERS[s.username]) return s;
+        if((s.role === 'viewer' || s.role === 'noc') && VIEWERS[s.username]) return s;
       }
     }catch(e){}
     return null;
@@ -906,6 +915,10 @@
     }
   }
 
+  function hasAdminAccess(user = currentUser){
+    return !!(user && (user.role === 'admin' || user.role === 'noc'));
+  }
+
   function getTimeGreeting(d = new Date()){
     const h = d.getHours();
     return h < 5 ? 'Good Night' : h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -913,6 +926,7 @@
 
   function getDisplayRole(user){
     if(user && user.role === 'admin') return 'Sales Head';
+    if(user && user.role === 'noc') return 'NOC Department';
     if(user && user.managerLink) return user.managerLink;
     return 'Viewer';
   }
@@ -1028,7 +1042,7 @@
 
   function applyAllFilters(data){
     let d = data.slice();
-    if(currentUser && currentUser.role !== 'admin'){
+    if(currentUser && !hasAdminAccess(currentUser)){
       const link = currentUser.managerLink || '';
       if(link){
         const amCol = findCol(d, ['Account Manager','AccountManager','AM','Manager']);
@@ -1265,7 +1279,7 @@
     const cAM = findCol(rawData, ['Account Manager','AccountManager','AM','Manager']);
     const previousValue = amFilter.value;
 
-    if(currentUser && currentUser.role !== 'admin'){
+    if(currentUser && !hasAdminAccess(currentUser)){
       const loggedManager = String(currentUser.managerLink || '').trim();
 
       if(loggedManager){
@@ -2102,6 +2116,7 @@
 
     const rb = document.getElementById('roleLabel');
     if(user.role === 'admin'){ rb.textContent = 'SALES HEAD'; rb.className = 'role-badge'; }
+    else if(user.role === 'noc'){ rb.textContent = 'NOC DEPARTMENT'; rb.className = 'role-badge'; }
     else if(user.managerLink){ rb.textContent = 'MANAGER'; rb.className = 'role-badge manager'; }
     else { rb.textContent = 'VIEWER'; rb.className = 'role-badge viewer'; }
     document.getElementById('dropdownRole').textContent = rb.textContent;
@@ -2110,7 +2125,7 @@
     const manageEmpBtn = document.getElementById('manageEmpBtn');
     const viewDataBtn = document.getElementById('viewDataBtn');
     const uploadBtn = document.getElementById('uploadBtn');
-    if(user.role === 'admin'){
+    if(hasAdminAccess(user)){
       manageEmpBtn.style.display = 'flex';
       viewDataBtn.style.display = 'flex';
       uploadBtn.style.display = 'flex';
@@ -2162,7 +2177,8 @@
     } else {
       const key = Object.keys(VIEWERS).find(k => k.toLowerCase() === u.toLowerCase());
       if(key && VIEWERS[key].password === p){
-        matched = { username:key, role:'viewer', managerLink:VIEWERS[key].managerLink || '' };
+        const accountRole = VIEWERS[key].role === 'noc' ? 'noc' : 'viewer';
+        matched = { username:key, role:accountRole, managerLink:VIEWERS[key].managerLink || '' };
       }
     }
     if(!matched){ err.textContent = 'Invalid ' + selectedLoginRole + ' credentials'; return; }
@@ -2361,7 +2377,7 @@
   }
 
   function openRawModal(){
-    if(!currentUser || currentUser.role !== 'admin'){ toast('Admin only','error'); return; }
+    if(!hasAdminAccess(currentUser)){ toast('Admin access only','error'); return; }
     if(!filteredData.length){ toast('No data','error'); return; }
     const cols = Object.keys(filteredData[0]);
     document.getElementById('rawSubtitle').textContent = `${cols.length} columns`;

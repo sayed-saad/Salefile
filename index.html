@@ -1232,27 +1232,11 @@
     return d;
   }
 
-  // Excel often stores formatted numbers as strings (for example, "115,700").
-  // parseFloat("115,700") becomes 115, so use this parser for all report metrics.
-  function parseMetricNumber(value){
-    if(value === null || value === undefined || value === '') return 0;
-    if(typeof value === 'number' && Number.isFinite(value)) return value;
-    let s = String(value).trim();
-    if(!s) return 0;
-    // Handle common Excel display formats: 115,700 / 115,700.50 / 115700.50
-    s = s.replace(/\s/g,'').replace(/,/g,'');
-    const negative = /^\(.*\)$/.test(s);
-    s = s.replace(/^\(|\)$/g,'').replace(/%$/,'');
-    const n = Number(s);
-    if(!Number.isFinite(n)) return 0;
-    return negative ? -n : n;
-  }
-
   function aggregateByAM(data){
     const cName = findCol(data,['Name','Client','Customer']);
     const cAM = findCol(data,['Account Manager','AccountManager','AM','Manager']);
-    const cCount = findCol(data,['Count','Total Count','Units','Total Units']);
-    const cDeliv = findCol(data,['Delivered','Total Delivered','Delivery','Delivered Count','Total Delivered Count','Delivered Qty','Delivered Quantity']);
+    const cCount = findCol(data,['Count','Total Count','Units']);
+    const cDeliv = findCol(data,['Delivered','Total Delivered']);
     const cProfit = findCol(data,['Profit','Total Profit']);
     const cCost = findCol(data,['Total Cost','Cost']);
     const cRate = findCol(data,['Total Rate','Revenue','Total Revenue','Rate']);
@@ -1261,13 +1245,13 @@
     data.forEach(r => {
       const am = r[cAM] || 'Unknown';
       if(!map[am]) map[am] = {am, count:0, delivered:0, profit:0, cost:0, revenue:0, clientRows:0, lossAccounts:0};
-      map[am].count += parseMetricNumber(r[cCount]) || 0;
-      map[am].delivered += parseMetricNumber(r[cDeliv]) || 0;
-      map[am].profit += parseMetricNumber(r[cProfit]) || 0;
-      map[am].cost += parseMetricNumber(r[cCost]) || 0;
-      map[am].revenue += parseMetricNumber(r[cRate]) || 0;
+      map[am].count += parseFloat(r[cCount]) || 0;
+      map[am].delivered += parseFloat(r[cDeliv]) || 0;
+      map[am].profit += parseFloat(r[cProfit]) || 0;
+      map[am].cost += parseFloat(r[cCost]) || 0;
+      map[am].revenue += parseFloat(r[cRate]) || 0;
       if(cName) map[am].clientRows++;
-      const pv = parseMetricNumber(r[cProfit]) || 0;
+      const pv = parseFloat(r[cProfit]) || 0;
       if(pv < 0) map[am].lossAccounts++;
     });
     return Object.values(map).map(x => {
@@ -1292,7 +1276,7 @@
     data.forEach((r, idx) => {
       const name = String(r[cName] || '').trim();
       const am = cAM ? String(r[cAM] || '').trim() : 'Unknown';
-      const profit = parseMetricNumber(r[cProfit]) || 0;
+      const profit = parseFloat(r[cProfit]) || 0;
       if(!name || profit >= 0) return;
       let reason = 'Minor loss';
       if(Math.abs(profit) < 0.01) reason = 'Very small loss';
@@ -1540,7 +1524,7 @@
     const cName = findCol(data,['Name','Client','Customer']);
     const cAM = findCol(data,['Account Manager','AccountManager','AM','Manager']);
     const cCount = findCol(data,['Count','Total Count','Units']);
-    const cDeliv = findCol(data,['Delivered','Total Delivered','Delivery','Delivered Count','Total Delivered Count','Delivered Qty','Delivered Quantity']);
+    const cDeliv = findCol(data,['Delivered','Total Delivered']);
     const cProfit = findCol(data,['Profit','Total Profit']);
     const cCost = findCol(data,['Total Cost','Cost']);
     const cRate = findCol(data,['Total Rate','Revenue','Total Revenue','Rate']);
@@ -1551,11 +1535,11 @@
       const client = cName ? String(r[cName] || 'Unknown').trim() : 'Unknown';
       const key = am + '|||' + client;
       if(!groups[key]) groups[key] = {am, client, count:0, delivered:0, profit:0, cost:0, revenue:0};
-      groups[key].count += parseMetricNumber(r[cCount]) || 0;
-      groups[key].delivered += parseMetricNumber(r[cDeliv]) || 0;
-      groups[key].profit += parseMetricNumber(r[cProfit]) || 0;
-      groups[key].cost += parseMetricNumber(r[cCost]) || 0;
-      groups[key].revenue += parseMetricNumber(r[cRate]) || 0;
+      groups[key].count += parseFloat(r[cCount]) || 0;
+      groups[key].delivered += parseFloat(r[cDeliv]) || 0;
+      groups[key].profit += parseFloat(r[cProfit]) || 0;
+      groups[key].cost += parseFloat(r[cCost]) || 0;
+      groups[key].revenue += parseFloat(r[cRate]) || 0;
     });
 
     let rows = Object.values(groups);
@@ -1632,45 +1616,26 @@
       }
     });
 
-    const isSingleManager = rows.length === 1;
     charts.chart2 = new Chart(document.getElementById('chart2'), {
       type:'bar',
       data:{ labels, datasets:[
         { label:'Count', data: rows.map(r=>r.count),
-          backgroundColor: rows.map((_,i)=>colors[i % colors.length]), borderRadius:6, barPercentage:isSingleManager ? 0.48 : 0.7,
-          categoryPercentage:isSingleManager ? 0.62 : 0.8 },
+          backgroundColor: rows.map((_,i)=>colors[i % colors.length]), borderRadius:6, barPercentage:0.7 },
         { label:'Delivered', data: rows.map(r=>r.delivered), type:'line',
-          borderColor:'#f97316', backgroundColor:'rgba(249,115,22,.12)', borderWidth:3,
-          tension:0.3, pointRadius:isSingleManager ? 6 : 5, pointHoverRadius:8,
-          pointBackgroundColor:isDark?'#141b2d':'#fff', pointBorderColor:'#f97316', pointBorderWidth:3, fill:false,
-          datalabels:{
-            display: isSingleManager || rows.length <= 5,
-            anchor:'end', align:'right', offset:8, color:'#f97316',
-            font:{weight:'800', size:11, family:'Space Grotesk'},
-            formatter:v=>fmtInt(v)
-          }
-        }
+          borderColor:'#f97316', backgroundColor:'rgba(249,115,22,.15)', borderWidth:3,
+          tension:0.3, pointRadius:5, pointBackgroundColor:isDark?'#141b2d':'#fff', pointBorderColor:'#f97316', pointBorderWidth:3, fill:true }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
         animation:{duration:600},
-        layout:{ padding:{ top: isSingleManager ? 42 : 30, right: isSingleManager ? 28 : 12 } },
+        layout:{ padding:{ top: 28 } },
         plugins:{
           legend:{position:'top', labels:{boxWidth:12, font:{size:11, weight:600}, color:textColor}},
-          tooltip:{mode:'index', intersect:false, callbacks:{
-            label:ctx => `${ctx.dataset.label}: ${fmtInt(ctx.raw)}`
-          }},
-          datalabels:{
-            display: ctx => ctx.datasetIndex === 0 && (isSingleManager || rows.length <= 8),
-            anchor:'end', align:'top', offset:6, color:textColor,
+          tooltip:{mode:'index', intersect:false},
+          datalabels:{ anchor:'end', align:'top', offset:6, color:textColor,
             font:{weight:'700', size:11, family:'Space Grotesk'},
-            formatter:v=>fmtInt(v)
-          }
+            formatter:(v,ctx)=>{ if(ctx.datasetIndex !== 0) return null; return fmtInt(v); } }
         },
-        scales:{
-          y:{beginAtZero:true, grace:'12%', grid:{color:gridColor},
-            ticks:{callback:v=>fmtInt(v), color:textColor}},
-          x:{grid:{display:false}, ticks:{color:textColor, font:{weight:600}, maxRotation:isSingleManager?0:25, minRotation:0}}
-        }
+        scales:{y:{beginAtZero:true, grid:{color:gridColor}, ticks:{callback:v=>fmtInt(v), color:textColor}}, x:{grid:{display:false}, ticks:{color:textColor, font:{weight:600}}}}
       }
     });
 
@@ -1730,7 +1695,7 @@
     const map = {};
     data.forEach(r => {
       const name = r[cName] || 'Unknown';
-      map[name] = (map[name] || 0) + (parseMetricNumber(r[cProfit]) || 0);
+      map[name] = (map[name] || 0) + (parseFloat(r[cProfit]) || 0);
     });
     const arr = Object.entries(map).map(([name,profit])=>({name,profit}));
     arr.sort((a,b)=>b.profit-a.profit);
@@ -2836,10 +2801,10 @@
       if(!managerMatch(rowAM, am)) return;
       const client = String(r[cName] || 'Unknown').trim();
       if(!groups[client]) groups[client] = {client,count:0,profit:0,cost:0,revenue:0};
-      groups[client].count += parseMetricNumber(r[cCount]) || 0;
-      groups[client].profit += parseMetricNumber(r[cProfit]) || 0;
-      groups[client].cost += parseMetricNumber(r[cCost]) || 0;
-      groups[client].revenue += parseMetricNumber(r[cRevenue]) || 0;
+      groups[client].count += parseFloat(r[cCount]) || 0;
+      groups[client].profit += parseFloat(r[cProfit]) || 0;
+      groups[client].cost += parseFloat(r[cCost]) || 0;
+      groups[client].revenue += parseFloat(r[cRevenue]) || 0;
     });
     return Object.values(groups).sort((a,b)=>b.profit-a.profit);
   }

@@ -258,6 +258,10 @@
   table.am-table td{padding:.6rem .7rem;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
   table.am-table tr:hover td{background:var(--table-hover);}
   table.am-table tr.total-row td{background:var(--total-row-bg);font-weight:700;color:var(--total-row-text);border-top:2px solid var(--total-row-border);}
+  table.am-summary-table{min-width:0;}
+  table.am-summary-table th, table.am-summary-table td{padding:.7rem .8rem;}
+  table.am-summary-table th:first-child, table.am-summary-table td:first-child{text-align:left;}
+  table.am-summary-table th:not(:first-child), table.am-summary-table td:not(:first-child){text-align:right;}
   .num{text-align:right;font-variant-numeric:tabular-nums;}
   .pos{color:#059669;font-weight:700;}
   .neg{color:#dc2626;font-weight:700;}
@@ -484,7 +488,7 @@
       <button class="icon-btn purple" id="uploadBtn" title="Upload data" style="display:none;"><i class="fas fa-cloud-upload-alt"></i> <span>Upload</span></button>
       <button class="icon-btn orange" id="viewDataBtn" title="View all data" style="display:none;"><i class="fas fa-table"></i> <span>View</span></button>
       <button class="icon-btn green" id="manageEmpBtn" title="Manage accounts" style="display:none;"><i class="fas fa-users-cog"></i> <span>Users</span></button>
-      <button class="icon-btn teal" id="exportPdfBtn" title="Export PDF report"><i class="fas fa-file-pdf"></i> <span>Report</span></button>
+      <button class="icon-btn teal" id="exportReportBtn" title="Export Excel report"><i class="fas fa-file-excel"></i> <span>Report</span></button>
       <button class="icon-btn" id="themeBtn" title="Toggle theme"><i class="fas fa-moon"></i></button>
       <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fas fa-expand"></i></button>
 
@@ -553,6 +557,21 @@
   <div class="content-wrap" id="contentWrap">
     <div class="kpi-row" id="kpiRow"></div>
     <div class="insights-grid" id="insightsGrid"></div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-table"></i> AM Summary</div>
+      <div class="table-wrap">
+        <table class="am-table am-summary-table" id="amSummaryTable">
+          <thead>
+            <tr>
+              <th>AM</th><th class="num">Counts</th><th class="num">Revenue</th>
+              <th class="num">Cost</th><th class="num">Profit</th>
+            </tr>
+          </thead>
+          <tbody id="amSummaryTableBody"></tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="card">
       <div class="section-title"><i class="fas fa-users"></i> Account Manager Performance</div>
@@ -1219,6 +1238,39 @@
     `).join('');
   }
 
+  function renderAMSummaryTable(rows){
+    const tbody = document.getElementById('amSummaryTableBody');
+    if(!tbody) return;
+    if(!rows.length){
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.2rem;">No data</td></tr>';
+      return;
+    }
+    const totals = rows.reduce((a,r)=>{
+      a.count += r.count;
+      a.revenue += r.revenue;
+      a.cost += r.cost;
+      a.profit += r.profit;
+      return a;
+    }, {count:0,revenue:0,cost:0,profit:0});
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td><strong>${r.am}</strong></td>
+        <td class="num">${fmtInt(r.count)}</td>
+        <td class="num">${fmt(r.revenue)}</td>
+        <td class="num">${fmt(r.cost)}</td>
+        <td class="num ${r.profit>=0?'pos':'neg'}">${fmt(r.profit)}</td>
+      </tr>
+    `).join('') + `
+      <tr class="total-row">
+        <td><strong>Grand Total</strong></td>
+        <td class="num">${fmtInt(totals.count)}</td>
+        <td class="num">${fmt(totals.revenue)}</td>
+        <td class="num">${fmt(totals.cost)}</td>
+        <td class="num ${totals.profit>=0?'pos':'neg'}">${fmt(totals.profit)}</td>
+      </tr>`;
+  }
+
   function renderAMTable(rows){
     const tbody = document.getElementById('amTableBody');
     if(!rows.length){ tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:1.2rem;">No data</td></tr>'; return; }
@@ -1541,6 +1593,7 @@
     const amRows = aggregateByAM(filteredData);
     renderKPIs(amRows);
     renderInsights(amRows);
+    renderAMSummaryTable(amRows);
     renderAMTable(amRows);
     renderCharts(amRows);
     renderClients(filteredData);
@@ -1645,6 +1698,14 @@
 
   // LIVE DATA: automatically fetch data.xlsx / sales-data.xlsx from the same
   // folder as this HTML. LocalStorage is only a fallback.
+  // The promise is shared so the Excel file starts loading as soon as the
+  // page opens instead of starting a fresh download after every login.
+  let serverDataPromise = null;
+  function getServerDataPromise(){
+    if(!serverDataPromise) serverDataPromise = loadFromServer();
+    return serverDataPromise;
+  }
+
   async function loadFromServer(){
     const files = ['data.xlsx', 'sales-data.xlsx'];
     for(const f of files){
@@ -1835,6 +1896,7 @@
         }
         const validation = validateUploadedData(data);
         if(!validation.ok) throw new Error(validation.message);
+        serverDataPromise = null;
         rawData = data;
         dataSource = 'upload';
         detectManagers(rawData);
@@ -1888,6 +1950,29 @@
         'Loss':r.lossAccounts, 'Avg/Client':r.avgProfit
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), 'Summary');
+
+      const amCompact = amRows.map(r => ({
+        'AM': r.am,
+        'Counts': r.count,
+        'Revenue': r.revenue,
+        'Cost': r.cost,
+        'Profit': r.profit
+      }));
+      const amTotals = amRows.reduce((a,r) => ({
+        count: a.count + r.count,
+        revenue: a.revenue + r.revenue,
+        cost: a.cost + r.cost,
+        profit: a.profit + r.profit
+      }), {count:0,revenue:0,cost:0,profit:0});
+      amCompact.push({
+        'AM':'Grand Total',
+        'Counts':amTotals.count,
+        'Revenue':amTotals.revenue,
+        'Cost':amTotals.cost,
+        'Profit':amTotals.profit
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(amCompact), 'AM Summary');
+
       const losses = getLossAccounts(data);
       if(losses.length){
         const ld = losses.map((x,i) => ({'#':i+1, 'AM':x.am, 'Client':x.name, 'Profit':x.profit, 'Reason':x.reason}));
@@ -2145,7 +2230,7 @@
     const manageEmpBtn = document.getElementById('manageEmpBtn');
     const viewDataBtn = document.getElementById('viewDataBtn');
     const uploadBtn = document.getElementById('uploadBtn');
-    const exportBtn = document.getElementById('exportPdfBtn');
+    const exportBtn = document.getElementById('exportReportBtn');
     if(manageEmpBtn) manageEmpBtn.style.display = (user.role === 'admin' || normalizePermissions(user.permissions).user_management) ? 'flex' : 'none';
     if(viewDataBtn) viewDataBtn.style.display = (user.role === 'admin' || normalizePermissions(user.permissions).view_data) ? 'flex' : 'none';
     if(uploadBtn) uploadBtn.style.display = (user.role === 'admin' || normalizePermissions(user.permissions).upload_data) ? 'flex' : 'none';
@@ -2163,7 +2248,7 @@
       refresh();
     }
 
-    loadFromServer().then(serverResult => {
+    getServerDataPromise().then(serverResult => {
       if(serverResult){
         const oldCount = rawData.length;
         const newCount = serverResult.data.length;
@@ -2349,6 +2434,7 @@
       const amRows = aggregateByAM(filteredData);
       renderKPIs(amRows);
       renderInsights(amRows);
+      renderAMSummaryTable(amRows);
       renderAMTable(amRows);
       renderCharts(amRows);
       renderClients(filteredData);
@@ -2549,7 +2635,7 @@
     if(file) handlePhotoFile(file);
   });
 
-  document.getElementById('exportPdfBtn').addEventListener('click', openReportModal);
+  document.getElementById('exportReportBtn').addEventListener('click', openReportModal);
   document.getElementById('reportCancel').addEventListener('click', closeReportModal);
   document.getElementById('reportModal').addEventListener('click', e => { if(e.target.id === 'reportModal') closeReportModal(); });
   document.getElementById('reportExcel').addEventListener('click', () => { closeReportModal(); exportExcel(); });
@@ -2589,7 +2675,7 @@
   });
 
   async function restoreAuth(){
-    ensureDefaultUsers();
+    await ensureDefaultUsers();
     const session=getLocalSession();
     if(session && VIEWERS[session.username]) applyUserUI({...VIEWERS[session.username],permissions:normalizePermissions(VIEWERS[session.username].permissions)});
   }
@@ -2617,6 +2703,11 @@
     setupDateFilters();
     setupDetailFilters();
     setupManagerTableActions();
+
+    // Warm up the live Excel request before the user logs in. The result is
+    // reused by applyUserUI(), so login no longer waits for a brand-new fetch.
+    getServerDataPromise().catch(() => {});
+
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
     if(resetFiltersBtn) resetFiltersBtn.addEventListener('click', resetAllFilters);
 

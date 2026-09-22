@@ -141,17 +141,43 @@
   .dashboard.active{display:block;animation:dashEnter .35s ease;}
   @keyframes dashEnter{from{opacity:0;transform:translateY(8px);}}
 
-  .app-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:nowrap;background:var(--glass-bg);backdrop-filter:blur(20px);border-radius:20px;padding:.85rem 1.2rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);position:relative;z-index:500;min-width:0;}
+  /* Dashboard section navigation */
+  .dashboard-tabs{display:flex;align-items:center;gap:.45rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:.4rem;margin:0 0 1rem;box-shadow:var(--shadow-sm);position:sticky;top:.6rem;z-index:450;backdrop-filter:blur(18px);overflow-x:auto;scrollbar-width:none;}
+  .dashboard-tabs::-webkit-scrollbar{display:none;}
+  .dashboard-tab{border:0;background:transparent;color:var(--muted);padding:.7rem .95rem;border-radius:11px;font:600 .78rem 'Space Grotesk',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:.45rem;white-space:nowrap;cursor:pointer;transition:.2s;}
+  .dashboard-tab:hover{background:var(--bg);color:var(--text);}
+  .dashboard-tab.active{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;box-shadow:0 7px 18px rgba(59,130,246,.22);}
+  .dashboard-tab .tab-count{font-size:.6rem;min-width:1.15rem;height:1.15rem;padding:0 .28rem;border-radius:999px;background:rgba(255,255,255,.14);display:inline-flex;align-items:center;justify-content:center;}
+  .dashboard-panel{display:none;animation:panelIn .22s ease;}
+  .dashboard-panel.active{display:block;}
+  @keyframes panelIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .section-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin:0 0 1rem;padding:.15rem .1rem;}
+  .section-hero h2{margin:0;font:700 1.25rem 'Space Grotesk',sans-serif;color:var(--text);letter-spacing:-.4px;}
+  .section-hero p{margin:.25rem 0 0;color:var(--muted);font-size:.75rem;}
+  .section-hero .section-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(59,130,246,.1);color:var(--accent);flex:none;}
+  .utility-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;}
+  .utility-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.1rem;box-shadow:var(--shadow-sm);}
+  .utility-card h3{margin:0 0 .35rem;color:var(--text);font-size:.9rem;}
+  .utility-card p{margin:0 0 .9rem;color:var(--muted);font-size:.72rem;line-height:1.5;}
+  .utility-action{border:0;border-radius:10px;padding:.62rem .85rem;background:var(--accent);color:#fff;font:600 .72rem 'Space Grotesk',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;}
+  .utility-action.secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);}
+  body.dark .utility-action.secondary{background:#111827;}
+  #exportReportBtn,#uploadBtn,#viewDataBtn,#manageEmpBtn{display:none !important;}
+  @media(max-width:900px){.utility-grid{grid-template-columns:1fr 1fr}.dashboard-tabs{top:.35rem}.dashboard-tab{padding:.65rem .75rem}}
+  @media(max-width:620px){.utility-grid{grid-template-columns:1fr}.section-hero{align-items:flex-start;flex-direction:column}.dashboard-tabs{border-radius:13px}.dashboard-tab{font-size:.7rem}}
+
+  .app-header{display:grid;grid-template-columns:minmax(300px,42%) minmax(0,58%);align-items:center;gap:.75rem;overflow:hidden;background:var(--glass-bg);backdrop-filter:blur(20px);border-radius:20px;padding:.85rem 1.2rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);position:relative;z-index:500;min-width:0;min-height:84px;}
   body.dark .app-header{background:linear-gradient(180deg,rgba(20,27,45,.92),rgba(15,22,38,.92));border-color:#243044;}
 
-  .brand{display:flex;align-items:center;gap:.8rem;min-width:0;flex:1 1 auto;}
+  .brand{display:flex;align-items:center;gap:.8rem;min-width:0;width:100%;}
   .brand .logo-mark-sm{width:132px;height:42px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 6px 16px rgba(15,23,42,.18);flex:none;}
   .brand .logo-mark-sm img{width:100%;height:100%;object-fit:contain;display:block;}
   .brand .brand-text h1{font-family:'Space Grotesk';font-size:1rem;font-weight:700;color:var(--accent);letter-spacing:-.3px;}
   body.dark .brand .brand-text h1{color:#e6edf7;}
   .brand .brand-text p{font-size:.68rem;color:var(--muted);font-weight:500;}
 
-  .header-actions{display:flex;gap:.5rem;align-items:center;flex:0 0 auto;flex-wrap:nowrap;min-width:max-content;overflow-x:auto;scrollbar-width:none;padding-bottom:1px;}
+  .header-actions{display:flex;gap:.5rem;align-items:center;justify-self:stretch;flex:0 1 auto;flex-wrap:nowrap;min-width:0;width:100%;max-width:none;overflow-x:auto;overflow-y:visible;scrollbar-width:none;padding:1px 0 2px;}
+  .header-actions > *{flex:0 0 auto;}
   .header-actions::-webkit-scrollbar{display:none;}
 
   .user-chip{position:relative;display:flex;align-items:center;gap:.55rem;background:var(--card);padding:.4rem .85rem .4rem .4rem;border-radius:30px;font-size:.76rem;font-weight:600;border:1px solid var(--border);box-shadow:0 2px 8px rgba(15,23,42,.04);cursor:pointer;user-select:none;}
@@ -440,11 +466,11 @@
   ::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,.7);}
 
   @media (max-width:1180px) and (min-width:769px){
-    .app-header{align-items:flex-start;}
+    .app-header{grid-template-columns:minmax(260px,36%) minmax(0,64%);align-items:center;}
     .brand .logo-mark-sm{width:108px;height:38px;}
     .brand .brand-text h1{font-size:.9rem;}
     .brand .brand-text p{font-size:.62rem;}
-    .header-actions{gap:.35rem;max-width:72vw;}
+    .header-actions{gap:.35rem;max-width:none;}
     .header-actions .theme-swatches{gap:.3rem;}
     .header-actions .theme-swatch{width:22px;height:22px;}
     .header-actions .icon-btn,.header-actions .logout-btn{padding:.45rem .6rem;font-size:.7rem;}
@@ -454,7 +480,7 @@
   @media (max-width:768px){
     .login-glass{padding:2rem 1.5rem 1.8rem;border-radius:24px;}
     .dashboard{padding:.6rem .5rem 1.4rem;}
-    .app-header{padding:.65rem .8rem;gap:.5rem;border-radius:16px;flex-wrap:wrap;}
+    .app-header{padding:.65rem .8rem;gap:.5rem;border-radius:16px;grid-template-columns:minmax(170px,38%) minmax(0,62%);min-height:72px;}
     .header-actions{width:100%;max-width:none;overflow-x:auto;flex-wrap:nowrap;padding-top:.15rem;}
     .brand .logo-mark-sm{width:104px;height:34px;}
     .brand .brand-text h1{font-size:.85rem;}
@@ -598,6 +624,14 @@
     </div>
   </div>
 
+  <nav class="dashboard-tabs" id="dashboardTabs" aria-label="Dashboard sections">
+    <button class="dashboard-tab active" data-tab="overview"><i class="fas fa-chart-pie"></i> Overview</button>
+    <button class="dashboard-tab" data-tab="am-performance"><i class="fas fa-users"></i> AM Performance</button>
+    <button class="dashboard-tab" data-tab="client-analysis"><i class="fas fa-building"></i> Client Analysis</button>
+    <button class="dashboard-tab" data-tab="reports"><i class="fas fa-file-excel"></i> Reports</button>
+    <button class="dashboard-tab" data-tab="administration" id="administrationTab" style="display:none;"><i class="fas fa-user-shield"></i> Administration</button>
+  </nav>
+
   <div class="warning-banner" id="warningBanner" style="display:none;">
     <i class="fas fa-exclamation-triangle"></i>
     <span id="warningBannerText">—</span>
@@ -616,40 +650,10 @@
   </div>
 
   <div class="content-wrap" id="contentWrap">
+    <section class="dashboard-panel active" data-panel="overview">
+      <div class="section-hero"><div><h2>Sales Overview</h2><p>Executive snapshot of your current sales performance and portfolio.</p></div><div class="section-icon"><i class="fas fa-chart-line"></i></div></div>
     <div class="kpi-row" id="kpiRow"></div>
     <div class="insights-grid" id="insightsGrid"></div>
-
-    <div class="card">
-      <div class="section-title"><i class="fas fa-table"></i> AM Summary</div>
-      <div class="table-wrap">
-        <table class="am-table am-summary-table" id="amSummaryTable">
-          <thead>
-            <tr>
-              <th>AM</th><th class="num">Counts</th><th class="num">Revenue</th>
-              <th class="num">Cost</th><th class="num">Profit</th>
-            </tr>
-          </thead>
-          <tbody id="amSummaryTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title"><i class="fas fa-users"></i> Account Manager Performance</div>
-      <div class="table-wrap">
-        <table class="am-table" id="amTable">
-          <thead>
-            <tr>
-              <th>Account Manager</th><th class="num">Count</th><th class="num">Delivered</th>
-              <th class="num">Delivery %</th><th class="num">Profit</th><th class="num">Cost</th>
-              <th class="num">Revenue</th><th class="num">Margin %</th><th class="num">Clients</th>
-              <th class="num">Loss</th><th class="num">Avg/Client</th>
-            </tr>
-          </thead>
-          <tbody id="amTableBody"></tbody>
-        </table>
-      </div>
-    </div>
 
     <div class="charts-grid">
       <div class="chart-box">
@@ -684,6 +688,48 @@
       <div class="chart-canvas-wrap" style="height:300px;max-width:520px;margin:0 auto;"><canvas id="chartPie"></canvas></div>
     </div>
 
+
+    </section>
+
+    <section class="dashboard-panel" data-panel="am-performance">
+      <div class="section-hero"><div><h2>AM Performance</h2><p>Compare account managers across counts, delivery, revenue, cost, profit and margin.</p></div><div class="section-icon"><i class="fas fa-users"></i></div></div>
+    <div class="card">
+      <div class="section-title"><i class="fas fa-table"></i> AM Summary</div>
+      <div class="table-wrap">
+        <table class="am-table am-summary-table" id="amSummaryTable">
+          <thead>
+            <tr>
+              <th>AM</th><th class="num">Counts</th><th class="num">Revenue</th>
+              <th class="num">Cost</th><th class="num">Profit</th>
+            </tr>
+          </thead>
+          <tbody id="amSummaryTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-users"></i> Account Manager Performance</div>
+      <div class="table-wrap">
+        <table class="am-table" id="amTable">
+          <thead>
+            <tr>
+              <th>Account Manager</th><th class="num">Count</th><th class="num">Delivered</th>
+              <th class="num">Delivery %</th><th class="num">Profit</th><th class="num">Cost</th>
+              <th class="num">Revenue</th><th class="num">Margin %</th><th class="num">Clients</th>
+              <th class="num">Loss</th><th class="num">Avg/Client</th>
+            </tr>
+          </thead>
+          <tbody id="amTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    </section>
+
+    <section class="dashboard-panel" data-panel="client-analysis">
+      <div class="section-hero"><div><h2>Client Analysis</h2><p>Search and review client-level performance, profitability and account-manager ownership.</p></div><div class="section-icon"><i class="fas fa-building"></i></div></div>
     <div class="card">
       <div class="section-title"><i class="fas fa-table"></i> Detailed Client Analysis</div>
       <div class="detail-filters">
@@ -712,6 +758,28 @@
       </div>
       <div class="detail-count">Showing <b id="detailCount">0</b> records</div>
     </div>
+  </div>
+
+
+    </section>
+
+    <section class="dashboard-panel" data-panel="reports">
+      <div class="section-hero"><div><h2>Reports</h2><p>Export the current filtered dashboard data and management summaries to Excel.</p></div><div class="section-icon"><i class="fas fa-file-excel"></i></div></div>
+      <div class="utility-grid">
+        <div class="utility-card"><h3><i class="fas fa-file-excel" style="color:#059669;margin-right:.35rem;"></i> Excel Report</h3><p>Generate a workbook containing filtered data, summaries, AM performance and loss accounts.</p><button class="utility-action" id="tabExportReport"><i class="fas fa-download"></i> Download Excel</button></div>
+        <div class="utility-card"><h3><i class="fas fa-filter" style="color:var(--accent);margin-right:.35rem;"></i> Current Filters</h3><p id="reportFilterSummary">Your active date, search and manager filters are applied to the report.</p><button class="utility-action secondary" id="tabResetFilters"><i class="fas fa-rotate-left"></i> Reset Filters</button></div>
+        <div class="utility-card"><h3><i class="fas fa-clock" style="color:#7c3aed;margin-right:.35rem;"></i> Data Freshness</h3><p>Use Refresh in the header to fetch the latest Excel data without leaving the dashboard.</p><button class="utility-action secondary" id="tabRefreshData"><i class="fas fa-sync-alt"></i> Refresh Data</button></div>
+      </div>
+    </section>
+
+    <section class="dashboard-panel" data-panel="administration" id="administrationPanel">
+      <div class="section-hero"><div><h2>Administration</h2><p>Manage data access, users and source files. These controls are available according to your permissions.</p></div><div class="section-icon"><i class="fas fa-user-shield"></i></div></div>
+      <div class="utility-grid">
+        <div class="utility-card"><h3><i class="fas fa-cloud-upload-alt" style="color:#7c3aed;margin-right:.35rem;"></i> Upload Data</h3><p>Upload or replace the dashboard's Excel/CSV source data.</p><button class="utility-action" id="tabUploadData"><i class="fas fa-upload"></i> Upload File</button></div>
+        <div class="utility-card"><h3><i class="fas fa-table" style="color:#ea580c;margin-right:.35rem;"></i> View Raw Data</h3><p>Open the current filtered source records in a full data table.</p><button class="utility-action secondary" id="tabViewData"><i class="fas fa-eye"></i> View Data</button></div>
+        <div class="utility-card"><h3><i class="fas fa-users-cog" style="color:#059669;margin-right:.35rem;"></i> User Management</h3><p>Create, review and manage dashboard user accounts and permissions.</p><button class="utility-action secondary" id="tabManageUsers"><i class="fas fa-users"></i> Manage Users</button></div>
+      </div>
+    </section>
   </div>
 
   <div class="footer-note"><i class="fas fa-database"></i> SHANSI Communications · <span id="footerYear"></span></div>
@@ -2349,6 +2417,7 @@
 
   function applyUserUI(user){
     currentUser = user;
+    updateDashboardTabsForUser(user);
     document.getElementById('userLabel').textContent = user.username;
     document.getElementById('dropdownName').textContent = user.username;
     updateAvatarDisplay();
@@ -2574,6 +2643,56 @@
 
   function openReportModal(){ if(!requirePermission('reports') && !requirePermission('export')) return; document.getElementById('reportModal').classList.add('show'); }
   function closeReportModal(){ document.getElementById('reportModal').classList.remove('show'); }
+
+  function switchDashboardTab(tabName){
+    const tab = document.querySelector(`.dashboard-tab[data-tab="${tabName}"]`);
+    const panel = document.querySelector(`.dashboard-panel[data-panel="${tabName}"]`);
+    if(!tab || !panel || tab.style.display === 'none') return;
+    document.querySelectorAll('.dashboard-tab').forEach(x => x.classList.toggle('active', x === tab));
+    document.querySelectorAll('.dashboard-panel').forEach(x => x.classList.toggle('active', x === panel));
+    if(tabName === 'reports') updateReportFilterSummary();
+    requestAnimationFrame(() => Object.values(charts).forEach(c => { try{ c.resize(); }catch(e){} }));
+  }
+
+  function updateReportFilterSummary(){
+    const el=document.getElementById('reportFilterSummary');
+    if(!el) return;
+    const active=[];
+    const search=document.getElementById('globalSearch')?.value?.trim();
+    if(search) active.push(`Search: ${search}`);
+    if(activeDateFrom) active.push(`From: ${activeDateFrom.toLocaleDateString()}`);
+    if(activeDateTo) active.push(`To: ${activeDateTo.toLocaleDateString()}`);
+    el.textContent=active.length ? `${active.join(' · ')} · ${filteredData.length.toLocaleString()} rows included.` : `No additional filters · ${filteredData.length.toLocaleString()} rows currently included.`;
+  }
+
+  function setupDashboardTabs(){
+    document.querySelectorAll('.dashboard-tab').forEach(btn=>btn.addEventListener('click',()=>switchDashboardTab(btn.dataset.tab)));
+    document.getElementById('tabExportReport')?.addEventListener('click',()=>openReportModal());
+    document.getElementById('tabResetFilters')?.addEventListener('click',()=>{resetAllFilters();switchDashboardTab('reports');});
+    document.getElementById('tabRefreshData')?.addEventListener('click',()=>refreshLiveData(true));
+    document.getElementById('tabUploadData')?.addEventListener('click',()=>document.getElementById('uploadBtn')?.click());
+    document.getElementById('tabViewData')?.addEventListener('click',()=>document.getElementById('viewDataBtn')?.click());
+    document.getElementById('tabManageUsers')?.addEventListener('click',()=>document.getElementById('manageEmpBtn')?.click());
+  }
+
+  function updateDashboardTabsForUser(user){
+    const perms=normalizePermissions(user?.permissions);
+    const canAM = user?.role === 'admin' || perms.manager_analysis;
+    const canClient = user?.role === 'admin' || perms.client_analysis;
+    const canReports = user?.role === 'admin' || perms.reports || perms.export;
+    const canAdmin = user?.role === 'admin' || perms.user_management || perms.view_data || perms.upload_data;
+    const set=(name,show)=>{const el=document.querySelector(`.dashboard-tab[data-tab="${name}"]`); if(el) el.style.display=show?'inline-flex':'none';};
+    set('am-performance',canAM); set('client-analysis',canClient); set('reports',canReports); set('administration',canAdmin);
+    ['tabUploadData','tabViewData','tabManageUsers'].forEach(id=>{const el=document.getElementById(id);if(el) el.style.display='inline-flex';});
+    const adminPanel=document.getElementById('administrationPanel');
+    if(adminPanel){
+      const cards=adminPanel.querySelectorAll('.utility-card');
+      if(cards[0]) cards[0].style.display=(user?.role==='admin'||perms.upload_data)?'block':'none';
+      if(cards[1]) cards[1].style.display=(user?.role==='admin'||perms.view_data)?'block':'none';
+      if(cards[2]) cards[2].style.display=(user?.role==='admin'||perms.user_management)?'block':'none';
+    }
+    switchDashboardTab('overview');
+  }
 
   function setupSearch(){
     const s = document.getElementById('globalSearch');
@@ -2959,6 +3078,7 @@
 
     document.getElementById('footerYear').textContent = new Date().getFullYear();
 
+    setupDashboardTabs();
     setupSearch();
     setupDateFilters();
     setupDetailFilters();

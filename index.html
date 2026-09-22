@@ -141,17 +141,18 @@
   .dashboard.active{display:block;animation:dashEnter .35s ease;}
   @keyframes dashEnter{from{opacity:0;transform:translateY(8px);}}
 
-  .app-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:var(--glass-bg);backdrop-filter:blur(20px);border-radius:20px;padding:.85rem 1.2rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);position:relative;z-index:500;}
+  .app-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:nowrap;background:var(--glass-bg);backdrop-filter:blur(20px);border-radius:20px;padding:.85rem 1.2rem;margin-bottom:1rem;border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);position:relative;z-index:500;min-width:0;}
   body.dark .app-header{background:linear-gradient(180deg,rgba(20,27,45,.92),rgba(15,22,38,.92));border-color:#243044;}
 
-  .brand{display:flex;align-items:center;gap:.8rem;min-width:0;}
+  .brand{display:flex;align-items:center;gap:.8rem;min-width:0;flex:1 1 auto;}
   .brand .logo-mark-sm{width:132px;height:42px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 6px 16px rgba(15,23,42,.18);flex:none;}
   .brand .logo-mark-sm img{width:100%;height:100%;object-fit:contain;display:block;}
   .brand .brand-text h1{font-family:'Space Grotesk';font-size:1rem;font-weight:700;color:var(--accent);letter-spacing:-.3px;}
   body.dark .brand .brand-text h1{color:#e6edf7;}
   .brand .brand-text p{font-size:.68rem;color:var(--muted);font-weight:500;}
 
-  .header-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+  .header-actions{display:flex;gap:.5rem;align-items:center;flex:0 0 auto;flex-wrap:nowrap;min-width:max-content;overflow-x:auto;scrollbar-width:none;padding-bottom:1px;}
+  .header-actions::-webkit-scrollbar{display:none;}
 
   .user-chip{position:relative;display:flex;align-items:center;gap:.55rem;background:var(--card);padding:.4rem .85rem .4rem .4rem;border-radius:30px;font-size:.76rem;font-weight:600;border:1px solid var(--border);box-shadow:0 2px 8px rgba(15,23,42,.04);cursor:pointer;user-select:none;}
   body.dark .user-chip{background:#0f172a;border-color:#243044;}
@@ -388,6 +389,40 @@
   .detail-count{font-size:.72rem;color:var(--muted);margin-top:.5rem;text-align:right;}
   .filter-status{font-size:.7rem;color:var(--muted);margin-left:.35rem;white-space:nowrap;}
   .filter-status.active{color:var(--accent);font-weight:700;}
+  .detail-drawer-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.34);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:.25s;z-index:3900;}
+  .detail-drawer-backdrop.show{opacity:1;visibility:visible;}
+  .detail-drawer{position:fixed;top:0;right:0;height:100vh;width:min(560px,94vw);background:var(--card);border-left:1px solid var(--border);box-shadow:-18px 0 50px rgba(15,23,42,.18);transform:translateX(105%);transition:transform .3s cubic-bezier(.22,1,.36,1);z-index:4000;display:flex;flex-direction:column;}
+  body.dark .detail-drawer{background:#0f172a;border-color:#243044;}
+  .detail-drawer.show{transform:translateX(0);}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:1rem 1.05rem;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(59,130,246,.07),transparent);}
+  .drawer-title{min-width:0;}
+  .drawer-title .eyebrow{font-size:.65rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:800;}
+  .drawer-title h3{font-family:'Space Grotesk';font-size:1.05rem;color:var(--text);margin-top:.12rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .drawer-close{width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;}
+  .drawer-close:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .drawer-body{padding:1rem;overflow:auto;flex:1;}
+  .drawer-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.55rem;margin-bottom:1rem;}
+  .drawer-kpi{padding:.7rem .65rem;border:1px solid var(--border);border-radius:12px;background:var(--bg);min-width:0;}
+  .drawer-kpi small{display:block;color:var(--muted);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.35px;}
+  .drawer-kpi b{display:block;color:var(--text);font-size:.88rem;margin-top:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .drawer-section-title{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.9rem 0 .55rem;font-size:.78rem;font-weight:800;color:var(--text);}
+  .drawer-search{width:100%;padding:.65rem .75rem;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);outline:none;margin-bottom:.65rem;}
+  .drawer-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1);}
+  .drawer-client-list{display:flex;flex-direction:column;gap:.45rem;}
+  .drawer-client{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.7rem;align-items:center;padding:.65rem .7rem;border:1px solid var(--border);border-radius:11px;background:var(--card);cursor:pointer;transition:.18s;}
+  .drawer-client:hover{border-color:var(--accent);transform:translateX(-2px);box-shadow:0 6px 18px rgba(15,23,42,.08);}
+  .drawer-client .client-name{font-size:.76rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .drawer-client .client-meta{font-size:.64rem;color:var(--muted);margin-top:.15rem;}
+  .drawer-client .client-profit{font-size:.76rem;font-weight:800;text-align:right;white-space:nowrap;}
+  .drawer-client .client-profit.pos{color:#059669;}
+  .drawer-client .client-profit.neg{color:#dc2626;}
+  .drawer-empty{padding:1.2rem;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:11px;font-size:.75rem;}
+  .am-row:hover{background:rgba(59,130,246,.055);}
+  .am-row.active-row{background:rgba(59,130,246,.09);box-shadow:inset 3px 0 0 var(--accent);}
+  .kpi-card{cursor:pointer;}
+  .kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+  @media (max-width:560px){.drawer-kpis{grid-template-columns:repeat(2,1fr);}.detail-drawer{width:100%;}}
+
   .sync-state{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;}
   .sync-state i{font-size:.5rem;}
   .sync-state.live i{color:#10b981;}
@@ -404,10 +439,23 @@
   ::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px;}
   ::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,.7);}
 
+  @media (max-width:1180px) and (min-width:769px){
+    .app-header{align-items:flex-start;}
+    .brand .logo-mark-sm{width:108px;height:38px;}
+    .brand .brand-text h1{font-size:.9rem;}
+    .brand .brand-text p{font-size:.62rem;}
+    .header-actions{gap:.35rem;max-width:72vw;}
+    .header-actions .theme-swatches{gap:.3rem;}
+    .header-actions .theme-swatch{width:22px;height:22px;}
+    .header-actions .icon-btn,.header-actions .logout-btn{padding:.45rem .6rem;font-size:.7rem;}
+    .header-actions .user-chip{padding:.35rem .65rem .35rem .35rem;}
+  }
+
   @media (max-width:768px){
     .login-glass{padding:2rem 1.5rem 1.8rem;border-radius:24px;}
     .dashboard{padding:.6rem .5rem 1.4rem;}
-    .app-header{padding:.65rem .8rem;gap:.5rem;border-radius:16px;}
+    .app-header{padding:.65rem .8rem;gap:.5rem;border-radius:16px;flex-wrap:wrap;}
+    .header-actions{width:100%;max-width:none;overflow-x:auto;flex-wrap:nowrap;padding-top:.15rem;}
     .brand .logo-mark-sm{width:104px;height:34px;}
     .brand .brand-text h1{font-size:.85rem;}
     .user-chip{padding:.32rem .6rem .32rem .32rem;font-size:.66rem;}
@@ -668,6 +716,20 @@
 
   <div class="footer-note"><i class="fas fa-database"></i> SHANSI Communications · <span id="footerYear"></span></div>
 </div>
+
+<div class="detail-drawer-backdrop" id="detailDrawerBackdrop"></div>
+<aside class="detail-drawer" id="detailDrawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-title"><div class="eyebrow">Account Manager Details</div><h3 id="drawerAMName">—</h3></div>
+    <button class="drawer-close" id="drawerClose" title="Close"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-kpis" id="drawerKpis"></div>
+    <div class="drawer-section-title"><span><i class="fas fa-building" style="color:var(--accent)"></i> Client Accounts</span><span id="drawerClientCount" style="color:var(--muted);font-size:.68rem;">0</span></div>
+    <input class="drawer-search" id="drawerClientSearch" placeholder="Search clients in this manager..." autocomplete="off">
+    <div class="drawer-client-list" id="drawerClientList"></div>
+  </div>
+</aside>
 
 <div class="modal-overlay" id="uploadModal">
   <div class="modal-card">
@@ -1213,10 +1275,13 @@
     });
 
     const lossCard = document.querySelector('[data-kpi="Loss"]');
-    if(lossCard){
-      lossCard.style.cursor = 'pointer';
-      lossCard.addEventListener('click', openLossModal);
-    }
+    if(lossCard){ lossCard.addEventListener('click', openLossModal); }
+    const clientCard = document.querySelector('[data-kpi="Clients"]');
+    if(clientCard){ clientCard.title='View client analysis'; clientCard.addEventListener('click',()=>document.getElementById('detailTable')?.scrollIntoView({behavior:'smooth',block:'start'})); }
+    const revenueCard = document.querySelector('[data-kpi="Revenue"]');
+    if(revenueCard){ revenueCard.title='View client analysis'; revenueCard.addEventListener('click',()=>document.getElementById('detailTable')?.scrollIntoView({behavior:'smooth',block:'start'})); }
+    const profitCard = document.querySelector('[data-kpi="Profit"]');
+    if(profitCard){ profitCard.title='View manager analysis'; profitCard.addEventListener('click',()=>document.getElementById('amTable')?.scrollIntoView({behavior:'smooth',block:'start'})); }
   }
 
   function renderInsights(rows){
@@ -1572,7 +1637,7 @@
     const maxBottom = Math.max(...bottom.map(t=>Math.abs(t.profit)), 1);
 
     document.getElementById('topClients').innerHTML = top.map(c => `
-      <div class="client-item">
+      <div class="client-item" data-client-name="${String(c.name).replace(/"/g,'&quot;')}" title="Click to find this client">
         <span class="name">${c.name}</span>
         <div class="bar-bg"><div class="bar-fill" style="width:${(c.profit/maxTop*100).toFixed(1)}%;background:linear-gradient(90deg,#34d399,#059669);"></div></div>
         <span class="val pos">${fmtSmart(c.profit)}</span>
@@ -1580,7 +1645,7 @@
     `).join('') || '<div style="color:var(--muted);">No data</div>';
 
     document.getElementById('bottomClients').innerHTML = bottom.map(c => `
-      <div class="client-item">
+      <div class="client-item" data-client-name="${String(c.name).replace(/"/g,'&quot;')}" title="Click to find this client">
         <span class="name">${c.name}</span>
         <div class="bar-bg"><div class="bar-fill" style="width:${(Math.abs(c.profit)/maxBottom*100).toFixed(1)}%;background:linear-gradient(90deg,#f87171,#dc2626);"></div></div>
         <span class="val ${c.profit>=0?'pos':'neg'}">${fmtSmart(c.profit)}</span>
@@ -2595,13 +2660,110 @@
       const row = e.target.closest('tr.am-row');
       if(!row) return;
       const am = row.getAttribute('data-am') || '';
-      const filter = document.getElementById('detailFilter');
-      if(!filter || !am) return;
-      filter.value = am;
-      updateFilterStatus();
-      const detail = document.getElementById('detailTable');
-      if(detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
-      renderDetailTable(filteredData);
+      if(!am) return;
+      document.querySelectorAll('#amTableBody tr.am-row.active-row').forEach(r => r.classList.remove('active-row'));
+      row.classList.add('active-row');
+      openManagerDrawer(am);
+    });
+  }
+
+  function getManagerClientRows(am){
+    const data = filteredData.length ? filteredData : rawData;
+    const cName = findCol(data,['Name','Client','Customer']);
+    const cAM = findCol(data,['Account Manager','AccountManager','AM','Manager']);
+    const cCount = findCol(data,['Count','Total Count','Units']);
+    const cProfit = findCol(data,['Profit','Total Profit']);
+    const cCost = findCol(data,['Total Cost','Cost']);
+    const cRevenue = findCol(data,['Total Rate','Revenue','Total Revenue','Rate']);
+    if(!cName || !cAM) return [];
+    const groups = {};
+    data.forEach(r => {
+      const rowAM = String(r[cAM] || '').trim();
+      if(!managerMatch(rowAM, am)) return;
+      const client = String(r[cName] || 'Unknown').trim();
+      if(!groups[client]) groups[client] = {client,count:0,profit:0,cost:0,revenue:0};
+      groups[client].count += parseFloat(r[cCount]) || 0;
+      groups[client].profit += parseFloat(r[cProfit]) || 0;
+      groups[client].cost += parseFloat(r[cCost]) || 0;
+      groups[client].revenue += parseFloat(r[cRevenue]) || 0;
+    });
+    return Object.values(groups).sort((a,b)=>b.profit-a.profit);
+  }
+
+  function openManagerDrawer(am){
+    const drawer = document.getElementById('detailDrawer');
+    const backdrop = document.getElementById('detailDrawerBackdrop');
+    if(!drawer || !backdrop) return;
+    const rows = aggregateByAM(filteredData.length ? filteredData : rawData);
+    const r = rows.find(x => managerMatch(x.am, am));
+    const clients = getManagerClientRows(am);
+    document.getElementById('drawerAMName').textContent = am;
+    const metrics = r ? [
+      ['Revenue',fmt(r.revenue)],['Cost',fmt(r.cost)],['Profit',fmt(r.profit)],['Clients',fmtInt(r.clients)]
+    ] : [['Revenue','—'],['Cost','—'],['Profit','—'],['Clients',String(clients.length)]];
+    document.getElementById('drawerKpis').innerHTML = metrics.map(([label,value])=>`<div class="drawer-kpi"><small>${label}</small><b>${value}</b></div>`).join('');
+    document.getElementById('drawerClientCount').textContent = `${clients.length.toLocaleString()} clients`;
+    const search = document.getElementById('drawerClientSearch');
+    if(search) search.value='';
+    renderDrawerClients(clients);
+    drawer.classList.add('show');
+    backdrop.classList.add('show');
+    drawer.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  }
+
+  function renderDrawerClients(clients){
+    const list = document.getElementById('drawerClientList');
+    const search = document.getElementById('drawerClientSearch');
+    if(!list) return;
+    const q = search ? search.value.trim().toLowerCase() : '';
+    const filtered = q ? clients.filter(c => c.client.toLowerCase().includes(q)) : clients;
+    if(!filtered.length){ list.innerHTML='<div class="drawer-empty">No matching clients found.</div>'; return; }
+    list.innerHTML = filtered.slice(0,120).map(c=>`
+      <div class="drawer-client" data-drawer-client="${String(c.client).replace(/"/g,'&quot;')}">
+        <div><div class="client-name">${c.client}</div><div class="client-meta">Count ${fmtInt(c.count)} · Revenue ${fmt(c.revenue)} · Cost ${fmt(c.cost)}</div></div>
+        <div class="client-profit ${c.profit>=0?'pos':'neg'}">${fmt(c.profit)}</div>
+      </div>`).join('');
+    if(filtered.length>120) list.insertAdjacentHTML('beforeend',`<div class="drawer-empty">Showing first 120 matching clients.</div>`);
+  }
+
+  function closeManagerDrawer(){
+    const drawer=document.getElementById('detailDrawer'); const backdrop=document.getElementById('detailDrawerBackdrop');
+    if(drawer) { drawer.classList.remove('show'); drawer.setAttribute('aria-hidden','true'); }
+    if(backdrop) backdrop.classList.remove('show');
+    document.body.style.overflow='';
+    document.querySelectorAll('#amTableBody tr.am-row.active-row').forEach(r=>r.classList.remove('active-row'));
+  }
+
+  function setupDrawer(){
+    const close=document.getElementById('drawerClose'); const backdrop=document.getElementById('detailDrawerBackdrop'); const search=document.getElementById('drawerClientSearch');
+    close?.addEventListener('click',closeManagerDrawer);
+    backdrop?.addEventListener('click',closeManagerDrawer);
+    search?.addEventListener('input',()=>{
+      const am=document.getElementById('drawerAMName')?.textContent||'';
+      renderDrawerClients(getManagerClientRows(am));
+    });
+    document.getElementById('drawerClientList')?.addEventListener('click',e=>{
+      const item=e.target.closest('.drawer-client'); if(!item) return;
+      const client=item.getAttribute('data-drawer-client')||'';
+      const gs=document.getElementById('globalSearch');
+      closeManagerDrawer();
+      if(gs){ gs.value=client; gs.dispatchEvent(new Event('input',{bubbles:true})); }
+      document.getElementById('top-bar')?.scrollIntoView({behavior:'smooth',block:'start'});
+    });
+    document.getElementById('topClients')?.addEventListener('click',e=>{
+      const item=e.target.closest('.client-item[data-client-name]'); if(!item) return;
+      const client=item.getAttribute('data-client-name')||'';
+      const gs=document.getElementById('globalSearch');
+      if(gs){ gs.value=client; gs.dispatchEvent(new Event('input',{bubbles:true})); }
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+    document.getElementById('bottomClients')?.addEventListener('click',e=>{
+      const item=e.target.closest('.client-item[data-client-name]'); if(!item) return;
+      const client=item.getAttribute('data-client-name')||'';
+      const gs=document.getElementById('globalSearch');
+      if(gs){ gs.value=client; gs.dispatchEvent(new Event('input',{bubbles:true})); }
+      window.scrollTo({top:0,behavior:'smooth'});
     });
   }
 
@@ -2760,11 +2922,15 @@
     if(e.ctrlKey && e.key === 'k'){ e.preventDefault(); document.getElementById('globalSearch')?.focus(); }
     if(e.ctrlKey && e.key === 'd'){ e.preventDefault(); toggleTheme(); }
     if(e.key === 'Escape'){
+      closeManagerDrawer();
       ['lossModal','pwdModal','photoModal','empModal','rawModal','uploadModal','reportModal'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.classList.remove('show');
       });
       userDropdown.classList.remove('show');
+    }
+    if(!e.ctrlKey && !e.altKey && !e.metaKey && e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA'){
+      e.preventDefault(); document.getElementById('globalSearch')?.focus();
     }
   });
 
@@ -2797,6 +2963,7 @@
     setupDateFilters();
     setupDetailFilters();
     setupManagerTableActions();
+    setupDrawer();
 
     // Warm up the live Excel request before the user logs in. The result is
     // reused by applyUserUI(), so login no longer waits for a brand-new fetch.

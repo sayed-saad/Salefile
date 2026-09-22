@@ -254,7 +254,8 @@
 
   .table-wrap{overflow-x:auto;border-radius:12px;}
   table.am-table{width:100%;border-collapse:collapse;font-size:.76rem;min-width:900px;}
-  table.am-table th{background:var(--table-th-bg);color:var(--table-th-text);padding:.6rem .7rem;text-align:left;font-weight:700;white-space:nowrap;border-bottom:2px solid var(--table-th-border);font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;}
+  table.am-table th{background:var(--table-th-bg);color:var(--table-th-text);padding:.6rem .7rem;text-align:left;font-weight:700;white-space:nowrap;border-bottom:2px solid var(--table-th-border);font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;z-index:3;}
+  table.am-table tr.total-row td{position:relative;z-index:1;}
   table.am-table td{padding:.6rem .7rem;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
   table.am-table tr:hover td{background:var(--table-hover);}
   table.am-table tr.total-row td{background:var(--total-row-bg);font-weight:700;color:var(--total-row-text);border-top:2px solid var(--total-row-border);}
@@ -317,7 +318,6 @@
   .btn-danger{background:#fee2e2;color:#dc2626;}
   .btn-excel{background:linear-gradient(135deg,#047857,#059669);color:#fff;}
   .btn-csv{background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;}
-  .btn-pdf{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;}
   .btn-png{background:linear-gradient(135deg,#0e7490,#0891b2);color:#fff;}
   .modal-msg{font-size:.76rem;text-align:center;margin-top:.5rem;min-height:1rem;}
 
@@ -386,6 +386,18 @@
   .detail-filters input:focus{border-color:var(--accent);}
   .detail-filters input{flex:1;min-width:200px;}
   .detail-count{font-size:.72rem;color:var(--muted);margin-top:.5rem;text-align:right;}
+  .filter-status{font-size:.7rem;color:var(--muted);margin-left:.35rem;white-space:nowrap;}
+  .filter-status.active{color:var(--accent);font-weight:700;}
+  .sync-state{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;}
+  .sync-state i{font-size:.5rem;}
+  .sync-state.live i{color:#10b981;}
+  .sync-state.cache i{color:#f59e0b;}
+  .sync-state.loading i{color:#3b82f6;animation:pulseDot 1s infinite;}
+  @keyframes pulseDot{50%{opacity:.25;}}
+  .icon-btn.refreshing i{animation:spin .8s linear infinite;}
+  .storage-refresh-mini.refreshing i{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .login-loading{opacity:.7;pointer-events:none;}
 
   ::-webkit-scrollbar{width:8px;height:8px;}
   ::-webkit-scrollbar-track{background:transparent;}
@@ -489,6 +501,7 @@
       <button class="icon-btn orange" id="viewDataBtn" title="View all data" style="display:none;"><i class="fas fa-table"></i> <span>View</span></button>
       <button class="icon-btn green" id="manageEmpBtn" title="Manage accounts" style="display:none;"><i class="fas fa-users-cog"></i> <span>Users</span></button>
       <button class="icon-btn teal" id="exportReportBtn" title="Export Excel report"><i class="fas fa-file-excel"></i> <span>Report</span></button>
+      <button class="icon-btn" id="refreshDataBtn" title="Refresh live data"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
       <button class="icon-btn" id="themeBtn" title="Toggle theme"><i class="fas fa-moon"></i></button>
       <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fas fa-expand"></i></button>
 
@@ -527,7 +540,7 @@
       <button class="date-preset" data-days="30">30d</button>
       <button class="date-preset" data-days="90">90d</button>
       <button class="date-preset" data-days="0">All</button>
-      <button class="date-preset" id="resetFiltersBtn" title="Reset search and date filters"><i class="fas fa-rotate-left"></i> Reset</button>
+      <button class="date-preset" id="resetFiltersBtn" title="Reset search and date filters"><i class="fas fa-rotate-left"></i> Reset</button><span class="filter-status" id="filterStatus">No filters</span>
     </div>
     <div class="live-clock">
       <i class="fas fa-circle"></i>
@@ -544,7 +557,7 @@
 
   <div class="storage-banner" id="storageBanner" style="display:none;">
     <i class="fas fa-globe"></i>
-    <span id="storageBannerText">Loading...</span>
+    <span id="storageBannerText">Loading...</span><button class="storage-refresh-mini" id="storageRefreshBtn" title="Refresh live data" style="margin-left:auto;border:0;background:transparent;color:inherit;cursor:pointer;font-size:.75rem;"><i class="fas fa-sync-alt"></i></button>
   </div>
 
   <div class="empty-state" id="emptyState" style="display:none;">
@@ -781,10 +794,10 @@
 
 <div class="modal-overlay" id="reportModal">
   <div class="modal-card">
-    <h3><i class="fas fa-file-excel" style="color:#059669"></i> Export Report</h3>
-    <p class="sub">Choose format for your dashboard report</p>
+    <h3><i class="fas fa-file-excel" style="color:#059669"></i> Export Excel Report</h3>
+    <p class="sub">Download the current dashboard data and summaries as an Excel workbook.</p>
     <div style="display:flex;flex-direction:column;gap:.5rem;margin:1rem 0;">
-      <button class="btn-excel" id="reportExcel" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-file-excel"></i> Download Excel Data</button>
+      <button class="btn-excel" id="reportExcel" style="width:100%;padding:.8rem;border-radius:10px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="fas fa-file-excel"></i> Download Excel Report</button>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" id="reportCancel"><i class="fas fa-times"></i> Close</button>
@@ -819,6 +832,7 @@
   let selectedLoginRole = 'admin';
   let knownManagers = [];
   let dataSource = 'none';
+  let lastSyncedAt = null;
   let pendingPhotoData = '';
   let activeDateFrom = null;
   let activeDateTo = null;
@@ -930,7 +944,7 @@
     const el = document.getElementById('liveGreeting');
     if(!el) return;
     const greeting = getTimeGreeting();
-    const who = getDisplayRole(user);
+    const who = user && user.username ? user.username : getDisplayRole(user);
     el.textContent = `${greeting}, ${who}`;
   }
 
@@ -944,7 +958,7 @@
     const greetingEl = document.getElementById('liveGreeting');
     if(greetingEl){
       const greeting = getTimeGreeting(d);
-      const who = currentUser ? getDisplayRole(currentUser) : '';
+      const who = currentUser ? (currentUser.username || getDisplayRole(currentUser)) : '';
       greetingEl.textContent = who ? `${greeting}, ${who}` : greeting;
     }
   }
@@ -1600,6 +1614,7 @@
     renderDetailTable(filteredData);
     updateStorageBanner();
     updateHeaderSubtitle();
+    updateFilterStatus();
   }
 
   function updateHeaderSubtitle(){
@@ -1622,17 +1637,37 @@
   function updateStorageBanner(){
     const b = document.getElementById('storageBanner');
     const t = document.getElementById('storageBannerText');
+    if(!b || !t) return;
     if(!rawData.length){ b.style.display = 'none'; return; }
     b.style.display = 'flex';
+    const stamp = lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
     if(dataSource === 'server'){
-      t.textContent = `Live data · ${rawData.length.toLocaleString()} rows · cached locally`;
+      t.innerHTML = `<span class="sync-state live"><i class="fas fa-circle"></i> Live data · ${rawData.length.toLocaleString()} rows</span>${stamp ? ` · Last synced ${stamp}` : ''}`;
     } else if(dataSource === 'cache'){
-      t.textContent = `Cached data · ${rawData.length.toLocaleString()} rows`;
+      t.innerHTML = `<span class="sync-state cache"><i class="fas fa-circle"></i> Cached data · ${rawData.length.toLocaleString()} rows</span> · Syncing latest data…`;
     } else if(dataSource === 'upload'){
-      t.textContent = `Uploaded data · ${rawData.length.toLocaleString()} rows · saved locally`;
+      t.innerHTML = `<span class="sync-state live"><i class="fas fa-circle"></i> Uploaded data · ${rawData.length.toLocaleString()} rows</span>${stamp ? ` · Updated ${stamp}` : ''}`;
     } else {
       t.textContent = `Local data · ${rawData.length.toLocaleString()} rows`;
     }
+  }
+
+  function updateFilterStatus(){
+    const el = document.getElementById('filterStatus');
+    if(!el) return;
+    let count = 0;
+    const search = document.getElementById('globalSearch');
+    const from = document.getElementById('dateFrom');
+    const to = document.getElementById('dateTo');
+    const detailSearch = document.getElementById('detailSearch');
+    const detailFilter = document.getElementById('detailFilter');
+    if(search && search.value.trim()) count++;
+    if(from && from.value) count++;
+    if(to && to.value) count++;
+    if(detailSearch && detailSearch.value.trim()) count++;
+    if(detailFilter && detailFilter.value) count++;
+    el.textContent = count ? `${count} filter${count===1?'':'s'} active` : 'No filters';
+    el.classList.toggle('active', count > 0);
   }
 
   function parseExcelBuffer(buffer){
@@ -1899,6 +1934,7 @@
         serverDataPromise = null;
         rawData = data;
         dataSource = 'upload';
+        lastSyncedAt = new Date().toISOString();
         detectManagers(rawData);
         cacheData(rawData, { fileName:file.name, rowCount:data.length, uploadedAt:new Date().toISOString() });
         const detailFilter = document.getElementById('detailFilter');
@@ -1941,7 +1977,7 @@
     if(!data.length){ toast('No data','error'); return; }
     try{
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Data');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Filtered Data');
       const amRows = aggregateByAM(data);
       const summary = amRows.map(r => ({
         'Account Manager':r.am, 'Count':r.count, 'Delivered':r.delivered,
@@ -1978,7 +2014,10 @@
         const ld = losses.map((x,i) => ({'#':i+1, 'AM':x.am, 'Client':x.name, 'Profit':x.profit, 'Reason':x.reason}));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ld), 'Losses');
       }
-      XLSX.writeFile(wb, 'shansi_data_' + new Date().toISOString().slice(0,10) + '.xlsx');
+      const now = new Date();
+      const datePart = now.toISOString().slice(0,10);
+      const timePart = now.toTimeString().slice(0,8).replace(/:/g,'-');
+      XLSX.writeFile(wb, `SHANSI_Sales_Report_${datePart}_${timePart}.xlsx`);
       toast('Excel exported','success');
     }catch(e){ toast('Error: '+e.message,'error'); }
   }
@@ -2213,6 +2252,36 @@
     }
   }
 
+  async function refreshLiveData(showToast = true){
+    const btn = document.getElementById('refreshDataBtn');
+    const mini = document.getElementById('storageRefreshBtn');
+    if(btn) btn.classList.add('refreshing');
+    if(mini) mini.classList.add('refreshing');
+    try{
+      serverDataPromise = null;
+      const result = await getServerDataPromise();
+      if(!result){
+        if(showToast) toast('Live Excel file could not be loaded','error');
+        return false;
+      }
+      rawData = result.data;
+      dataSource = 'server';
+      lastSyncedAt = new Date().toISOString();
+      detectManagers(rawData);
+      cacheData(rawData, {fileName:result.fileName,rowCount:rawData.length,uploadedAt:lastSyncedAt});
+      refresh();
+      if(showToast) toast(`Data refreshed · ${rawData.length.toLocaleString()} rows`,'success');
+      return true;
+    }catch(e){
+      console.error(e);
+      if(showToast) toast('Refresh failed: ' + e.message,'error');
+      return false;
+    }finally{
+      if(btn) btn.classList.remove('refreshing');
+      if(mini) mini.classList.remove('refreshing');
+    }
+  }
+
   function applyUserUI(user){
     currentUser = user;
     document.getElementById('userLabel').textContent = user.username;
@@ -2244,6 +2313,7 @@
     if(cached && cached.data.length){
       rawData = cached.data;
       dataSource = 'cache';
+      lastSyncedAt = cached.meta && cached.meta.uploadedAt ? cached.meta.uploadedAt : null;
       detectManagers(rawData);
       refresh();
     }
@@ -2255,6 +2325,7 @@
 
         rawData = serverResult.data;
         dataSource = serverResult.source;
+        lastSyncedAt = new Date().toISOString();
         detectManagers(rawData);
 
         cacheData(rawData, {
@@ -2270,8 +2341,14 @@
         }
       } else if(!cached || !cached.data.length){
         dataSource = 'none';
+        lastSyncedAt = null;
         refresh();
         toast('Data file could not be loaded. Put data.xlsx beside index.html.','error');
+      } else {
+        // Keep the usable cached dashboard visible if the live file is temporarily unavailable.
+        dataSource = 'cache';
+        refresh();
+        toast('Live data unavailable · showing cached data','info');
       }
     });
 
@@ -2280,13 +2357,24 @@
 
   async function doLogin(){
     const u=document.getElementById('loginUser').value.trim(); const p=document.getElementById('loginPass').value;
-    const err=document.getElementById('loginError'); err.textContent='';
+    const err=document.getElementById('loginError');
+    const btn=document.getElementById('loginBtn');
+    const btnText=document.getElementById('loginBtnText');
+    const originalText = selectedLoginRole === 'admin' ? 'Sign in as Sales Head' : 'Sign in';
+    err.textContent='';
     if(!u||!p){err.textContent='Please enter username and password';return;}
-    await loadUsers(); const key=Object.keys(VIEWERS).find(k=>k.toLowerCase()===u.toLowerCase()); const account=key?VIEWERS[key]:null;
-    if(!account || (await sha256(p))!==account.passwordHash){err.textContent='Invalid ID or password';return;}
-    if(selectedLoginRole==='admin' && account.role!=='admin'){err.textContent='Select the Manager / NOC login tab for this account';return;}
-    if(selectedLoginRole!=='admin' && account.role==='admin'){err.textContent='Select Sales Head for this account';return;}
-    const matched={...account,permissions:normalizePermissions(account.permissions)}; saveSession(matched); applyUserUI(matched); toast(`${getTimeGreeting()}, ${getDisplayRole(matched)}`,'success');
+    if(btn){btn.disabled=true;btn.classList.add('login-loading');}
+    if(btnText) btnText.textContent='Signing in…';
+    try{
+      await loadUsers(); const key=Object.keys(VIEWERS).find(k=>k.toLowerCase()===u.toLowerCase()); const account=key?VIEWERS[key]:null;
+      if(!account || (await sha256(p))!==account.passwordHash){err.textContent='Invalid ID or password';return;}
+      if(selectedLoginRole==='admin' && account.role!=='admin'){err.textContent='Select the Manager / NOC login tab for this account';return;}
+      if(selectedLoginRole!=='admin' && account.role==='admin'){err.textContent='Select Sales Head for this account';return;}
+      const matched={...account,permissions:normalizePermissions(account.permissions)}; saveSession(matched); applyUserUI(matched); toast(`${getTimeGreeting()}, ${matched.username}`,'success');
+    }finally{
+      if(btn){btn.disabled=false;btn.classList.remove('login-loading');}
+      if(btnText && document.getElementById('loginOverlay') && !document.getElementById('loginOverlay').classList.contains('hidden')) btnText.textContent=originalText;
+    }
   }
 
   async function doLogout(){
@@ -2427,7 +2515,8 @@
     if(!s) return;
     s.addEventListener('input', (e) => {
       const q = e.target.value.trim().toLowerCase();
-      if(!q){ refresh(); return; }
+      if(!q){ refresh();
+      updateFilterStatus(); return; }
       let d = applyAllFilters(rawData);
       d = d.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(q)));
       filteredData = d;
@@ -2439,6 +2528,7 @@
       renderCharts(amRows);
       renderClients(filteredData);
       renderDetailTable(filteredData);
+      updateFilterStatus();
     });
   }
 
@@ -2451,11 +2541,13 @@
       activeDateFrom = dateFrom.value ? new Date(dateFrom.value) : null;
       if(activeDateFrom) activeDateFrom.setHours(0,0,0,0);
       refresh();
+      updateFilterStatus();
     });
     dateTo.addEventListener('change', () => {
       activeDateTo = dateTo.value ? new Date(dateTo.value) : null;
       if(activeDateTo) activeDateTo.setHours(23,59,59,999);
       refresh();
+      updateFilterStatus();
     });
 
     document.querySelectorAll('.date-preset').forEach(btn => {
@@ -2492,6 +2584,7 @@
     activeDateTo = null;
     if(detailFilter){ detailFilter.value = ''; }
     refresh();
+    updateFilterStatus();
     toast('All filters reset','info');
   }
 
@@ -2505,6 +2598,7 @@
       const filter = document.getElementById('detailFilter');
       if(!filter || !am) return;
       filter.value = am;
+      updateFilterStatus();
       const detail = document.getElementById('detailTable');
       if(detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
       renderDetailTable(filteredData);
@@ -2515,10 +2609,10 @@
     const amFilter = document.getElementById('detailFilter');
     const searchInput = document.getElementById('detailSearch');
     if(amFilter){
-      amFilter.addEventListener('change', () => renderDetailTable(filteredData));
+      amFilter.addEventListener('change', () => { renderDetailTable(filteredData); updateFilterStatus(); });
     }
     if(searchInput){
-      searchInput.addEventListener('input', () => renderDetailTable(filteredData));
+      searchInput.addEventListener('input', () => { renderDetailTable(filteredData); updateFilterStatus(); });
     }
   }
 
@@ -2710,6 +2804,10 @@
 
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
     if(resetFiltersBtn) resetFiltersBtn.addEventListener('click', resetAllFilters);
+    const refreshDataBtn = document.getElementById('refreshDataBtn');
+    const storageRefreshBtn = document.getElementById('storageRefreshBtn');
+    if(refreshDataBtn) refreshDataBtn.addEventListener('click', () => refreshLiveData(true));
+    if(storageRefreshBtn) storageRefreshBtn.addEventListener('click', () => refreshLiveData(true));
 
     restoreAuth();
   });

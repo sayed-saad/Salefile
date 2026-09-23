@@ -7,81 +7,6 @@
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22SHANSI%20Dashboard%22%2C%22short_name%22%3A%22SHANSI%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230b1220%22%2C%22theme_color%22%3A%22%233b82f6%22%7D">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-/* ===== V3 STATUS / WELCOME HELPERS ===== */
-function updateV3Status(){
-  try{
-    const dot=document.getElementById('v3DataDot');
-    const state=document.getElementById('v3DataState');
-    const rows=document.getElementById('v3RowCount');
-    const sync=document.getElementById('v3SyncTime');
-    const role=document.getElementById('v3RoleState');
-    const title=document.getElementById('v3WelcomeTitle');
-    const sub=document.getElementById('v3WelcomeSub');
-    if(!dot) return;
-    dot.className='v3-dot '+(dataSource==='cache'?'cache':(dataSource==='none'?'none':''));
-    state.textContent='Data status: '+(dataSource==='cache'?'Cached':'Live');
-    rows.textContent=(rawData?.length||0).toLocaleString()+' rows';
-    sync.textContent='Last sync: '+(lastSyncedAt?new Date(lastSyncedAt).toLocaleString():'—');
-    role.textContent='Role: '+(currentUser?getDisplayRole(currentUser):'—');
-    if(currentUser){
-      title.textContent='Welcome, '+currentUser.username;
-      sub.textContent='Your SHANSI workspace is ready. Review performance, clients and profitability from one corporate dashboard.';
-    }
-  }catch(e){}
-}
-
-
-/* ===== V3 PROFILE CENTER LOGIC ===== */
-function getV3ProfileUser(){
-  try{
-    if(window.__shansiProfileUser) return window.__shansiProfileUser;
-    const raw=sessionStorage.getItem('shansi_session_v30');
-    const u=raw?JSON.parse(raw):null;
-    if(u) window.__shansiProfileUser=u;
-    return u;
-  }catch(e){ return null; }
-}
-function openProfileModal(){
-  const u=getV3ProfileUser();
-  if(!u){ if(typeof toast==='function') toast('Please login first','error'); return; }
-  const name = u.username || 'User';
-  const role = (typeof getDisplayRole==='function' ? getDisplayRole(u) : (u.role || 'Viewer'));
-  const avatar = u.avatar || '';
-  const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val||'—'; };
-  set('profileName', name);
-  set('profileUsername', u.username || name);
-  set('profileRole', role);
-  set('profileRoleInfo', role);
-  set('profileManager', u.managerLink || (u.role==='noc' ? 'All Account Managers' : '—'));
-  const av=document.getElementById('profileBigAvatar');
-  if(av){
-    av.innerHTML = avatar ? '<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="Profile">' : '<span>'+String(name).charAt(0).toUpperCase()+'</span>';
-  }
-  const dd=document.getElementById('userDropdown'); if(dd) dd.classList.remove('show');
-  const modal=document.getElementById('profileModal'); if(modal) { modal.classList.add('show'); modal.style.display='flex'; }
-}
-function closeProfileModal(){ const m=document.getElementById('profileModal'); if(m){m.classList.remove('show');m.style.removeProperty('display');} }
-function openProfilePhotoFromProfile(){ closeProfileModal(); setTimeout(()=>{ const b=document.getElementById('ddPhoto'); if(b) b.click(); },80); }
-function openPasswordFromProfile(){ closeProfileModal(); setTimeout(()=>{ const b=document.getElementById('ddChangePwd'); if(b) b.click(); },80); }
-function bindV3ProfileCenter(){
-  const on=(id,fn)=>{ const e=document.getElementById(id); if(e && !e.dataset.v3Bound){e.addEventListener('click',fn);e.dataset.v3Bound='1';} };
-  // Dropdown items are bound by the main dashboard event handlers below.
-  // Keep this binder limited to the profile modal's own buttons.
-  on('profileClose',closeProfileModal);
-  on('profileDone',closeProfileModal);
-  on('profilePhotoBtn',openProfilePhotoFromProfile);
-  on('profilePasswordBtn',openPasswordFromProfile);
-}
-try{
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bindV3ProfileCenter, {once:true});
-  }else{
-    bindV3ProfileCenter();
-  }
-}catch(e){}
-
-</script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -1121,6 +1046,59 @@ body.dark .profile-security-note{color:#6ee7b7}
   let rawData = [];
   let filteredData = [];
   let currentUser = null;
+
+  // ===== FIXED PROFILE / USER DROPDOWN =====
+  // Keep one source of truth: the existing currentUser/session and existing modals.
+  function openProfileModal(){
+    if(!currentUser){
+      toast('Not logged in','error');
+      return;
+    }
+    const name = currentUser.username || 'User';
+    const role = (typeof getDisplayRole === 'function' ? getDisplayRole(currentUser) : (currentUser.role || 'Viewer')) || 'Viewer';
+    const avatar = currentUser.avatar || '';
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if(el) el.textContent = value || '—';
+    };
+    setText('profileName', name);
+    setText('profileUsername', currentUser.username);
+    setText('profileRole', role);
+    setText('profileRoleInfo', role);
+    setText('profileManager', currentUser.managerLink || (currentUser.role === 'noc' ? 'All Account Managers' : '—'));
+    const av = document.getElementById('profileBigAvatar');
+    if(av){
+      av.innerHTML = avatar
+        ? '<img src="' + avatar + '" alt="Profile">'
+        : '<span>' + String(name).charAt(0).toUpperCase() + '</span>';
+    }
+    const dropdown = document.getElementById('userDropdown');
+    if(dropdown) dropdown.classList.remove('show');
+    const modal = document.getElementById('profileModal');
+    if(modal) modal.classList.add('show');
+  }
+  function closeProfileModal(){
+    const modal = document.getElementById('profileModal');
+    if(modal) modal.classList.remove('show');
+  }
+  function openProfilePhotoFromProfile(){
+    closeProfileModal();
+    setTimeout(() => { if(typeof openPhotoModal === 'function') openPhotoModal(); }, 80);
+  }
+  function openPasswordFromProfile(){
+    closeProfileModal();
+    setTimeout(() => { if(typeof openPwdModal === 'function') openPwdModal(); }, 80);
+  }
+  function updateV3Status(){
+    try{
+      const role=document.getElementById('v3RoleState');
+      const title=document.getElementById('v3WelcomeTitle');
+      const sub=document.getElementById('v3WelcomeSub');
+      if(role) role.textContent='Role: '+(currentUser && typeof getDisplayRole==='function' ? getDisplayRole(currentUser) : '—');
+      if(currentUser && title) title.textContent='Welcome, '+currentUser.username;
+      if(currentUser && sub) sub.textContent='Your SHANSI workspace is ready. Review performance, clients and profitability from one corporate dashboard.';
+    }catch(e){}
+  }
   const charts = {};
   let selectedLoginRole = 'admin';
   let knownManagers = [];
@@ -2582,7 +2560,7 @@ try{setTimeout(updateV3Status,0);}catch(e){}
   }
 
   function applyUserUI(user){
-try{bindV3ProfileCenter();}catch(e){}
+try{setTimeout(bindV3ProfileCenter,100);}catch(e){}
 
 try{setTimeout(updateV3Status,0);}catch(e){}
 
@@ -3098,27 +3076,48 @@ try{setTimeout(updateV3Status,0);}catch(e){}
     e.stopPropagation();
     userDropdown.classList.toggle('show');
   });
+  userChip.setAttribute('role','button');
+  userChip.setAttribute('tabindex','0');
+  userChip.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      userDropdown.classList.toggle('show');
+    }
+  });
   document.addEventListener('click', (e) => {
     if (!userChip.contains(e.target)) userDropdown.classList.remove('show');
   });
 
   document.getElementById('ddProfile').addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    userDropdown.classList.remove('show');
-    if(typeof openProfileModal === 'function') openProfileModal();
+    openProfileModal();
   });
   document.getElementById('ddPhoto').addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     userDropdown.classList.remove('show');
     if(typeof openPhotoModal === 'function') openPhotoModal();
   });
   document.getElementById('ddChangePwd').addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     userDropdown.classList.remove('show');
-    if(typeof openPwdModal === 'function') openPwdModal();
+    openPwdModal();
   });
   document.getElementById('ddLogout').addEventListener('click', (e) => {
-    e.stopPropagation(); userDropdown.classList.remove('show'); doLogout();
+    e.preventDefault();
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    doLogout();
+  });
+
+  document.getElementById('profileClose')?.addEventListener('click', closeProfileModal);
+  document.getElementById('profileDone')?.addEventListener('click', closeProfileModal);
+  document.getElementById('profilePhotoBtn')?.addEventListener('click', openProfilePhotoFromProfile);
+  document.getElementById('profilePasswordBtn')?.addEventListener('click', openPasswordFromProfile);
+  document.getElementById('profileModal')?.addEventListener('click', (e) => {
+    if(e.target.id === 'profileModal') closeProfileModal();
   });
 
   document.getElementById('themeBtn').addEventListener('click', toggleTheme);
@@ -3219,7 +3218,7 @@ try{setTimeout(updateV3Status,0);}catch(e){}
     if(e.ctrlKey && e.key === 'd'){ e.preventDefault(); toggleTheme(); }
     if(e.key === 'Escape'){
       closeManagerDrawer();
-      ['lossModal','pwdModal','photoModal','empModal','rawModal','uploadModal','reportModal'].forEach(id => {
+      ['lossModal','pwdModal','photoModal','empModal','rawModal','uploadModal','reportModal','profileModal'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.classList.remove('show');
       });
@@ -3231,9 +3230,7 @@ try{setTimeout(updateV3Status,0);}catch(e){}
   });
 
   async function restoreAuth(){
-try{setTimeout(bindV3ProfileCenter,100);}catch(e){}
-
-    await ensureDefaultUsers();
+await ensureDefaultUsers();
     const session=getLocalSession();
     if(session && VIEWERS[session.username]) applyUserUI({...VIEWERS[session.username],permissions:normalizePermissions(VIEWERS[session.username].permissions)});
   }
@@ -3280,37 +3277,5 @@ try{setTimeout(bindV3ProfileCenter,100);}catch(e){}
 
 })();
 </script>
-
-<script>
-/* ===== PROFILE CLICK SAFETY BRIDGE ===== */
-(function(){
-  document.addEventListener('click', function(e){
-    var t=e.target && e.target.closest ? e.target.closest('#ddProfile,#profileClose,#profileDone,#profilePhotoBtn,#profilePasswordBtn') : null;
-    if(!t) return;
-    var id=t.id;
-    if(id==='ddProfile'){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      if(typeof openProfileModal==='function') openProfileModal();
-      return;
-    }
-    if(id==='profileClose' || id==='profileDone'){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      if(typeof closeProfileModal==='function') closeProfileModal();
-      return;
-    }
-    if(id==='profilePhotoBtn'){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      if(typeof openProfilePhotoFromProfile==='function') openProfilePhotoFromProfile();
-      return;
-    }
-    if(id==='profilePasswordBtn'){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      if(typeof openPasswordFromProfile==='function') openPasswordFromProfile();
-      return;
-    }
-  }, true);
-})();
-</script>
-
 </body>
 </html>

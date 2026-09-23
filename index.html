@@ -188,7 +188,7 @@
   .role-badge.manager{background:#7c3aed;}
   .role-badge.viewer{background:#0e7490;}
 
-  .user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md);min-width:230px;padding:.4rem;display:none;z-index:2000;}
+  .user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md);min-width:230px;padding:.4rem;display:none;z-index:99999;pointer-events:auto;}
   body.dark .user-dropdown{background:#0f172a;border-color:#243044;}
   .user-dropdown.show{display:block;animation:dropIn .25s ease;}
   @keyframes dropIn{from{opacity:0;transform:translateY(-8px);}}
@@ -3088,37 +3088,45 @@ try{setTimeout(updateV3Status,0);}catch(e){}
     if (!userChip.contains(e.target)) userDropdown.classList.remove('show');
   });
 
-  document.getElementById('ddProfile').addEventListener('click', (e) => {
+
+  // SINGLE PROFILE DROPDOWN HANDLER — prevents parent userChip click from interfering.
+  function openProfileModal(){
+    if(!currentUser){ toast('Not logged in','error'); return; }
+    const name = currentUser.username || 'User';
+    const role = (typeof getDisplayRole === 'function' ? getDisplayRole(currentUser) : currentUser.role) || 'Viewer';
+    const set = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val || '—'; };
+    set('profileName',name);
+    set('profileUsername',currentUser.username);
+    set('profileRole',role);
+    set('profileRoleInfo',role);
+    set('profileManager',currentUser.managerLink || (currentUser.role==='noc' ? 'All Account Managers' : '—'));
+    const av=document.getElementById('profileBigAvatar');
+    if(av) av.innerHTML=currentUser.avatar ? '<img src="'+currentUser.avatar+'" alt="Profile">' : '<span>'+String(name).charAt(0).toUpperCase()+'</span>';
+    if(userDropdown) userDropdown.classList.remove('show');
+    document.getElementById('profileModal')?.classList.add('show');
+  }
+  function closeProfileModal(){ document.getElementById('profileModal')?.classList.remove('show'); }
+  function openProfilePhotoFromProfile(){ closeProfileModal(); setTimeout(()=>openPhotoModal(),80); }
+  function openPasswordFromProfile(){ closeProfileModal(); setTimeout(()=>openPwdModal(),80); }
+
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest('#ddProfile,#ddPhoto,#ddChangePwd,#ddLogout');
+    if(!item) return;
     e.preventDefault();
     e.stopPropagation();
-    openProfileModal();
-  });
-  document.getElementById('ddPhoto').addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    userDropdown.classList.remove('show');
-    if(typeof openPhotoModal === 'function') openPhotoModal();
-  });
-  document.getElementById('ddChangePwd').addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    userDropdown.classList.remove('show');
-    openPwdModal();
-  });
-  document.getElementById('ddLogout').addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    userDropdown.classList.remove('show');
-    doLogout();
-  });
+    e.stopImmediatePropagation();
+    if(userDropdown) userDropdown.classList.remove('show');
+    if(item.id==='ddProfile') openProfileModal();
+    else if(item.id==='ddPhoto') openPhotoModal();
+    else if(item.id==='ddChangePwd') openPwdModal();
+    else if(item.id==='ddLogout') doLogout();
+  }, true);
 
   document.getElementById('profileClose')?.addEventListener('click', closeProfileModal);
   document.getElementById('profileDone')?.addEventListener('click', closeProfileModal);
   document.getElementById('profilePhotoBtn')?.addEventListener('click', openProfilePhotoFromProfile);
   document.getElementById('profilePasswordBtn')?.addEventListener('click', openPasswordFromProfile);
-  document.getElementById('profileModal')?.addEventListener('click', (e) => {
-    if(e.target.id === 'profileModal') closeProfileModal();
-  });
+  document.getElementById('profileModal')?.addEventListener('click', (e) => { if(e.target.id==='profileModal') closeProfileModal(); });
 
   document.getElementById('themeBtn').addEventListener('click', toggleTheme);
   document.getElementById('fullscreenBtn').addEventListener('click', () => {

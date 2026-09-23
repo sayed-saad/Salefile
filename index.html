@@ -37,7 +37,7 @@ function openProfileModal(){
   if(!currentUser){ toast('Not logged in','error'); return; }
   const name = currentUser.username || 'User';
   const role = getDisplayRole(currentUser) || currentUser.role || 'Viewer';
-  const avatar = getUserAvatar ? getUserAvatar() : (currentUser.avatar || '');
+  const avatar = (typeof getUserAvatar==='function' ? getUserAvatar() : (currentUser.avatar || ''));
   const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val||'—'; };
   set('profileName', name);
   set('profileUsername', currentUser.username);
@@ -56,9 +56,8 @@ function openProfilePhotoFromProfile(){ closeProfileModal(); setTimeout(()=>{ if
 function openPasswordFromProfile(){ closeProfileModal(); setTimeout(()=>{ if(typeof openPwdModal==='function') openPwdModal(); },80); }
 function bindV3ProfileCenter(){
   const on=(id,fn)=>{ const e=document.getElementById(id); if(e && !e.dataset.v3Bound){e.addEventListener('click',fn);e.dataset.v3Bound='1';} };
-  on('ddProfile',openProfileModal);
-  on('ddPhoto',()=>{ if(typeof openPhotoModal==='function') openPhotoModal(); });
-  on('ddChangePwd',()=>{ if(typeof openPwdModal==='function') openPwdModal(); });
+  // Dropdown items are bound by the main dashboard event handlers below.
+  // Keep this binder limited to the profile modal's own buttons.
   on('profileClose',closeProfileModal);
   on('profileDone',closeProfileModal);
   on('profilePhotoBtn',openProfilePhotoFromProfile);
@@ -2573,7 +2572,7 @@ try{setTimeout(updateV3Status,0);}catch(e){}
   }
 
   function applyUserUI(user){
-try{setTimeout(bindV3ProfileCenter,100);}catch(e){}
+try{bindV3ProfileCenter();}catch(e){}
 
 try{setTimeout(updateV3Status,0);}catch(e){}
 
@@ -3094,14 +3093,19 @@ try{setTimeout(updateV3Status,0);}catch(e){}
   });
 
   document.getElementById('ddProfile').addEventListener('click', (e) => {
-    e.stopPropagation(); userDropdown.classList.remove('show');
-    openProfileModal();
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    if(typeof openProfileModal === 'function') openProfileModal();
   });
   document.getElementById('ddPhoto').addEventListener('click', (e) => {
-    e.stopPropagation(); userDropdown.classList.remove('show'); openPhotoModal();
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    if(typeof openPhotoModal === 'function') openPhotoModal();
   });
   document.getElementById('ddChangePwd').addEventListener('click', (e) => {
-    e.stopPropagation(); userDropdown.classList.remove('show'); openPwdModal();
+    e.stopPropagation();
+    userDropdown.classList.remove('show');
+    if(typeof openPwdModal === 'function') openPwdModal();
   });
   document.getElementById('ddLogout').addEventListener('click', (e) => {
     e.stopPropagation(); userDropdown.classList.remove('show'); doLogout();

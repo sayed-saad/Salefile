@@ -2674,6 +2674,7 @@ try{setTimeout(updateV3Status,0);}catch(e){}
   function fmtActivityDate(iso){const d=new Date(iso);return isNaN(d)?'—':d.toLocaleDateString();}
   function fmtActivityTime(iso){const d=new Date(iso);return isNaN(d)?'—':d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});}
   function activityLabel(t){return t==='password_change'?'Password Changed':t==='login'?'Login':t==='logout'?'Logout':t;}
+  function escapeHtml(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   function canViewActivity(){return !!currentUser && currentUser.role==='admin';}
   function getFilteredActivity(){
     const uf=(document.getElementById('activityUserFilter')?.value||'').trim().toLowerCase(); const tf=document.getElementById('activityTypeFilter')?.value||'';

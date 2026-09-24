@@ -913,7 +913,15 @@ body.dark .profile-security-note{color:#6ee7b7}
   <div class="modal-card wide" style="max-width:1400px;">
     <h3><i class="fas fa-exclamation-triangle" style="color:#dc2626"></i> Loss-Making Accounts Analysis</h3>
     <p class="sub" id="lossSubtitle">Complete loss analysis — Count, Delivered, Delivery %, date-wise, manager-wise and client-wise</p>
-    <div class="raw-count" id="lossCount">0 accounts</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;margin:.7rem 0 1rem;">
+      <div class="raw-count" id="lossCount">0 accounts</div>
+      <div style="display:flex;align-items:center;gap:.55rem;">
+        <label for="lossManagerFilter" style="font-size:.74rem;font-weight:800;color:var(--muted);white-space:nowrap;">Account Manager</label>
+        <select id="lossManagerFilter" style="min-width:220px;padding:.55rem .7rem;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);font-weight:700;">
+          <option value="">All Account Managers</option>
+        </select>
+      </div>
+    </div>
     <div id="lossSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:.65rem;margin:.75rem 0 1rem;"></div>
 
     <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin:.2rem 0 .45rem;">Date-wise Loss Summary</div>
@@ -2812,32 +2820,75 @@ try{setTimeout(updateV3Status,0);}catch(e){}
     toast('Logged out','info');
   }
 
+  function getLossAnalysisBaseData(){
+    let data = rawData.slice();
+    if(currentUser && currentUser.role === 'manager'){
+      const link=String(currentUser.managerLink||'').trim();
+      const amCol=findCol(data,['Account Manager','AccountManager','AM','Manager']);
+      if(link && amCol) data=data.filter(r=>managerMatch(r[amCol],link));
+    }
+    if(activeDateFrom || activeDateTo){
+      const dcol=getDateCol();
+      if(dcol){
+        data=data.filter(r=>{
+          const dt=parseDate(r[dcol]);
+          if(!dt) return true;
+          if(activeDateFrom && dt<activeDateFrom) return false;
+          if(activeDateTo && dt>activeDateTo) return false;
+          return true;
+        });
+      }
+    }
+    return data;
+  }
+
+  function populateLossManagerFilter(data){
+    const sel=document.getElementById('lossManagerFilter');
+    if(!sel) return;
+    const amCol=findCol(data,['Account Manager','AccountManager','AM','Manager']);
+    const vals=amCol?[...new Set(data.map(r=>String(r[amCol]||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b)):[];
+    const isManager=currentUser && currentUser.role==='manager';
+    const own=String(currentUser?.managerLink||'').trim();
+    if(isManager){
+      sel.innerHTML=own?`<option value="${own.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}">${own}</option>`:'<option value="">My Accounts</option>';
+      sel.value=own;
+      sel.disabled=true;
+      return;
+    }
+    sel.disabled=false;
+    const old=sel.value;
+    sel.innerHTML='<option value="">All Account Managers</option>'+vals.map(v=>`<option value="${v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}">${v}</option>`).join('');
+    if(vals.includes(old)) sel.value=old; else sel.value='';
+  }
+
+  function getLossAnalysisData(){
+    let data=getLossAnalysisBaseData();
+    const sel=document.getElementById('lossManagerFilter');
+    const selected=sel?.value||'';
+    if(selected){
+      const amCol=findCol(data,['Account Manager','AccountManager','AM','Manager']);
+      if(amCol) data=data.filter(r=>managerMatch(r[amCol],selected));
+    }
+    return data;
+  }
+
   function openLossModal(){
-    const data = filteredData.length ? filteredData : rawData;
-    const losses = getLossAccounts(data);
+    const baseData=getLossAnalysisBaseData();
+    populateLossManagerFilter(baseData);
+    const data=getLossAnalysisData();
+    const losses=getLossAccounts(data);
     const countEl=document.getElementById('lossCount'), summaryEl=document.getElementById('lossSummary');
     const summaryTbody=document.getElementById('lossSummaryTbody'), dateTbody=document.getElementById('lossDateTbody'), tbody=document.getElementById('lossTbody');
     if(!countEl||!summaryEl||!summaryTbody||!dateTbody||!tbody) return;
-    countEl.textContent = losses.length + ' loss records';
+    countEl.textContent=losses.length+' loss records';
     const cCount=findCol(data,['Count','Total Count','Units']), cDeliv=findCol(data,['Delivered','Total Delivered']), cCost=findCol(data,['Total Cost','Cost']), cRate=findCol(data,['Total Rate','Revenue','Total Revenue','Rate']), cProfit=findCol(data,['Profit','Total Profit']), cName=findCol(data,['Name','Client','Customer']), cAM=findCol(data,['Account Manager','AccountManager','AM','Manager']), cDate=findCol(data,['Date','date','Created Date','Report Date']);
     const num=(v)=>parseFloat(v)||0;
     const rows=losses.map(x=>{const row=data[x.rowIndex]||{}; const count=cCount?num(row[cCount]):0, delivered=cDeliv?num(row[cDeliv]):0, revenue=cRate?num(row[cRate]):0, cost=cCost?num(row[cCost]):0, profit=cProfit?num(row[cProfit]):x.profit; const dateRaw=cDate?row[cDate]:''; const d=parseDate(dateRaw); const date=d&&!isNaN(d)?d.toISOString().slice(0,10):(String(dateRaw||'').trim()||'No Date'); const am=cAM?String(row[cAM]||x.am).trim():x.am; const name=cName?String(row[cName]||x.name).trim():x.name; return {...x,count,delivered,revenue,cost,profit,date,am,name,margin:revenue?(profit/revenue)*100:0};});
-    if(!rows.length){
-      summaryEl.innerHTML=''; summaryTbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#059669;padding:1.2rem;font-weight:600;">No loss-making accounts</td></tr>'; dateTbody.innerHTML=summaryTbody.innerHTML; tbody.innerHTML='<tr><td colspan="12" style="text-align:center;color:#059669;padding:2rem;font-weight:600;">No loss-making accounts</td></tr>'; document.getElementById('lossModal').classList.add('show'); return;
-    }
+    if(!rows.length){ summaryEl.innerHTML=''; summaryTbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#059669;padding:1.2rem;font-weight:600;">No loss-making accounts</td></tr>'; dateTbody.innerHTML=summaryTbody.innerHTML; tbody.innerHTML='<tr><td colspan="12" style="text-align:center;color:#059669;padding:2rem;font-weight:600;">No loss-making accounts</td></tr>'; document.getElementById('lossModal').classList.add('show'); return; }
     const totalLoss=rows.reduce((s,r)=>s+Math.abs(r.profit),0), totalCount=rows.reduce((s,r)=>s+r.count,0), totalDelivered=rows.reduce((s,r)=>s+r.delivered,0), totalRevenue=rows.reduce((s,r)=>s+r.revenue,0), totalCost=rows.reduce((s,r)=>s+r.cost,0), deliveryPct=totalCount?(totalDelivered/totalCount)*100:0, marginPct=totalRevenue?(-totalLoss/totalRevenue)*100:0;
     const uniqueAccounts=new Set(rows.map(r=>r.am+'||'+r.name)).size;
     const allCount=data.reduce((s,r)=>s+(cCount?num(r[cCount]):0),0), lossRate=allCount?(totalCount/allCount)*100:0;
-    summaryEl.innerHTML=`
-      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#991b1b;font-weight:800">TOTAL LOSS</div><div style="font-size:1.05rem;font-weight:800;color:#dc2626">${fmtSmart(-totalLoss)}</div></div>
-      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#9a3412;font-weight:800">LOSS ACCOUNTS</div><div style="font-size:1.05rem;font-weight:800">${uniqueAccounts}</div><small>${rows.length} records</small></div>
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#1d4ed8;font-weight:800">COUNT</div><div style="font-size:1.05rem;font-weight:800">${fmtInt(totalCount)}</div></div>
-      <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#047857;font-weight:800">DELIVERED</div><div style="font-size:1.05rem;font-weight:800">${fmtInt(totalDelivered)}</div></div>
-      <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#0f766e;font-weight:800">DELIVERY %</div><div style="font-size:1.05rem;font-weight:800">${deliveryPct.toFixed(2)}%</div></div>
-      <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#6d28d9;font-weight:800">REVENUE</div><div style="font-size:1.05rem;font-weight:800">${fmt(totalRevenue)}</div></div>
-      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#c2410c;font-weight:800">COST</div><div style="font-size:1.05rem;font-weight:800">${fmt(totalCost)}</div></div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#475569;font-weight:800">LOSS MARGIN</div><div style="font-size:1.05rem;font-weight:800;color:#dc2626">${marginPct.toFixed(2)}%</div></div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#475569;font-weight:800">LOSS COUNT RATE</div><div style="font-size:1.05rem;font-weight:800">${lossRate.toFixed(2)}%</div></div>`;
+    summaryEl.innerHTML=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#991b1b;font-weight:800">TOTAL LOSS</div><div style="font-size:1.05rem;font-weight:800;color:#dc2626">${fmtSmart(-totalLoss)}</div></div><div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#9a3412;font-weight:800">LOSS ACCOUNTS</div><div style="font-size:1.05rem;font-weight:800">${uniqueAccounts}</div><small>${rows.length} records</small></div><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#1d4ed8;font-weight:800">COUNT</div><div style="font-size:1.05rem;font-weight:800">${fmtInt(totalCount)}</div></div><div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#047857;font-weight:800">DELIVERED</div><div style="font-size:1.05rem;font-weight:800">${fmtInt(totalDelivered)}</div></div><div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#0f766e;font-weight:800">DELIVERY %</div><div style="font-size:1.05rem;font-weight:800">${deliveryPct.toFixed(2)}%</div></div><div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#6d28d9;font-weight:800">REVENUE</div><div style="font-size:1.05rem;font-weight:800">${fmt(totalRevenue)}</div></div><div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#c2410c;font-weight:800">COST</div><div style="font-size:1.05rem;font-weight:800">${fmt(totalCost)}</div></div><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#475569;font-weight:800">LOSS MARGIN</div><div style="font-size:1.05rem;font-weight:800;color:#dc2626">${marginPct.toFixed(2)}%</div></div><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.7rem .85rem"><div style="font-size:.66rem;color:#475569;font-weight:800">LOSS COUNT RATE</div><div style="font-size:1.05rem;font-weight:800">${lossRate.toFixed(2)}%</div></div>`;
     const aggregate=(keyFn)=>{const m={}; rows.forEach(r=>{const k=keyFn(r)||'No Date'; if(!m[k])m[k]={key:k,accounts:new Set(),count:0,delivered:0,revenue:0,cost:0,loss:0}; m[k].accounts.add(r.am+'||'+r.name); m[k].count+=r.count; m[k].delivered+=r.delivered; m[k].revenue+=r.revenue; m[k].cost+=r.cost; m[k].loss+=Math.abs(r.profit);}); return Object.values(m);};
     const dateRows=aggregate(r=>r.date).sort((a,b)=>String(a.key).localeCompare(String(b.key)));
     dateTbody.innerHTML=dateRows.map(r=>{const dp=r.count?(r.delivered/r.count)*100:0, mp=r.revenue?(-r.loss/r.revenue)*100:0; return `<tr><td><strong>${r.key}</strong></td><td class="num">${r.accounts.size}</td><td class="num">${fmtInt(r.count)}</td><td class="num">${fmtInt(r.delivered)}</td><td class="num">${dp.toFixed(2)}%</td><td class="num">${fmt(r.revenue)}</td><td class="num">${fmt(r.cost)}</td><td class="num" style="color:#dc2626;font-weight:700">${fmtSmart(-r.loss)}</td><td class="num" style="color:#b91c1c;font-weight:700">${mp.toFixed(2)}%</td></tr>`;}).join('');
@@ -3334,7 +3385,7 @@ try{setTimeout(updateV3Status,0);}catch(e){}
 
   document.getElementById('lossClose').addEventListener('click', closeLossModal);
   document.getElementById('lossExport').addEventListener('click', () => {
-    const data = filteredData.length ? filteredData : rawData;
+    const data = getLossAnalysisData();
     const losses = getLossAccounts(data);
     if(!losses.length){ toast('No loss-making accounts','error'); return; }
     try{
@@ -3352,6 +3403,7 @@ try{setTimeout(updateV3Status,0);}catch(e){}
       XLSX.writeFile(wb,'SHANSI_Loss_Making_Analysis_'+new Date().toISOString().slice(0,10)+'.xlsx'); toast('Loss analysis Excel downloaded','success');
     }catch(e){toast('Excel export error: '+e.message,'error');}
   });
+  document.getElementById('lossManagerFilter').addEventListener('change', openLossModal);
   document.getElementById('lossModal').addEventListener('click', e => { if(e.target.id === 'lossModal') closeLossModal(); });
 
   document.querySelectorAll('.chart-action-btn').forEach(btn => {

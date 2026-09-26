@@ -250,12 +250,12 @@
   body.dark .storage-banner{background:linear-gradient(135deg,rgba(5,150,105,.75),rgba(4,120,87,.75));border-color:rgba(16,185,129,.35);}
   .warning-banner{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:16px;padding:.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem;font-weight:600;}
 
-  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;margin-bottom:1rem;}
+  .kpi-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.85rem;margin-bottom:1rem;}
   .kpi-card{border-radius:18px;padding:1rem 1.15rem;color:#fff;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s;cursor:pointer;box-shadow:0 10px 30px rgba(15,23,42,.12);}
   .kpi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
   .kpi-card .label{font-size:.66rem;opacity:.9;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.3rem;}
-  .kpi-card .value{font-family:'Space Grotesk';font-size:1.35rem;font-weight:700;line-height:1.2;letter-spacing:-.3px;}
-  .kpi-card .kpi-icon{position:absolute;top:.9rem;right:1rem;font-size:1.4rem;opacity:.25;}
+  .kpi-card .value{font-family:'Space Grotesk';font-size:1.5rem;font-weight:750;line-height:1.15;letter-spacing:-.35px;white-space:nowrap;}
+  .kpi-card .kpi-icon{position:absolute;top:.9rem;right:1rem;font-size:1.4rem;opacity:.3;}
   .kpi-card.blue{background:linear-gradient(135deg,#2563eb,#1d4ed8);}
   .kpi-card.green{background:linear-gradient(135deg,#059669,#047857);}
   .kpi-card.teal{background:linear-gradient(135deg,#0891b2,#0e7490);}
@@ -447,7 +447,9 @@
   .am-row.active-row{background:rgba(59,130,246,.09);box-shadow:inset 3px 0 0 var(--accent);}
   .kpi-card{cursor:pointer;}
   .kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
-  @media (max-width:560px){.drawer-kpis{grid-template-columns:repeat(2,1fr);}.detail-drawer{width:100%;}}
+  @media (max-width:1200px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media (max-width:700px){.kpi-row{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:560px){.drawer-kpis{grid-template-columns:repeat(2,1fr);}.detail-drawer{width:100%;}}
 
   .sync-state{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;}
   .sync-state i{font-size:.5rem;}
@@ -595,7 +597,7 @@ body.dark .profile-security-note{color:#6ee7b7}
 .view-context-main{display:flex;align-items:center;gap:.75rem;min-width:0}.view-context-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--accent);color:#fff;box-shadow:0 5px 12px rgba(59,130,246,.2)}
 .view-context-copy{min-width:0}.view-context-kicker{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:var(--muted)}.view-context-title{font-size:.92rem;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.view-context-sub{font-size:.68rem;color:var(--muted);margin-top:2px}
 .view-context-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .6rem;border-radius:999px;background:var(--surface-2,#f8fafc);border:1px solid var(--border);font-size:.65rem;font-weight:700;color:var(--muted);white-space:nowrap}
-.kpi-card .kpi-meta{margin-top:.32rem;font-size:.62rem;font-weight:650;color:var(--muted);min-height:1em}.kpi-card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.kpi-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
+.kpi-card .kpi-meta{margin-top:.38rem;font-size:.67rem;font-weight:650;color:rgba(255,255,255,.78);min-height:1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi-card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.kpi-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
 .insight-card{transition:transform .18s ease,box-shadow .18s ease}.insight-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.07)}
 .content-wrap.is-refreshing{opacity:.72;transition:opacity .16s ease}.content-wrap.is-refreshing .chart-box,.content-wrap.is-refreshing .kpi-card{pointer-events:none}
 .chart-value-note{font-size:.62rem;color:var(--muted);font-weight:650;margin:-.35rem 0 .45rem;padding-left:.15rem}
